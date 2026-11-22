@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Anna's Basement</title>
+<meta name="description" content="Under the cellar doors of Anna's House: a stair down to rooms cut into the rock round a courtyard in a grotto, open to the clouds.">
+<meta name="theme-color" content="#0f0c0a">
+<meta name="color-scheme" content="dark light">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Anna's Basement">
+<meta property="og:description" content="Under the cellar doors of Anna's House: a stair down to rooms cut into the rock round a courtyard in a grotto, open to the clouds.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preload" href="assets/fonts/goudy-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/goudy-italic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="src/ui.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+</script>
+<!-- preload: tools/preload.py writes this list -->
+<link rel="modulepreload" href="src/about.js">
+<link rel="modulepreload" href="src/builder.js">
+<link rel="modulepreload" href="src/campus.js">
+<link rel="modulepreload" href="src/engine/frame.js">
+<link rel="modulepreload" href="src/engine/picinfo.js">
+<link rel="modulepreload" href="src/engine/stage.js">
+<link rel="modulepreload" href="src/fonts.js">
+<link rel="modulepreload" href="src/grounds.js">
+<link rel="modulepreload" href="src/island.js">
+<link rel="modulepreload" href="src/life.js">
+<link rel="modulepreload" href="src/lighting.js">
+<link rel="modulepreload" href="src/materials.js">
+<link rel="modulepreload" href="src/perf.js">
+<link rel="modulepreload" href="src/post.js">
+<link rel="modulepreload" href="src/quality.js">
+<link rel="modulepreload" href="src/shade.js">
+<link rel="modulepreload" href="src/sky.js">
+<link rel="modulepreload" href="src/sound.js">
+<link rel="modulepreload" href="src/trees.js">
+<link rel="modulepreload" href="src/visibility.js">
+<link rel="modulepreload" href="src/walk.js">
+<link rel="modulepreload" href="src/warm.js">
+<link rel="modulepreload" href="vendor/three/addons/controls/OrbitControls.js">
+<link rel="modulepreload" href="vendor/three/three.module.js">
+<link rel="modulepreload" href="src/building.js">
+<link rel="modulepreload" href="src/buildings/index.js">
+<link rel="modulepreload" href="src/doors.js">
+<link rel="modulepreload" href="src/engine/load.js">
+<link rel="modulepreload" href="src/flame.js">
+<link rel="modulepreload" href="src/furnish.js">
+<link rel="modulepreload" href="src/grounds/cards.js">
+<link rel="modulepreload" href="src/grounds/grounds_court.js">
+<link rel="modulepreload" href="src/grounds/grounds_edges.js">
+<link rel="modulepreload" href="src/grounds/grounds_flora.js">
+<link rel="modulepreload" href="src/grounds/grounds_meadow.js">
+<link rel="modulepreload" href="src/grounds/paint.js">
+<link rel="modulepreload" href="src/grounds/tools.js">
+<link rel="modulepreload" href="src/shuffle.js">
+<link rel="modulepreload" href="vendor/three/addons/geometries/RoundedBoxGeometry.js">
+<link rel="modulepreload" href="vendor/three/addons/loaders/GLTFLoader.js">
+<link rel="modulepreload" href="vendor/three/addons/objects/Sky.js">
+<link rel="modulepreload" href="vendor/three/addons/utils/BufferGeometryUtils.js">
+<link rel="modulepreload" href="src/boards.js">
+<link rel="modulepreload" href="src/buildings/spanya.js">
+<link rel="modulepreload" href="src/faculty/roster.js">
+<link rel="modulepreload" href="src/furnish/index.js">
+<link rel="modulepreload" href="src/grounds/flora.js">
+<link rel="modulepreload" href="src/grounds/ground.js">
+<link rel="modulepreload" href="src/grounds/grounds_cave_forms.js">
+<link rel="modulepreload" href="src/grounds/grounds_cave_paint.js">
+<link rel="modulepreload" href="src/kit.js">
+<link rel="modulepreload" href="src/kit/geom.js">
+<link rel="modulepreload" href="src/record.js">
+<link rel="modulepreload" href="vendor/three/addons/utils/BufferGeometryUtils.js">
+<link rel="modulepreload" href="src/books/shelves.js">
+<link rel="modulepreload" href="src/kit/bath.js">
+<link rel="modulepreload" href="src/kit/light.js">
+<link rel="modulepreload" href="src/kit/mats.js">
+<link rel="modulepreload" href="src/kit/props.js">
+<link rel="modulepreload" href="src/kit/showroom.js">
+<link rel="modulepreload" href="src/kit/soft.js">
+<link rel="modulepreload" href="src/kit/wood.js">
+<link rel="modulepreload" href="src/books/catalogue.js">
+<link rel="modulepreload" href="src/kit/chairs.js">
+<!-- /preload -->
+</head>
+<body>
+<!-- Drawings used across the page: the cellar door (this place's mark, drawn in the hand of the house's lantern: two
+     slanted leaves, shut, with the line of daylight between them) and the cloud lift, the stepped curve the Greenes
+     cut into their beams and rails (the family's one rule). -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="doors" viewBox="0 0 40 56">
+      <rect x="9.6" y="8.4" width="20.8" height="2.6" fill="currentColor"/>
+      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="currentColor" fill-opacity=".42"/>
+      <path class="glass" d="M18 11h4v32h-4Z" style="fill: var(--glass, #e2a647)"/>
+      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z M9.6 19H18 M7.8 27H18 M6 35H18 M22 19H30.4 M22 27H32.2 M22 35H34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <rect x="2" y="43" width="36" height="2.8" fill="currentColor"/>
+      <rect x="0" y="48.2" width="40" height="1.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="cloudlift" viewBox="0 0 240 12">
+      <path d="M2 9H96c5 0 5-5 10-5h28c5 0 5 5 10 5H238" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="0" y="7.5" width="3" height="3" fill="currentColor"/><rect x="237" y="7.5" width="3" height="3" fill="currentColor"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- The threshold: shown while the place is put together. You are on the stair under the shut cellar doors, and the
+     daylight between them widens as things come. Plain HTML and CSS, so it draws at once and keeps moving while the
+     page is busy building. -->
+<div id="loading" role="status" aria-live="polite">
+  <div class="threshold">
+    <div class="doors" aria-hidden="true">
+      <i class="day"></i>
+      <span class="leaf l"><i></i></span><span class="leaf r"><i></i></span>
+      <i class="bloom"></i><i class="flare"></i><i class="fall"></i>
+    </div>
+    <p class="name">Anna’s Basement</p>
+    <svg class="rule" viewBox="0 0 240 12" aria-hidden="true">
+      <path class="track" d="M2 9H96c5 0 5-5 10-5h28c5 0 5 5 10 5H238" pathLength="100"/>
+      <path id="ruleFill" class="fill" d="M2 9H96c5 0 5-5 10-5h28c5 0 5 5 10 5H238" pathLength="100"/>
+    </svg>
+    <p id="loadCount" class="count">Opening the cellar doors</p>
+    <svg class="drivers" viewBox="0 0 10 10" aria-hidden="true"><rect id="glassFill" x="0" y="10" width="10" height="0" data-foot="10" data-rise="10"/></svg>
+  </div>
+</div>
+
+<!-- The invitation -->
+<div id="welcome">
+  <div class="card">
+    <svg class="mark" aria-hidden="true"><use href="#doors"/></svg>
+    <h1>Anna’s Basement</h1>
+    <svg class="rule" aria-hidden="true"><use href="#cloudlift"/></svg>
+    <p class="invite">Under the cellar doors of Anna’s House, a stair down to rooms cut into the rock round a courtyard open to the clouds. Robes are by the fire.</p>
+    <div class="actions">
+      <button id="enter">Go down</button>
+      <button id="aboutBtn" class="link">About this place &amp; sources</button>
+    </div>
+    <p class="teach keys-teach"><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>&ensp;walk</span> <span>the mouse to look</span> <span><kbd>E</kbd>&ensp;use things</span> <span><kbd>H</kbd>&ensp;all the keys</span></p>
+    <p class="teach touch-teach">Your left thumb walks, your right thumb looks about, and a tap uses what you face.</p>
+    <div id="trickle" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div id="dot"></div>
+<div id="prompt"></div>
+<div id="hud">
+  <div id="room"></div>
+  <div id="clock"></div>
+</div>
+<script type="module">
+// If the place cannot be put together, say so instead of waiting for ever.
+import('./src/main.js').catch(err => {
+  console.error(err);
+  const c = document.getElementById('loadCount'); if (c) c.textContent = 'The doors would not open this time. Reload the page to try again.';
+  document.getElementById('loading')?.classList.add('failed');
+});
+</script>
+</body>
+</html>

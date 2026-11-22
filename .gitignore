@@ -1,0 +1,9 @@
+# Working material that stays on the build machine: test screenshots, notes, this machine's server address,
+# and the research (third-party drawings and photographs: private reference, never published).
+shots/
+notes/
+research/
+tools/local.env
+node_modules/
+.DS_Store
+__pycache__/

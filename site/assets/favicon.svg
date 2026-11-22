@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Anna's Basement: the cellar door shut on a line of daylight (the #doors mark in site/index.html), set as the house sets its lantern. -->
+  <rect width="64" height="64" rx="10" fill="#2a1c13"/>
+  <g transform="translate(12 4)" color="#f0e5cf">
+    <rect x="9.6" y="8.4" width="20.8" height="2.8" fill="currentColor"/>
+    <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="currentColor" fill-opacity=".45"/>
+    <path d="M18 11h4v32h-4Z" fill="#e2a647"/>
+    <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z M7.8 27H18 M22 27H32.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="2" y="43" width="36" height="3.4" fill="currentColor"/>
+    <rect x="0" y="48.4" width="40" height="2" fill="currentColor"/>
+  </g>
+</svg>

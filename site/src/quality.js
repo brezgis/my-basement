@@ -1,0 +1,60 @@
+// Quality tiers. The house is drawn at one of three levels, chosen before the renderer
+// is made (antialiasing cannot be changed afterwards):
+//
+//   high     big discrete GPUs and the larger Apple chips: everything as designed
+//   medium   integrated GPUs (a MacBook Air, Iris Xe): a little less resolution, 2048
+//            shadows with the cheaper filter, half-size normal and roughness maps, clutter a few
+//            feet nearer
+//   low      older or phone GPUs, software rendering: no antialiasing, 1x resolution,
+//            half-size textures throughout, three lamps instead of four
+//
+// ?quality=low|medium|high (or the settings card, window.house.quality) forces a tier. Otherwise the GPU's name decides, and if a
+// visit had to drop to the lowest resolution to keep up, the next visit starts a tier
+// lower (remembered in localStorage; ?quality=auto clears it).
+
+export const TIERS = {
+  high: { name: 'high', ratio: 1.5, aniso: 16, antialias: true, shadow: 4096, softShadow: true, tex: 'full', reach: 1, lamps: 4, reachFull: 95, reachBig: 260 },
+  medium: { name: 'medium', ratio: 1.25, aniso: 8, antialias: true, shadow: 2048, softShadow: false, tex: 'detail', reach: 0.85, lamps: 4, reachFull: 80, reachBig: 210 },
+  low: { name: 'low', ratio: 1, aniso: 4, antialias: false, shadow: 2048, softShadow: false, tex: 'half', reach: 0.7, lamps: 3, reachFull: 60, reachBig: 150 },
+};
+const ORDER = ['low', 'medium', 'high'];
+
+// The card's name is asked of a context that is then handed to the renderer (engine/load.js)
+import { gpuName, takeContext } from './engine/load.js';
+export { gpuName, takeContext };
+
+export function guessTier(name) {
+  const n = name.toLowerCase();
+  if (/swiftshader|llvmpipe|software|mali|adreno|powervr|intel.*(hd|uhd) graphics|gma/.test(n)) return 'low';
+  if (/apple m\d+ (pro|max|ultra)|nvidia|geforce|quadro|rtx|gtx|radeon (rx|pro)/.test(n)) return 'high';
+  return 'medium';                                              // Apple M1/M2/M3, "Apple GPU" (Safari), Iris Xe, unknown
+}
+
+// The visitor's own choice from the settings card (ui.js), kept in localStorage
+export const QUALITY_OPTIONS = [{ value: 'auto', label: 'Automatic' }, { value: 'high', label: 'High' }, { value: 'medium', label: 'Medium' }, { value: 'low', label: 'Low (fastest)' }];
+export function storedChoice() { try { return localStorage.getItem('qualityChoice'); } catch { return null; } }
+export function chooseTier(v) { try { if (v === 'auto' || !TIERS[v]) { localStorage.removeItem('qualityChoice'); localStorage.removeItem('quality'); } else localStorage.setItem('qualityChoice', v); } catch { /* private window */ } }
+
+export function chooseQuality(Q) {
+  const forced = Q.get('quality') ?? storedChoice();
+  let stored = null;
+  try { if (forced === 'auto') localStorage.removeItem('quality'); stored = localStorage.getItem('quality'); } catch { /* private window */ }
+  const gpu = gpuName();
+  let tier = TIERS[forced] ? forced : guessTier(gpu);
+  if (!TIERS[forced] && stored && ORDER.indexOf(stored) < ORDER.indexOf(tier)) tier = stored;
+  if (typeof navigator !== 'undefined' && !TIERS[forced] && (navigator.deviceMemory ?? 8) <= 2) tier = 'low';
+  // (for measuring one difference between the tiers at a time: ?aa=0|1, ?lamps=N, ?tex=full|detail|half, ?shadow=N)
+  const over = {};
+  if (Q.has('aa')) over.antialias = Q.get('aa') === '1';
+  if (Q.has('lamps')) over.lamps = Number(Q.get('lamps'));
+  if (Q.has('tex')) over.tex = Q.get('tex');
+  if (Q.has('shadow')) over.shadow = Number(Q.get('shadow'));
+  return { ...TIERS[tier], ...over, gpu, forced: !!TIERS[forced] };
+}
+
+// Called by the frame-rate watcher when even the lowest resolution is too slow: the next
+// visit starts a tier lower.
+export function rememberSlow(tier) {
+  const i = ORDER.indexOf(tier);
+  if (i > 0) try { localStorage.setItem('quality', ORDER[i - 1]); } catch { /* private window */ }
+}

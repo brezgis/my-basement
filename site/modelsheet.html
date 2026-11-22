@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Model sheet</title>
+<link rel="icon" href="assets/favicon.svg">
+<!-- The shared models (notes/ASSETS.md), each on a 1 ft grid at its real size in feet, lit warm, with its name, size and
+     triangle count. A small red arrow on the floor points to the model's FRONT (+Z of the file: the side that faces a
+     frame's front when placed with K.model / f.model, dq 0). Each cell is framed to its own model, so read sizes from
+     the grid and the caption, not from the picture.
+       ?group=seating|tables|light|listening|bar|spa|garden|objects   one group (default: all, paged)
+       ?ids=a,b,c        just these        ?page=1&per=12  (default per: 12)        ?cols=4
+       ?yaw=0.6          the view's angle round the model, radians (0 = straight at the front)
+       ?pitch=0.35       how far down the view looks (radians)        ?bg=dark   a dark warm ground
+     Screenshots: tools/shot.sh cannot open this page (it opens the place). Open it with Playwright through the same render lock
+     as tools/drive.py (a slot file in /tmp/claude-1002/my_house_shot_locks, flock), wait for window.__ready === true (set once
+     every model has loaded), then screenshot; the recipe is in notes/ASSETS.md, "Checked, and not". -->
+<style>
+  :root { --bg: #d9d4ca; --ink: #1d1a16; }
+  html, body { margin: 0; height: 100%; background: var(--bg); font: 12px/1.25 Helvetica, Arial, sans-serif; color: var(--ink); overflow: hidden; }
+  canvas { display: block; position: fixed; inset: 0; }
+  .lab { position: fixed; padding: 2px 5px; background: rgba(255, 252, 245, 0.78); pointer-events: none; white-space: nowrap; }
+  .lab b { font-weight: 700; } .bad { background: #c33; color: #fff; }
+  #head { position: fixed; right: 6px; bottom: 4px; background: rgba(255,255,255,.7); padding: 2px 6px; }
+</style>
+<script type="importmap">{ "imports": { "three": "./vendor/three/three.module.js", "three/addons/": "./vendor/three/addons/" } }</script>
+</head>
+<body>
+<div id="head"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+// [id, group] in catalogue order (notes/ASSETS.md)
+const ALL = [
+  ['st_armchair_12_oak', 'seating'], ['st_armchair_4_green', 'seating'], ['st_armchair_5_barrel', 'seating'], ['modern_arm_chair_01', 'seating'],
+  ['mid_century_lounge_chair', 'seating'], ['chinese_armchair', 'seating'], ['st_sofa_21_tan', 'seating'], ['st_sofa_6_leather', 'seating'],
+  ['chinese_sofa', 'seating'], ['st_chaise_tufted', 'seating'], ['st_lounger_chaise', 'seating'], ['Ottoman_01', 'seating'],
+  ['st_stool_6', 'seating'], ['st_stool_7_bar', 'seating'], ['chinese_stool', 'seating'], ['st_dining_chair_3', 'seating'],
+  ['st_bench_26_slab', 'seating'], ['st_bench_27_low', 'seating'],
+  ['modern_coffee_table_01', 'tables'], ['chinese_tea_table', 'tables'], ['WoodenTable_02', 'tables'], ['side_table_tall_01', 'tables'],
+  ['WoodenTable_01', 'tables'], ['modern_wooden_cabinet', 'tables'],
+  ['lightbulb_pendant', 'light'], ['lightbulb_01', 'light'], ['st_pendant_lamp_11', 'light'], ['wooden_lantern_01', 'light'],
+  ['brass_diya_lantern', 'light'], ['st_candle_stone', 'light'],
+  ['st_crates_1', 'listening'],
+  ['wine_barrel_01', 'bar'], ['brass_pot_01', 'bar'], ['wooden_cutting_board', 'bar'], ['wooden_bowl_01', 'bar'], ['st_bread_1', 'bar'],
+  ['food_lime_01', 'bar'], ['st_clay_bowl_11', 'bar'], ['teapot_white', 'bar'], ['teacup_white', 'bar'], ['wine_bottles_01', 'bar'],
+  ['wooden_bucket_01', 'spa'], ['wooden_bucket_02', 'spa'], ['brass_pot_02', 'spa'], ['st_river_stone', 'spa'],
+  ['namaqualand_boulder_03', 'garden'], ['namaqualand_boulder_05', 'garden'], ['namaqualand_boulder_06', 'garden'],
+  ['mossy_rock_03', 'garden'], ['mossy_rock_04', 'garden'], ['mossy_rock_06', 'garden'],
+  ['moon_rock_02', 'garden'], ['st_rock_4', 'garden'], ['st_rock_6', 'garden'], ['st_rock_14_flat', 'garden'], ['rock_07', 'garden'],
+  ['fern_clump_a', 'garden'], ['fern_clump_b', 'garden'], ['fern_clump_c', 'garden'], ['fern_clump_d', 'garden'], ['fern_02', 'garden'], ['tree_stump_02', 'garden'], ['dead_quiver_branch_01', 'garden'],
+  ['dry_branch_a', 'garden'], ['branch_upright_b', 'garden'], ['branch_upright_c', 'garden'],
+  ['ceramic_vase_01', 'objects'], ['ceramic_vase_02', 'objects'], ['st_vase_4', 'objects'], ['st_terracotta_jar_1', 'objects'], ['st_clay_pot_7', 'objects'],
+];
+const Q = new URLSearchParams(location.search), FT = 3.28084;
+let list = ALL.map(a => a[0]);
+if (Q.get('group')) list = ALL.filter(a => a[1] === Q.get('group')).map(a => a[0]);
+if (Q.get('ids')) list = Q.get('ids').split(',');
+const per = +(Q.get('per') ?? 12), page = +(Q.get('page') ?? 1);
+const ids = Q.get('ids') ? list : list.slice((page - 1) * per, page * per);
+const W = innerWidth, H = innerHeight, cols = +(Q.get('cols') ?? Math.min(4, ids.length)), rows = Math.ceil(ids.length / cols);
+const cw = W / cols, ch = H / rows, yaw = +(Q.get('yaw') ?? 0.6), pitch = +(Q.get('pitch') ?? 0.32), dark = Q.get('bg') === 'dark';
+document.getElementById('head').textContent = `${ids.length} of ${list.length} models` + (Q.get('ids') ? '' : `, page ${page} of ${Math.ceil(list.length / per)}`);
+if (dark) document.documentElement.style.setProperty('--bg', '#2a231d');
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.setSize(W, H); renderer.setScissorTest(true);
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.append(renderer.domElement);
+const loader = new GLTFLoader();
+const load = id => new Promise(ok => loader.load(`assets/models/${id}/${id}.gltf`, g => ok(g.scene), undefined, e => { console.error('could not load', id, e?.message ?? e); ok(null); }));
+const label = (html, x, y, bad) => { const d = document.createElement('div'); d.className = 'lab' + (bad ? ' bad' : ''); d.innerHTML = html; Object.assign(d.style, { left: x + 4 + 'px', top: y + 3 + 'px' }); document.body.append(d); };
+
+const cells = [];
+await Promise.all(ids.map(async (id, i) => {
+  const x = (i % cols) * cw, y = Math.floor(i / cols) * ch;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(dark ? 0x2a231d : 0xd9d4ca);
+  scene.add(new THREE.HemisphereLight(0xfff2e0, 0x6b5a48, 1.9));
+  const sun = new THREE.DirectionalLight(0xffe2b8, 2.4); sun.position.set(3, 6, 5); scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xdde6ff, 0.8); fill.position.set(-5, 3, -2); scene.add(fill);
+  const cam = new THREE.PerspectiveCamera(28, cw / ch, 0.05, 400);
+  const o = await load(id);
+  if (!o) { label(`<b>${id}</b>: did not load`, x, y, true); cells.push({ scene, cam, x, y }); return; }
+  // materials as the place's loader tunes them (life.js prepareModel): alpha-tested, not blended; refracting glass made plain clear glass
+  const tune = m => { m = m.clone(); if (m.transparent || m.alphaTest > 0) { m.transparent = false; m.alphaTest = 0.5; }
+    if (m.transmission > 0) { m.transmission = 0; m.thickness = 0; m.transparent = true; m.opacity = 0.32; m.depthWrite = false; } return m; };
+  o.traverse(n => { if (n.isMesh) n.material = Array.isArray(n.material) ? n.material.map(tune) : tune(n.material); });
+  o.scale.setScalar(FT);                                         // metres in the file, feet here (as life.js does)
+  o.updateMatrixWorld(true);
+  let box = new THREE.Box3().setFromObject(o);
+  o.position.y -= box.min.y; o.updateMatrixWorld(true);          // lowest point on the floor (as K.model does)
+  box = new THREE.Box3().setFromObject(o);
+  scene.add(o);
+  let tris = 0, missing = 0;
+  o.traverse(n => { if (!n.isMesh) return; tris += (n.geometry.index ? n.geometry.index.count : n.geometry.attributes.position.count) / 3;
+    for (const m of [].concat(n.material)) for (const k of ['map', 'normalMap']) if (m[k] && !m[k].image) missing++; });
+  const size = box.getSize(new THREE.Vector3()), mid = box.getCenter(new THREE.Vector3());
+  const span = Math.max(size.x, size.z, 1) + 1, gsz = Math.ceil(span / 2) * 2 + 2;
+  const grid = new THREE.GridHelper(gsz, gsz, 0x8a7d6c, 0xb3a999); grid.position.y = 0.002; scene.add(grid);
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(gsz, gsz), new THREE.MeshStandardMaterial({ color: dark ? 0x3b3129 : 0xcfc8bb, roughness: 1 }));
+  fl.rotation.x = -Math.PI / 2; scene.add(fl);
+  // the front: an arrow on the floor from the middle toward +Z, beyond the model
+  const L = Math.max(0.6, size.z * 0.25), z0 = box.max.z + 0.15;
+  const arrow = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0.01, z0), L, 0xc0302a, L * 0.35, L * 0.22); scene.add(arrow);
+  const r = size.length() / 2 + 0.3, dist = r / Math.sin(THREE.MathUtils.degToRad(cam.fov / 2)) * (cw / ch < 1 ? 1.25 : 1.0);
+  cam.position.set(mid.x + Math.sin(yaw) * Math.cos(pitch) * dist, mid.y + Math.sin(pitch) * dist, mid.z + Math.cos(yaw) * Math.cos(pitch) * dist);
+  cam.lookAt(mid); cam.far = dist * 4; cam.updateProjectionMatrix();
+  label(`<b>${id}</b> &nbsp;${size.x.toFixed(2)} w × ${size.z.toFixed(2)} d × ${size.y.toFixed(2)} h ft &nbsp;${Math.round(tris).toLocaleString()} tris` + (missing ? ` &nbsp;${missing} MISSING TEXTURES` : ''), x, y, !!missing);
+  cells.push({ scene, cam, x, y });
+}));
+const draw = () => { for (const { scene, cam, x, y } of cells) { renderer.setViewport(x, H - y - ch, cw, ch); renderer.setScissor(x, H - y - ch, cw, ch); renderer.render(scene, cam); } };
+renderer.setAnimationLoop(draw);
+window.__ready = true;
+</script>
+</body>
+</html>
