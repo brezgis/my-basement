@@ -578,7 +578,7 @@ export default function (b) {
       b.prism('boards', [[xa, ha], [xb, hb], [xb, hb + 0.32], [xa, ha + 0.32]], -right, -left);
     }
 
-    const sheet = 'c#728087/0.65/0.30', frame = 'c#414a4d/0.64/0.32', hardware = 'c#84908f/0.44/0.52';
+    const sheet = 'oak_light#5c4033', frame = 'oak_light#3f2c22', hardware = 'c#2b2a28/0.5/1';      // (boarded dark timber and wrought iron, as the doors now are at the house: they were steel on both sides)
     const height = X => hi + (lo - hi) * (X - X0) / (X1 - X0);
     function plate(mat, xa, xb, ya, yb, bottom, top) {
       b.prism(mat, [[xa, height(xa) + bottom], [xb, height(xb) + bottom],
