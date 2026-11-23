@@ -95,7 +95,8 @@ function snails(kit, E) {
   }
   // one on the damp flags by the tub, wandering, a faint silver trail behind it
   if (E.tub) {
-    const ox = E.tub.x + 0.5, oz = E.tub.z + 3.6; let g = null, x = ox, z = oz, head = 0.3, k = 1, shy = 0, line = null; const N = 60, pts = new Float32Array(N * 3); let n = 0, lastX = x, lastZ = z;
+    const ox = E.tub.x - 1.6, oz = E.tub.z + 5.6;      // (east of the barrel, clear of its turned stair)
+     let g = null, x = ox, z = oz, head = 0.3, k = 1, shy = 0, line = null; const N = 60, pts = new Float32Array(N * 3); let n = 0, lastX = x, lastZ = z;
     add({ name: 'flag snail', x: ox, z: oz, load: 50, live: 40,
       init: async () => {
         g = snailBody(mat); g.scale.setScalar(0.75); g.position.set(x, PAVE + 0.005, z); scene.add(g);

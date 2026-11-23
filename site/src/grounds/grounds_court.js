@@ -293,64 +293,91 @@ export function layCourt(E) {
     const tones = ['oak_light#896640', 'oak_light#83623f', 'oak_light#926f4a', 'oak_light#886746', 'oak_light#96734a'];
     for (let i = 0; i < staves; i++) lathe(tones[(i * 7 + Math.floor(i / 5)) % tones.length], stave, 3, i * sector + 0.0018, sector - 0.0036);
     for (const h of [0.55, 2.1]) put(IRONK, new THREE.TorusGeometry(TR - 0.11 + h * 0.042, 0.045, 5, 44).rotateX(Math.PI / 2).translate(x, PAVE + 0.25 + h, z));
-    for (const d of [-1.1, 1.1]) K.box('c#4a3a2c/0.9', x + d - 0.2, x + d + 0.2, PAVE, PAVE + 0.27, z - 2.4, z + 2.4);
+    // The stair, the stove, the bench and the seat all hang on the round barrel, and are turned about its centre by TURN,
+    // counterclockwise seen from above: the stair comes down north-east onto open flags, clear of the pine's bench. They
+    // are written below unturned (the stair running out toward +z, the stove to the north) and go through T; the engine's
+    // colliders and walk surfaces are axis-aligned, so those are re-expressed for the turn (small blocks along the
+    // diagonal; treads as their bounding boxes with a `contains` test, which walk.js and faculty/nav.js both honour).
+    const TURN = Math.PI / 4, cT = Math.cos(TURN), sT = Math.sin(TURN);
+    const tp = (px, pz) => [x + (px - x) * cT + (pz - z) * sT, z - (px - x) * sT + (pz - z) * cT];
+    const untp = (wx, wz) => [x + (wx - x) * cT - (wz - z) * sT, z + (wx - x) * sT + (wz - z) * cT];
+    const turnM = new THREE.Matrix4().makeTranslation(x, 0, z).multiply(new THREE.Matrix4().makeRotationY(TURN)).multiply(new THREE.Matrix4().makeTranslation(-x, 0, -z));
+    const T = {
+      box(mat, x0, x1, y0, y1, z0, z1, o) {
+        const [cx, cz] = tp((x0 + x1) / 2, (z0 + z1) / 2), hx = Math.abs(x1 - x0) / 2, hz = Math.abs(z1 - z0) / 2;
+        K.box(mat, cx - hx, cx + hx, y0, y1, cz - hz, cz + hz, { ...o, rot: [0, TURN, 0] });
+      },
+      cyl(mat, px, y0, y1, pz, ...rest) { const [a, b] = tp(px, pz); K.cyl(mat, a, y0, y1, b, ...rest); },
+      tube(mat, a, b, ...rest) { const [ax, az] = tp(a[0], a[2]), [bx, bz] = tp(b[0], b[2]); K.tube(mat, [ax, a[1], az], [bx, b[1], bz], ...rest); },
+      mesh(mat, g) { B.mesh(mat, g.applyMatrix4(turnM)); },
+      collide(px, pz, half, y1, y0) { const [a, b] = tp(px, pz); K.collide(a - half, a + half, b - half, b + half, y1, y0); },
+      surface(x0, x1, z0, z1, h) {
+        const c = [[x0, z0], [x0, z1], [x1, z0], [x1, z1]].map(q => tp(...q)), xs = c.map(q => q[0]), zs = c.map(q => q[1]);
+        K.surfaces.push({ x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs), h,
+          contains: (wx, wz) => { const [px, pz] = untp(wx, wz); return px >= x0 && px <= x1 && pz >= z0 && pz <= z1; } });
+      },
+    };
+    for (const d of [-1.1, 1.1]) T.box('c#4a3a2c/0.9', x + d - 0.2, x + d + 0.2, PAVE, PAVE + 0.27, z - 2.4, z + 2.4);
     B.mesh('water', new THREE.CircleGeometry(TR - 0.197, staves * 2).rotateX(-Math.PI / 2).translate(x, PAVE + 2.45, z));
     E.tub = { x, z, water: PAVE + 2.45, r: TR - 0.3 };
-    // Follow the barrel's footprint without blocking the diagonal routes around it.
-    for (const [dy, halfY, halfX] of [[0, 0.96, 2.8], [-1.57, 0.62, 2.64], [1.57, 0.62, 2.64], [-2.39, 0.41, 1.77], [2.39, 0.41, 1.77]]) {
-      K.collide(x + dy - halfY, x + dy + halfY, z - halfX, z + halfX, PAVE + 4.02, PAVE - 0.09);
+    // Follow the barrel's footprint without blocking the diagonal routes around it: strips across the circle, each as long
+    // as the chord at its middle (the landing meets the barrel on a diagonal, so the corners must not stand out into it).
+    for (let i = 0, strips = 9, w = 2 * TR / strips; i < strips; i++) {
+      const mid = -TR + (i + 0.5) * w, half = Math.sqrt(TR * TR - mid * mid);
+      K.collide(x + mid - w / 2, x + mid + w / 2, z - half, z + half, PAVE + 4.02, PAVE - 0.09);
     }
     const [sx, sz] = pw(TX - 1.2, TY + 3.9), sy = PAVE, radius = 0.7;
     const shell = 'c#403a34/0.43/0.65', flue = 'c#77746c/0.41/0.78', ash = 'c#241e1a/0.9';
-    K.box('limestone_smooth#77726a', sx - 0.88, sx + 1.18, sy, sy + 0.11, sz - 0.89, sz + 0.89);
-    for (const dx of [-0.45, 0.45]) for (const dz of [-0.41, 0.41]) K.cyl(IRONK, sx + dx, sy + 0.11, sy + 0.28, sz + dz, 0.09, 0.075, 8);
-    K.cyl(shell, sx, sy + 0.26, sy + 0.72, sz, radius, radius, 24);
-    K.cyl(shell, sx, sy + 1.56, sy + 2.3, sz, radius, radius, 24);
+    T.box('limestone_smooth#77726a', sx - 0.88, sx + 1.18, sy, sy + 0.11, sz - 0.89, sz + 0.89);
+    for (const dx of [-0.45, 0.45]) for (const dz of [-0.41, 0.41]) T.cyl(IRONK, sx + dx, sy + 0.11, sy + 0.28, sz + dz, 0.09, 0.075, 8);
+    T.cyl(shell, sx, sy + 0.26, sy + 0.72, sz, radius, radius, 24);
+    T.cyl(shell, sx, sy + 1.56, sy + 2.3, sz, radius, radius, 24);
     const slot = 0.65, cut = Math.PI / 2 + slot;
     const back = new THREE.CylinderGeometry(radius, radius, 0.84, 24, 1, true, cut, TAU - slot * 2);
-    B.mesh(shell, back.translate(sx, sy + 1.14, sz));
-    K.box(ash, sx + 0.04, sx + 0.09, sy + 0.72, sy + 1.56, sz - 0.4, sz + 0.4);
-    K.box('c#81432c/0.72', sx + 0.10, sx + 0.72, sy + 0.72, sy + 0.75, sz - 0.4, sz + 0.4);
+    T.mesh(shell, back.translate(sx, sy + 1.14, sz));
+    T.box(ash, sx + 0.04, sx + 0.09, sy + 0.72, sy + 1.56, sz - 0.4, sz + 0.4);
+    T.box('c#81432c/0.72', sx + 0.10, sx + 0.72, sy + 0.72, sy + 0.75, sz - 0.4, sz + 0.4);
     for (const side of [-1, 1]) {
       const zz = sz + side * 0.4;
-      K.box(IRONK, sx + 0.47, sx + 0.78, sy + 0.71, sy + 1.56, zz - 0.045, zz + 0.045);
+      T.box(IRONK, sx + 0.47, sx + 0.78, sy + 0.71, sy + 1.56, zz - 0.045, zz + 0.045);
     }
-    for (const h of [0.7, 1.54]) K.box(IRONK, sx + 0.49, sx + 0.79, sy + h, sy + h + 0.055, sz - 0.44, sz + 0.44);
+    for (const h of [0.7, 1.54]) T.box(IRONK, sx + 0.49, sx + 0.79, sy + h, sy + h + 0.055, sz - 0.44, sz + 0.44);
     // Hinged cast-iron fire door, open against the outer right jamb.
-    K.box(IRONK, sx + 0.76, sx + 1.45, sy + 0.75, sy + 1.52, sz + 0.38, sz + 0.44);
-    for (const h of [0.86, 1.38]) K.cyl(STEEL, sx + 0.78, sy + h, sy + h + 0.10, sz + 0.39, 0.045, 0.045, 8);
-    K.tube(PAINT.brass, [sx + 1.30, sy + 1.12, sz + 0.41], [sx + 1.42, sy + 1.12, sz + 0.56], 0.029, 8);
-    K.box(IRONK, sx + 0.61, sx + 0.73, sy + 0.43, sy + 0.59, sz - 0.27, sz + 0.27);
-    K.tube(STEEL, [sx + 0.74, sy + 0.51, sz - 0.13], [sx + 0.74, sy + 0.51, sz + 0.13], 0.023, 6);
+    T.box(IRONK, sx + 0.76, sx + 1.45, sy + 0.75, sy + 1.52, sz + 0.38, sz + 0.44);
+    for (const h of [0.86, 1.38]) T.cyl(STEEL, sx + 0.78, sy + h, sy + h + 0.10, sz + 0.39, 0.045, 0.045, 8);
+    T.tube(PAINT.brass, [sx + 1.30, sy + 1.12, sz + 0.41], [sx + 1.42, sy + 1.12, sz + 0.56], 0.029, 8);
+    T.box(IRONK, sx + 0.61, sx + 0.73, sy + 0.43, sy + 0.59, sz - 0.27, sz + 0.27);
+    T.tube(STEEL, [sx + 0.74, sy + 0.51, sz - 0.13], [sx + 0.74, sy + 0.51, sz + 0.13], 0.023, 6);
 
     // Stove top, seated collar, jointed flue and a rain cap held above the open outlet.
-    K.cyl(IRONK, sx, sy + 2.28, sy + 2.40, sz, 0.74, 0.675, 24);
-    K.cyl(IRONK, sx, sy + 2.39, sy + 2.67, sz, 0.285, 0.215, 20);
-    K.cyl(flue, sx, sy + 2.55, sy + 7.17, sz, 0.17, 0.17, 16);
-    for (const h of [2.73, 4.3, 5.92, 7.06]) K.cyl(IRONK, sx, sy + h, sy + h + 0.10, sz, 0.201, 0.201, 14);
+    T.cyl(IRONK, sx, sy + 2.28, sy + 2.40, sz, 0.74, 0.675, 24);
+    T.cyl(IRONK, sx, sy + 2.39, sy + 2.67, sz, 0.285, 0.215, 20);
+    T.cyl(flue, sx, sy + 2.55, sy + 7.17, sz, 0.17, 0.17, 16);
+    for (const h of [2.73, 4.3, 5.92, 7.06]) T.cyl(IRONK, sx, sy + h, sy + h + 0.10, sz, 0.201, 0.201, 14);
     for (let i = 0; i < 3; i++) {
       const a = i / 3 * TAU, dx = Math.cos(a), dz = Math.sin(a);
-      K.tube(IRONK, [sx + dx * 0.18, sy + 7.12, sz + dz * 0.18], [sx + dx * 0.20, sy + 7.45, sz + dz * 0.20], 0.022, 6);
+      T.tube(IRONK, [sx + dx * 0.18, sy + 7.12, sz + dz * 0.18], [sx + dx * 0.20, sy + 7.45, sz + dz * 0.20], 0.022, 6);
     }
-    K.cyl(IRONK, sx, sy + 7.43, sy + 7.61, sz, 0.29, 0.075, 18);
+    T.cyl(IRONK, sx, sy + 7.43, sy + 7.61, sz, 0.29, 0.075, 18);
     const toTub = new THREE.Vector2(x - sx, z - sz).normalize();
     for (const h of [0.91, 1.64]) {
       const inlet = new THREE.Vector3(sx + toTub.x * 0.65, sy + h, sz + toTub.y * 0.65);
       const outlet = new THREE.Vector3(x - toTub.x * (TR - 0.12), sy + h + 0.27, z - toTub.y * (TR - 0.12));
-      K.tube(STEEL, inlet.toArray(), outlet.toArray(), 0.078, 10);
+      T.tube(STEEL, inlet.toArray(), outlet.toArray(), 0.078, 10);
       const a = inlet.clone().lerp(outlet, 0.15), b = outlet.clone().lerp(inlet, 0.15);
-      K.tube(flue, inlet.toArray(), a.toArray(), 0.127, 10);
-      K.tube(flue, b.toArray(), outlet.toArray(), 0.124, 10);
+      T.tube(flue, inlet.toArray(), a.toArray(), 0.127, 10);
+      T.tube(flue, b.toArray(), outlet.toArray(), 0.124, 10);
     }
-    E.stove = { x: sx + 0.45, y: sy + 0.76, z: sz };
-    fixedExteriorLight(sx + 0.90, sy + 1.04, sz - 0.05, { power: 3.8, reach: 5.2 });
-    K.collide(sx - 0.74, sx + 0.8, sz - 0.74, sz + 0.74, sy + 7.61, sy - 0.5);
-    K.collide(sx + 0.76, sx + 1.46, sz + 0.34, sz + 0.47, sy + 1.52, sy + 0.75);
+    { const [fx, fz] = tp(sx + 0.45, sz), [lx, lz] = tp(sx + 0.90, sz - 0.05);
+      E.stove = { x: fx, y: sy + 0.76, z: fz };
+      fixedExteriorLight(lx, sy + 1.04, lz, { power: 3.8, reach: 5.2 }); }
+    T.collide(sx + 0.03, sz, 0.77, sy + 7.61, sy - 0.5);
+    for (const d of [0.9, 1.11, 1.32]) T.collide(sx + d, sz + 0.405, 0.12, sy + 1.52, sy + 0.75);      // (the open door leaf)
     // Set the oak planks on twin stringers and posts, with a landing below the lip.
     const tread = 'oak_light#b5966d', riser = 'oak_light#99714d', support = 'oak_light#74593e';
     const inside = TX + TR - 0.06, landingEnd = inside + 1.46, pitch = 0.87, totalRise = 2.52, stepRise = totalRise / 4;
     const bottom = landingEnd + 3 * pitch, halfWidth = 1.34;
-    const plank = (mat, a, b, lo, hi, near, far) => K.box(mat, x + near, x + far, PAVE + lo, PAVE + hi, a, b, { grain: 'long' });
+    const plank = (mat, a, b, lo, hi, near, far) => T.box(mat, x + near, x + far, PAVE + lo, PAVE + hi, a, b, { grain: 'long' });
     const stringer = new THREE.Shape();
     stringer.moveTo(bottom - 0.07, 0.035);
     stringer.lineTo(bottom - 0.07, stepRise - 0.105);
@@ -365,10 +392,10 @@ export function layCourt(E) {
     const cheek = new THREE.ExtrudeGeometry(stringer, { depth: 0.19, bevelEnabled: false }).rotateY(-Math.PI / 2);
     for (const side of [-1, 1]) {
       const railY = x + side * (halfWidth - 0.17);
-      B.mesh(support, cheek.clone().translate(railY + 0.095, PAVE, 0));
+      T.mesh(support, cheek.clone().translate(railY + 0.095, PAVE, 0));
       for (const planX of [inside + 0.15, landingEnd - 0.12]) {
-        K.box('limestone_smooth#908578', railY - 0.165, railY + 0.165, PAVE, PAVE + 0.085, planX - 0.18, planX + 0.18);
-        K.box(support, railY - 0.098, railY + 0.098, PAVE + 0.06, PAVE + totalRise - 0.1, planX - 0.098, planX + 0.098, { grain: 'long' });
+        T.box('limestone_smooth#908578', railY - 0.165, railY + 0.165, PAVE, PAVE + 0.085, planX - 0.18, planX + 0.18);
+        T.box(support, railY - 0.098, railY + 0.098, PAVE + 0.06, PAVE + totalRise - 0.1, planX - 0.098, planX + 0.098, { grain: 'long' });
       }
       plank(support, inside - 0.06, landingEnd + 0.04, totalRise - 0.33, totalRise - 0.09, railY - x - 0.1, railY - x + 0.1);
     }
@@ -380,22 +407,22 @@ export function layCourt(E) {
         plank(tread, inner, outer, h - 0.115, h, -halfWidth, halfWidth);
       }
       plank(riser, b - 0.107, b - 0.021, i === 0 ? 0.025 : h - stepRise - 0.04, h - 0.093, -halfWidth + 0.09, halfWidth - 0.09);
-      K.surface(x - halfWidth, x + halfWidth, a - 0.004, b + 0.045, PAVE + h);
+      T.surface(x - halfWidth, x + halfWidth, a - 0.004, b + 0.045, PAVE + h);
     }
     // Block the steep sides at a low height so someone on the treads can walk normally.
     for (const side of [-1, 1]) {
       const y = x + side * (halfWidth - 0.1);
-      K.collide(y - 0.085, y + 0.085, inside, landingEnd + 2 * pitch, PAVE + 2.41, PAVE);
+      for (let u = inside + 0.09; u < landingEnd + 2 * pitch; u += 0.18) T.collide(y, u, 0.09, PAVE + 2.41, PAVE);
     }
 
-    // An immersed wooden bench across the north side of the tub.
-    for (const dx of [-1.36, 1.36]) K.box('oak_light#795735', x + 0.62, x + 1.48, PAVE + 0.53, PAVE + 1.43, z + dx - 0.09, z + dx + 0.09);
+    // An immersed wooden bench across the tub (its north side, before the turn: now the north-west).
+    for (const dx of [-1.36, 1.36]) T.box('oak_light#795735', x + 0.62, x + 1.48, PAVE + 0.53, PAVE + 1.43, z + dx - 0.09, z + dx + 0.09);
     for (let j = 0; j < 3; j++) {
       const y = x + 0.61 + j * 0.33;
-      K.box('oak_light#b08858', y, y + 0.305, PAVE + 1.41, PAVE + 1.53, z - 1.7, z + 1.7, { grain: 'long' });
+      T.box('oak_light#b08858', y, y + 0.305, PAVE + 1.41, PAVE + 1.53, z - 1.7, z + 1.7, { grain: 'long' });
     }
-    const [seatX, seatZ] = pw(TX + 0.55, TY + 1.02);
-    K.seat(seatX, PAVE + 1.53, seatZ, lookTo(0.23, -1), 'slip into the hot tub');
+    const [seatX, seatZ] = tp(...pw(TX + 0.55, TY + 1.02));
+    K.seat(seatX, PAVE + 1.53, seatZ, lookTo(0.23, -1) + TURN, 'slip into the hot tub');
   }
   {
     // The Akari-style paper lantern now marks the garden-side path.

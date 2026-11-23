@@ -642,6 +642,21 @@ export default function (b) {
     });
   }
 
+  // ---- a door on the second landing, to something not made yet (Anna, 22 November 2026: "the door is under
+  // construction. Idk what we'll put there ... right now I just want to know that there'll be something there.").
+  // A plain boarded oak door in a cased frame in the landing's north wall, shut; it does not open. Nothing is behind
+  // it but rock: when the room is made, cut a real opening here (as the laundry's, above) and take this away.
+  { const XD = (xB1 + xC0) / 2, W2 = 1.5, HD = 6.8, Y = TW1, f = L2, IRON = 'c#2b2a28/0.5/1';
+    for (let i = 0; i < 5; i++) b.box(i % 2 ? 'oak_light#a9824f' : OAK, XD - W2 + i * 0.6 + 0.012, XD - W2 + (i + 1) * 0.6 - 0.012, Y - 0.1, Y + 0.02, f + 0.04, f + HD);      // five boards
+    b.box('oak_light#7d5f3a', XD - W2, XD + W2, Y - 0.06, Y + 0.02, f + 0.04, f + HD);                                    // the dark between them
+    for (const sx of [-1, 1]) b.box(OAK, XD + sx * (W2 + 0.2) - 0.2, XD + sx * (W2 + 0.2) + 0.2, Y - 0.16, Y + 0.02, f, f + HD + 0.4);      // the casing
+    b.box(OAK, XD - W2 - 0.4, XD + W2 + 0.4, Y - 0.18, Y + 0.02, f + HD, f + HD + 0.42);
+    b.box(STONEFLOOR, XD - W2, XD + W2, Y - 0.14, Y + 0.02, f, f + 0.05);                                                // a stone sill
+    for (const h of [1.3, 5.4]) b.box(IRON, XD - W2 + 0.05, XD + W2 - 0.25, Y - 0.125, Y - 0.1, f + h, f + h + 0.16);       // two iron straps
+    b.box(IRON, XD + W2 - 0.42, XD + W2 - 0.3, Y - 0.2, Y - 0.1, f + 3.1, f + 3.5); b.box(IRON, XD + W2 - 0.4, XD + W2 - 0.32, Y - 0.3, Y - 0.2, f + 3.22, f + 3.3);      // a latch
+    b.later(ctx => { const p = b.world(XD, Y - 0.3, f + 3.4); ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 6, size: 1.6, label: () => 'try the door', act: () => ctx.flash('It does not open yet. Something is being made behind it.') }); });
+  }
+
   // ---- the laundry: a small bright room off the stair's first landing, and a linen closet off that -----------------
   // (Anna: "a small but wonderful laundry room of dreams ... off the stairs to the basement".) furnish/laundry.js fills it.
   { const { X0, X1, Y0, Y1, CX1, CY0 } = LAU, f = L1, c = L1 + 8.6, s = { t: 1, h0: f - 1, h1: c + 0.5, fl: f, wood: OAK };
