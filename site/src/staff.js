@@ -429,7 +429,7 @@ class Staffer extends Polite {
       else if (!lying) this.sitTo = 0;
     }
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
-    const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7 });
+    const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7, far: 9, atAWalk: true });
     const errand = this.busyWithOrder() || this.withdrawing;
     const replying = now < (this.replyUntil ?? 0), hold = this.engaged = !this.fixed && ((eng.on && (talking || (!eng.give && !errand))) || (replying && !this.carrying));      // (still answering her: it does not walk off mid-sentence)
     if (this.fixed) { if (!talking && now >= (this.replyUntil ?? 0) && this.queue.length && !this.making && !this.carrying) { const o = this.queue.shift(); if (o.kind === 'answer' || !o.name) { this.say(pick(RANG.here), 'happy'); this.replyUntil = now + 4; } else if (o.kind === 'make') o.ready = true; else this.run('order', this.bring(o), false); } if (!this.task) this.think(); this.stepTask(); }
