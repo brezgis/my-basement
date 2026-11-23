@@ -400,16 +400,14 @@ export default function (f) {
       cabinet(BRASS,K.geom.bev(0.28,0.43,0.529,0.54,0.49,0.53,0.004));
       S.block(x-0.65,x+0.65,0.42,1.61,0,2.53);
     }
-    // (Anna did not care for the bears: Levitan's Golden Autumn, which she named among her favourites. Then: "perhaps the wall
-    // can, instead of the lights, be like a grid of framed record covers (find real ones)": a collector's hang, six sleeves
-    // either side of the painting, two wide and three high, each a true twelve inches in a thin frame of the room's walnut,
-    // the middle row level with the painting's middle. All twelve are in the public domain in the United States: see
-    // assets/credits/larder.md for each one's source and why.)
-    f.framed(S, 0, 5.54, 3.3, 2.15, 'golden_autumn', { frame: WALD, mat: 0.12, border: 0.085,
-      title: 'Golden Autumn', kicker: 'Isaac Levitan, 1895',
-      text: 'Birches turned yellow along a small river under a clear cold sky.', foot: 'Public domain. Image via Wikimedia Commons.' });
-    { const PD = 'Public domain in the United States. Image via Wikimedia Commons.', COLS = [-4.25, -2.9, 2.9, 4.25], ROWS = [6.89, 5.54, 4.19];
-      const sleeves = [      // row by row from the top, west to east
+    // (Anna: "perhaps the wall can, instead of the lights, be like a grid of framed record covers (find real ones)"; and then,
+    // of Golden Autumn in the middle: "I meant instead of golden autumn at all, we just have the records. so it's its own
+    // thing." So: a record shop's wall, twelve sleeves in one band over the console, six wide and two high, each a true
+    // twelve inches in a thin frame of the room's walnut, evenly spaced, under the pelmet. All twelve are in the public
+    // domain in the United States: see assets/credits/larder.md for each one's source and why.)
+    { const PD = 'Public domain in the United States. Image via Wikimedia Commons.', COLS = [-3.375, -2.025, -0.675, 0.675, 2.025, 3.375], ROWS = [6.3, 4.95];
+      const ORDER = ['lp_giant_steps', 'lp_gershwin_songs', 'lp_soultrane', 'lp_black_brown_beige', 'lp_elvis_presley', 'lp_takin_off', 'lp_blue_train', 'lp_cole_porter_songs', 'lp_hip_harp', 'lp_bossa_nova_pops', 'lp_bing_in_paris', 'lp_ed_higgins_trio'];      // the hang, row by row from the top
+      const sleeves = [
         ['lp_giant_steps', 'Giant Steps', 'John Coltrane, 1960', 'Atlantic 1311. Marvin Israel\'s design round Lee Friedlander\'s photograph: the record that made every saxophonist go home and practise.'],
         ['lp_gershwin_songs', 'George Gershwin Songs, Vol. 1', 'Bing Crosby and others, 1939', 'A Decca album of 78s, made two years after Gershwin died: the discs bound in a book, which is why a record is still called an album.'],
         ['lp_black_brown_beige', 'Black, Brown and Beige', 'Duke Ellington, 1946', 'RCA Victor. Ellington at the piano before Carnegie Hall, where the suite was first played in 1943.'],
@@ -423,12 +421,12 @@ export default function (f) {
         ['lp_bing_in_paris', 'Bing in Paris', 'Bing Crosby, 1958', 'Decca DL 8780. Bing Crosby sings the French hits, in a straw hat, with Paris behind him.'],
         ['lp_ed_higgins_trio', 'The Ed Higgins Trio', 'Eddie Higgins, 1957', 'Replica. A Chicago piano trio at work, in the dark, under three yellow diamonds.'],
       ];
-      sleeves.forEach(([slug, title, kicker, text], i) => f.framed(S, COLS[i % 4], ROWS[Math.floor(i / 4)], 1.08, 1.08, slug, { frame: WALD, mat: 0, border: 0.06, title, kicker, text, foot: PD })); }
+      ORDER.forEach((slug, i) => { const [, title, kicker, text] = sleeves.find(s => s[0] === slug); f.framed(S, COLS[i % 6], ROWS[Math.floor(i / 6)], 1.08, 1.08, slug, { frame: WALD, mat: 0, border: 0.06, title, kicker, text, foot: PD }); }); }
     // the lanterns are gone from this wall: a walnut pelmet over the whole hang hides a wash that grazes down the stone
     // (the wash glows; one unseen lamp before the pelmet does the lighting)
-    S.bev(WAL, -5.15, 5.15, 0.0, 0.42, 7.98, 8.07, 0.015); S.bev(WAL, -5.15, 5.15, 0.36, 0.42, 7.84, 8.0, 0.012);
-    wash(S, -5.0, 5.0, 0.1, 0.3, 7.955, 7.98);
-    K.lampAt(S, 0, 1.7, 7.6, 0.75);      // (one, in the middle and a little out from the wall: two close in made a hot spot each)
+    S.bev(WAL, -4.5, 4.5, 0.0, 0.42, 7.58, 7.67, 0.015); S.bev(WAL, -4.5, 4.5, 0.36, 0.42, 7.44, 7.6, 0.012);
+    wash(S, -4.35, 4.35, 0.1, 0.3, 7.555, 7.58);
+    K.lampAt(S, 0, 1.7, 7.2, 0.75);      // (one, in the middle and a little out from the wall: two close in made a hot spot each)
     // on the console: tulips in a jar at the left end, and three books lying on the receiver
     K.posy(S, -2.74, 0.7, top, ['c#e0a23a/0.55', 'c#d9694a/0.55', 'c#f4ddae/0.6'], { kinds: ['tulip'], jar: 'c#ded6c4/0.35', scale: 1.2 });      // (smaller and nearer the wall than they were, to stand under the sleeves and not across them)
     [['c#7a2f2a/0.7', 0.62, 0.9, 0.05], ['c#2f4a44/0.7', 0.56, 0.84, 0.07], ['c#c9a45c/0.6', 0.5, 0.74, -0.04]].forEach(([mat, w, d, turn], i) =>
@@ -443,13 +441,28 @@ export default function (f) {
       Pq.bev(WAL,x-0.055,x+0.055,y-0.055,y+0.055,0,4.57,0.014,{grain:'z'});
     for (const z of SH) Pq.bev(OAK,-4.56,4.56,0.07,1.03,z-0.09,z,0.019);
     Pq.block(-4.56,4.56,0.07,1.03,0,4.55);
-    K.bookRow(Pq,-4.32,-1.15,0.1,SH[0],1.04,0.86,{subject:['music','film','poetry']});
-    K.bookRow(Pq,0.15,2.8,0.1,SH[1],1.02,0.84,{subject:['cooking','garden','art']});
-    K.bookRow(Pq,-2.4,-0.15,0.1,SH[1],1.03,0.8,{subject:['literature','travel']});
-    G.booksFlat(Pq,-2.8,0.57,SH[3],3,['c#65756a/0.8','c#b59b75/0.85','c#6c4940/0.8']);
-    G.crock(Pq,1.2,0.52,SH[0],1.0,'c#aaa38d/0.5');
-    G.jug(Pq,3.65,0.53,SH[3],0.96,'c#889586/0.4');
-    G.tableLampB(Pq,-0.85,0.53,SH[3],1.05);
+    // (Anna: "that shelf too could have some love": arranged shelf by shelf, with room left empty on purpose. From the top:
+    //  a brass lamp at the north end, a small landscape leaning on the stone, three books lying flat, the celadon jug, and a
+    //  pothos at the south end trailing down the side; the larder shelf under it (the things to eat) is left as it was;
+    //  then two runs of books each stopped by a brass bookend, a jar of flowers in the gap, the pears; and on the lowest
+    //  shelf the music books, a crock and a short stack lying flat.)
+    const bookend = (x, z, side) => { Pq.bev(BRASS, x - 0.015, x + 0.015, 0.22, 0.7, z, z + 0.46, 0.006); Pq.bev(BRASS, Math.min(x, x + side * 0.34), Math.max(x, x + side * 0.34), 0.24, 0.68, z, z + 0.02, 0.005); };
+    K.bookRow(Pq,-4.32,-1.6,0.1,SH[0],1.04,0.92,{subject:['music','film','poetry']}); bookend(-1.52, SH[0], 1);
+    G.crock(Pq,1.0,0.52,SH[0],1.0,'c#aaa38d/0.5');
+    K.bookStack(Pq, 3.2, 0.5, SH[0], 3, { subject: 'art' });
+    K.bookRow(Pq,0.2,2.5,0.1,SH[1],1.02,0.95,{subject:['cooking','garden','art']}); bookend(2.58, SH[1], 1);
+    K.bookRow(Pq,-4.3,-2.3,0.1,SH[1],1.03,0.95,{subject:['literature','travel']}); bookend(-2.22, SH[1], 1);
+    K.posy(Pq, -1.05, 0.52, SH[1], ['c#f2ead8/0.8', 'c#e8b0a8/0.8', 'c#d9694a/0.7'], { jar: 'c#889586/0.4', scale: 0.85 });
+    // the top
+    G.tableLampB(Pq,-3.6,0.53,SH[3],1.05);
+    G.leaningPrint(Pq, -1.9, 0.14, SH[3], 0.95, 0.72, (g, W, H) => {      // a small landscape in gouache: a low sun over a field and a far blue hill
+      D.fill(g, W, H, '#ead9b8'); g.fillStyle = '#d98a4a'; g.beginPath(); g.arc(W * 0.68, H * 0.36, H * 0.16, 0, 6.3); g.fill();
+      g.fillStyle = '#6f8fa3'; g.beginPath(); g.moveTo(0, H * 0.58); g.quadraticCurveTo(W * 0.3, H * 0.36, W * 0.62, H * 0.56); g.quadraticCurveTo(W * 0.82, H * 0.48, W, H * 0.6); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+      g.fillStyle = '#c9a03a'; g.beginPath(); g.moveTo(0, H * 0.7); g.quadraticCurveTo(W * 0.5, H * 0.6, W, H * 0.72); g.lineTo(W, H); g.lineTo(0, H); g.fill();
+      g.fillStyle = '#5a6f3c'; g.beginPath(); g.moveTo(0, H * 0.86); g.quadraticCurveTo(W * 0.45, H * 0.76, W, H * 0.88); g.lineTo(W, H); g.lineTo(0, H); g.fill(); });
+    G.booksFlat(Pq,-0.6,0.57,SH[3],3,['c#65756a/0.8','c#b59b75/0.85','c#6c4940/0.8']);
+    G.jug(Pq,2.5,0.53,SH[3],0.96,'c#889586/0.4');
+    K.pottedPlant(Pq, 3.95, 0.55, SH[3], 'trailing', { size: 0.75, pot: 'c#d9cfbd/0.5', block: false });
     // within reach on the middle shelf: a bowl of apples, the quince paste on its board
     { const z = SH[2];
       bowl(Pq, 3.0, 0.5, z, 0.45, 0.24, 'c#3a3632/0.35', 14); for (const [dx, dy] of [[-0.15, -0.05], [0.15, 0.05], [0, 0.18], [0.05, -0.15]]) fruit(Pq, 'apple', 3.0 + dx, 0.5 + dy, z + 0.08);

@@ -12,6 +12,7 @@
 //   oculus()     daylight down the shaft: a pool of it on the floor and the table, a faint beam, dust turning in it
 //   bowl()       the water in the bowl under the shaft: touch it and rings go out; and the singing bowl beside it
 import * as THREE from 'three';
+import { drawSkylightGlass, EYE, CAPTION } from './skylight_glass.js';
 import { NOISE } from '../flame.js';
 import { DRAW, LIFE, makeLife, poolCopy, greatPlan, GREATPX, FONT, LOOP_EYE } from './pool_chapel_glass.js';
 import { NEW } from './pool_chapel_glass2.js';
@@ -369,6 +370,16 @@ void main() { vec3 V = normalize(cameraPosition - vW); float f = abs(dot(normali
     fragmentShader: 'uniform float uK, uR, uKk; uniform vec3 uCol; varying vec2 vP; void main() { float d = length(vP) / uR; float f = 1.0 - smoothstep(0.55, 1.0, d); gl_FragColor = vec4(uCol * f * uK * uKk, 1.0); }',
   })); m.position.set(p.x, p.y, p.z); m.renderOrder = 1; return m; };
   const floorPool = disc(o.floor + 0.018, o.r * 1.2, 1.1), tablePool = o.table ? disc(o.table.h + 0.014, o.table.r, 0.7) : null, tK = tablePool?.material.uniforms.uKk;
+  // The glass in the oculus (skylight_glass.js: autopoiesis, the same glass that lies in the grass at Anna's House):
+  // seen from below at the shaft's mouth, a clear eye with the coloured ring round it; and on the floor, round the
+  // white pool that the eye lets down, the ring's colours as a halo that goes where the pool goes.
+  const gtex = new THREE.CanvasTexture(drawSkylightGlass(1024)); gtex.colorSpace = THREE.SRGBColorSpace; gtex.anisotropy = 8;
+  const glassMat = new THREE.MeshBasicMaterial({ map: gtex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: false });
+  const glassRing = new THREE.Mesh(new THREE.RingGeometry(o.r * EYE - 0.01, o.r * 1.02, 96, 1).rotateX(-Math.PI / 2), glassMat);
+  { const p = W(o.X, o.Y, o.top + 0.22); glassRing.position.set(p.x, p.y, p.z); glassRing.name = 'chapel oculus glass'; }
+  const haloMat = new THREE.MeshBasicMaterial({ map: gtex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(o.r * 1.32, 72).rotateX(-Math.PI / 2), haloMat); halo.position.set(c0.x, c0.y + 0.024, c0.z); halo.renderOrder = 2; halo.name = 'chapel oculus halo';
+  ctx.interact?.push({ x: c0.x, y: c0.y + 10.5, z: c0.z, reach: 20, size: 3.4, label: () => 'look up at the glass', act: () => import('../card.js').then(m => m.showCard(CAPTION)).catch(() => ctx.flash?.(`${CAPTION.title}. ${CAPTION.kicker}.`)) });
   const N = 320, pos = new Float32Array(N * 3), sd = new Float32Array(N);
   let k = 3; const rnd = () => ((k = (k * 16807) % 2147483647) / 2147483647);
   for (let i = 0; i < N; i++) { const a = rnd() * 6.283, r = Math.sqrt(rnd()) * o.r * 0.95; pos.set([Math.cos(a) * r, 1 + rnd() * (H - 2), Math.sin(a) * r], i * 3); sd[i] = rnd(); }
@@ -384,7 +395,7 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
   }));
   motes.position.set(c0.x, c0.y, c0.z); motes.name = 'chapel motes';
   const at = W(o.X, o.Y, o.floor + 6);
-  for (const m of [beam, floorPool, tablePool, motes]) if (m) addTracked(ctx, m, at, 1);
+  for (const m of [beam, floorPool, tablePool, motes, glassRing, halo]) if (m) addTracked(ctx, m, at, 1);
   const warm = new THREE.Color(1.0, 0.6, 0.32), gold = new THREE.Color(1.0, 0.9, 0.7), moon = new THREE.Color(0.62, 0.74, 1.0), dir = new THREE.Vector3();
   ctx.animated.push(t => {
     U.uT.value = t; const day = ctx.day ?? {}, L = day.light ?? 1, sd2 = day.sunDir ?? new THREE.Vector3(0, 1, 0);
@@ -396,6 +407,8 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
     const y = Math.max(0.2, dir.y), lx = -dir.x / y * H * 0.18, lz = -dir.z / y * H * 0.18, ll = Math.hypot(lx, lz), cap = Math.min(1, 3.2 / Math.max(ll, 1e-6));
     U.uLean.value.set(lx * cap, lz * cap); U.uK.value = kk; U.uCol.value.copy(col); U.uW.value = wdt;
     floorPool.position.set(c0.x + U.uLean.value.x, c0.y + 0.018, c0.z + U.uLean.value.y); floorPool.scale.setScalar(wdt);
+    halo.position.set(floorPool.position.x, c0.y + 0.024, floorPool.position.z); halo.scale.setScalar(wdt); haloMat.color.copy(col).multiplyScalar(kk * 0.85);
+    glassMat.color.setScalar(0.2 + 0.85 * smooth(L, 0.1, 0.9));      // lit by the sky behind it: dim after dark, never black
     if (tK) tK.value = 0.7 * (1 - smooth(Math.hypot(U.uLean.value.x, U.uLean.value.y), 0.8, 2.6));
   });
 }
