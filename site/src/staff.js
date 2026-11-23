@@ -440,9 +440,25 @@ class Staffer extends Polite {
       } else if (this.session && !lying) { this.session = null; this.sitTo = 0; if (talking) H.talk.close(); if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
       else if (!lying) this.sitTo = 0;
     }
+    // She has come up to its counter (the desk, the bar) while it is off on its rounds: it leaves what it is doing, comes
+    // back behind the counter at a brisk step, turns to her and waits there for as long as she stands at it, as if she
+    // had come up to it itself. (Not while it is seeing to an order, and not for somebody only walking past.)
+    if (sp.counterW && !this.fixed) {
+      const c = sp.counterW, pk = sp.serve?.pickup?.xz, atIt = v.present && Math.abs(v.y - this.y) < 3 && (Math.hypot(v.x - c.x, v.z - c.z) < c.r + 4.2 || (pk && Math.hypot(v.x - pk[0], v.z - pk[1]) < 5.5)) && v.speed < 2.5;
+      this.atCounterFor = atIt ? (this.atCounterFor ?? 0) + dt : 0;
+      const away = Math.hypot(this.spots.home.x - this.x, this.spots.home.z - this.z) > 2.2;
+      if (this.atCounterFor > 0.7 && away && !this.busyWithOrder() && !talking && this.taskName !== 'toCounter' && now > (this.counterAt ?? 0)) {
+        this.counterAt = now + 6; const me = this, hm = this.spots.home;
+        this.run('toCounter', (function* () {
+          me.state = 'go'; yield* me.travel(hm.x, hm.z, { must: true, patience: 25, speed: 1.45 });
+          const t0 = me.W.now; me.state = 'home';
+          while (me.atCounterFor > 0 && me.W.now - t0 < 120) { me.m.v = 0; me.m.faceTo(v.x, v.z, me.W.dt * 2.2); yield; }
+        })(), true);
+      }
+    }
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
     const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7, far: 9, atAWalk: true });
-    const errand = this.busyWithOrder() || this.withdrawing;
+    const errand = this.busyWithOrder() || this.withdrawing || (this.taskName === 'toCounter' && this.state === 'go');
     const replying = now < (this.replyUntil ?? 0), hold = this.engaged = !this.fixed && ((eng.on && (talking || (!eng.give && !errand))) || (replying && !this.carrying));      // (still answering her: it does not walk off mid-sentence)
     if (this.fixed) { if (!talking && now >= (this.replyUntil ?? 0) && this.queue.length && !this.making && !this.carrying) { const o = this.queue.shift(); if (o.kind === 'answer' || !o.name) { this.say(pick(RANG.here), 'happy'); this.replyUntil = now + 4; } else if (o.kind === 'make') o.ready = true; else this.run('order', this.bring(o), false); } if (!this.task) this.think(); this.stepTask(); }
     else {
