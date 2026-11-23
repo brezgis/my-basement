@@ -71,7 +71,7 @@ export class Walker {
   floorAt(x, z, y) {
     let best = this.ground ? this.ground(x, z) : 0;      // the land itself (campus.js: it rises a little toward the hall)
     for (const s of this.surfaces) {
-      if (x < s.x0 || x > s.x1 || z < s.z0 || z > s.z1) continue;
+      if (x < s.x0 || x > s.x1 || z < s.z0 || z > s.z1 || (s.contains && !s.contains(x, z))) continue;
       // a ramp (a flight of stairs) runs along z unless ax is 'x': h at the high-coordinate end (z1 or x1), h2 at the low
       const h = s.ramp ? s.h + (s.h2 - s.h) * (s.ax === 'x' ? (s.x1 - x) / (s.x1 - s.x0) : (s.z1 - z) / (s.z1 - s.z0)) : s.h;
       // (in the air over a flight of stairs the slope may be taken from further below than a level floor may: running up
@@ -84,17 +84,20 @@ export class Walker {
   collide(p) {
     const lo = p.y + 1.4, hi = p.y + (this.crouch > 0.5 ? 3.3 : 5.7);
     for (let pass = 0; pass < 3; pass++) {
+      let moved = false;
       for (const c of this.colliders) {
         if (c.off || c.y1 <= lo || c.y0 >= hi) continue;
         const nx = Math.max(c.x0, Math.min(p.x, c.x1)), nz = Math.max(c.z0, Math.min(p.z, c.z1));
         const dx = p.x - nx, dz = p.z - nz, d2 = dx * dx + dz * dz;
         if (d2 >= RADIUS * RADIUS) continue;
+        moved = true;
         if (d2 > 1e-8) { const d = Math.sqrt(d2), k = (RADIUS - d) / d; p.x += dx * k; p.z += dz * k; }
         else {                                        // centre is inside the box: leave by the nearest face
           const l = p.x - c.x0, r = c.x1 - p.x, n = p.z - c.z0, f = c.z1 - p.z, m = Math.min(l, r, n, f);
           if (m === l) p.x = c.x0 - RADIUS; else if (m === r) p.x = c.x1 + RADIUS; else if (m === n) p.z = c.z0 - RADIUS; else p.z = c.z1 + RADIUS;
         }
       }
+      if (!moved) break;
     }
   }
 

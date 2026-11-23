@@ -406,18 +406,30 @@ export function makeWood(K) {
   // tall + 0.12 and overhangs 0.07: under the picture rail (6.95 above the floor) keep tall <= 6.8.
   function bookcase(f, w, tall, o = {}) {
     const d = o.d ?? 0.95, t = 0.09, pitch = o.pitch ?? 1.08, m = o.wood ?? 'fir';
-    bd(f, m, -w / 2, -w / 2 + t, 0, d, 0, tall, 0.012, { grain: 'z' }); bd(f, m, w / 2 - t, w / 2, 0, d, 0, tall, 0.012, { grain: 'z' });
-    bd(f, m, -w / 2 + t - 0.01, w / 2 - t + 0.01, 0, 0.04, 0, tall, 0.006, { grain: 'z' });      // the back and the plinth sit between the sides (their ends used to lie in the sides' outer faces, and flickered there)
-    bd(f, m, -w / 2 - 0.03, w / 2 + 0.03, 0, d + 0.03, tall, tall + 0.06, 0.012, { grain: 'x' });
-    bd(f, m, -w / 2 - 0.07, w / 2 + 0.07, 0, d + 0.07, tall + 0.05, tall + 0.12, 0.02, { grain: 'x' });
-    bd(f, m, -w / 2 + t - 0.01, w / 2 - t + 0.01, 0, d - 0.04, 0, 0.28, 0.01, { grain: 'x' });
-    bd(f, m, -w / 2 + t, w / 2 - t, d - 0.06, d, 0.02, 0.26, 0.012, { grain: 'x' });
-    for (const sx of [-1, 1]) bd(f, m, sx * (w / 2 - t / 2) - t / 2 - 0.015, sx * (w / 2 - t / 2) + t / 2 + 0.015, d - 0.01, d + 0.025, 0, tall, 0.008, { grain: 'z' });
+    const back = 0.055, front = d - 0.047;
+    bd(f, m, -w / 2, -w / 2 + t, back, front, 0.01, tall, 0.012, { grain: 'z' });
+    bd(f, m, w / 2 - t, w / 2, back, front, 0.01, tall, 0.012, { grain: 'z' });
+    bd(f, m, -w / 2 + t - 0.012, w / 2 - t + 0.012, 0.018, 0.073, 0.016, tall - 0.008, 0.006, { grain: 'z' });
+    bd(f, m, -w / 2 - 0.03, w / 2 + 0.03, 0.01, d + 0.032, tall - 0.014, tall + 0.06, 0.012, { grain: 'x' });
+    bd(f, m, -w / 2 - 0.07, w / 2 + 0.07, 0.006, d + 0.07, tall + 0.05, tall + 0.12, 0.02, { grain: 'x' });
+    bd(f, m, -w / 2 + t - 0.008, w / 2 - t + 0.008, 0.072, d - 0.054, 0.013, 0.281, 0.01, { grain: 'x' });
+    bd(f, m, -w / 2 + t - 0.004, w / 2 - t + 0.004, d - 0.061, d - 0.003, 0.021, 0.274, 0.012, { grain: 'x' });
+    for (const sx of [-1, 1]) bd(f, m, sx * (w / 2 - t / 2) - t / 2 - 0.015, sx * (w / 2 - t / 2) + t / 2 + 0.015, front - 0.016, d + 0.025, 0.012, tall - 0.01, 0.008, { grain: 'z' });
     const bays = Math.max(1, Math.round(w / 3.4)), bw = (w - t) / bays;
-    for (let i = 1; i < bays; i++) { bd(f, m, -w / 2 + i * bw, -w / 2 + i * bw + t, 0, d, 0.28, tall, 0.01, { grain: 'z' }); bd(f, m, -w / 2 + i * bw - 0.015, -w / 2 + i * bw + t + 0.015, d - 0.01, d + 0.02, 0.28, tall, 0.006, { grain: 'z' }); }
-    for (let z = 0.28; z < tall - 0.6; z += pitch) {
-      if (z > 0.3) { bd(f, m, -w / 2 + t, w / 2 - t, 0.04, d - 0.06, z - 0.06, z, 0.006, { grain: 'x' }); bd(f, m, -w / 2 + t, w / 2 - t, d - 0.06, d - 0.0, z - 0.1, z, 0.012, { grain: 'x' }); }
-      for (let i = 0; i < bays; i++) K.bookRow(f, -w / 2 + i * bw + t + 0.03, -w / 2 + (i + 1) * bw - 0.03, 0.04, z, Math.min(pitch - 0.07, tall - z), o.fill ?? 0.9, { subject: o.subject });
+    for (let i = 1; i < bays; i++) {
+      const x = -w / 2 + i * bw;
+      bd(f, m, x, x + t, back, front, 0.272, tall - 0.009, 0.01, { grain: 'z' });
+      bd(f, m, x - 0.015, x + t + 0.015, front - 0.014, d + 0.02, 0.279, tall - 0.012, 0.006, { grain: 'z' });
+    }
+    for (let z = 0.281; z < tall - 0.6; z += pitch) {
+      for (let i = 0; i < bays; i++) {
+        const x0 = -w / 2 + i * bw + t, x1 = -w / 2 + (i + 1) * bw;
+        if (z > 0.3) {
+          bd(f, m, x0 - 0.004, x1 + 0.004, 0.073, d - 0.065, z - 0.06, z, 0.006, { grain: 'x' });
+          bd(f, m, x0 + 0.014, x1 - 0.014, d - 0.072, d - 0.005, z - 0.1, z - 0.008, 0.012, { grain: 'x' });
+        }
+        K.bookRow(f, x0 + 0.03, x1 - 0.03, 0.08, z, Math.min(pitch - 0.09, tall - z), o.fill ?? 0.9, { subject: o.subject });
+      }
     }
     f.block(-w / 2, w / 2, 0, d, 0, tall);
   }

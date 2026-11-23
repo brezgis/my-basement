@@ -163,7 +163,7 @@ export class Builder {
       if (!m) { console.error('no such material: "' + name + '" (' + list.length + ' pieces, zone ' + zone + '): drawn in plain grey'); m = materials.make?.('c#7d7770/0.9') ?? materials.stone; }      // (a name nobody defined used to stop the whole page drawing)
       if (!m?.isMaterial) throw new Error('no material named ' + name);
       const mesh = new THREE.Mesh(mergeGeometries(list, false), m);
-      const seeThrough = name === 'glass' || name === 'screen' || name === 'water';
+      const seeThrough = name === 'glass' || name === 'screen' || name === 'water' || name === 'pool_glass' || name === 'pool_surface';
       mesh.castShadow = !seeThrough;
       mesh.receiveShadow = !seeThrough;
       if (seeThrough) mesh.renderOrder = 2;

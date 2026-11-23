@@ -28,8 +28,8 @@
 //   initial, a titlo, vyaz ligatures), the one sign in the place.
 //
 // STAFF POSTS (plan X, Y; every floor is h 0.4; for the agent who does the staff: nobody is placed here)
-//   The Tea Room, the tea attendant: home [104.0, 32.0], faces [101.9, 32.0] (west, the samovar's tap, at the tea
-//     table's east end; the tap at [101.9, 32.0, 3.4]). serve: { machine: [103.4, 32.0], pickup: [101.2, 33.2, 2.92]
+//   The Tea Room, the tea attendant: home [94.5, 31.75], faces [96.3, 32.0] (east, the samovar's tap, at the tea
+//     table's west end; the tap points down the aisle). serve: { machine: [94.5, 31.75], pickup: [96.1, 32.8, 2.52]
 //     (the table's top, its north-east corner) }, drinks: 'glass of tea' (tumbler, 0x6e2a0a), 'tea' (teacup: a drink
 //     named exactly 'tea' gets the lemon), 'Ivan-chai' (teacup, 0x9a5a2a), 'kvass' (highball, 0x5a3212). Posts: the
 //     east shelves [104.4, 28.0] facing east, the north daybed [98.0, 36.0] facing north, the stove [102.0, 36.4]
@@ -81,12 +81,12 @@ export default function (f) {
   // daybed by the courtyard glass and one under the picture by the stove. Nothing stands on the way between the doors.
   // =================================================================================================================
   {
-    // ---- the tea table: one slab of walnut, benches with sheepskins, the samovar at its east end
-    const C = [98.6, 32.0], T = fr(C[0], C[1]), top = slabTable(K, T, 6.6, 3.0, 2.5, MAT.OAK);
+    // ---- the tea table: one slab of walnut, benches with sheepskins, the samovar facing the open aisle at its west end
+    const C = [98.6, 32.0], T = fr(C[0], C[1], 2), top = slabTable(K, T, 6.6, 3.0, 2.5, MAT.OAK);
     slabBench(K, fr(C[0], 28.95), 6.0, { skins: [-1.5, 1.6], wood: MAT.OAK }); slabBench(K, fr(C[0], 35.05, 2), 6.0, { skins: [0.3], wood: MAT.OAK });
     const z = top + 0.005;
     K.cloth(T, MAT.LINEN, { cx: 0, cy: 0, z: top + 0.006, a: 3.0, b: 0.55, l: 0.35, r: 0.35, rho: 0.03, folds: 0.02, freq: 1.2, thick: 0.02, res: 0.2 });
-    const S = fr(C[0] + 2.3, C[1], 3, top + 0.02), sv = samovar(K, S, 0, 0, 0);
+    const S = fr(C[0] - 2.3, C[1], 1, top + 0.02), sv = samovar(K, S, 0, 0, 0);
     { const [a, b] = K.world(S, 0, 0); K.steam.push({ x: a, y: S.h + sv.top + 0.42 + 0.35, z: b }); }
     help(S, 0, 0.75, 0.45, { name: 'glass of tea', drink: { vessel: 'tumbler', liquid: 0x6e2a0a }, label: 'pour yourself a glass of tea from the samovar', note: 'You finish the glass of tea: strong from the teapot, topped up from the samovar, drunk through a lump of sugar held in the teeth, as the merchants drank it.' });
     help(S, 0, 0, sv.top + 0.25, { name: 'tea', drink: { vessel: 'teacup', liquid: 0x8a3a10 }, label: 'pour yourself a cup of tea with lemon', note: 'You finish the tea. Strong, a little sweet, the lemon at the bottom of the cup.' });
@@ -100,9 +100,9 @@ export default function (f) {
     help(T, 1.15, -0.4, z + 0.2, { name: 'Tula pryanik', build: EAT.tula, bites: 4, note: 'You finish the Tula pryanik: a slab of gingerbread with plum jam inside and the town\'s arms printed in its crust.' });
     plate(K, T, -1.6, 0.45, z + 0.02, 0.34); sushkiHeap(K, T, -1.6, 0.45, z + 0.05, 12, 4);
     help(T, -1.6, 0.45, z + 0.14, { name: 'sushka', build: EAT.sushka, bites: 2, note: 'You finish the sushka. You dunked it, which is the only correct way.' });
-    rosette(K, T, 0.3, 0.75, z + 0.02, 'c#7a1020/0.25'); rosette(K, T, 0.05, 0.45, z + 0.02, 'c#d9822a/0.3'); jamJar(K, T, 0.35, -0.55, z + 0.02, 'c#7a1020/0.25');
-    help(T, 0.3, 0.75, z + 0.12, { name: 'spoonful of cherry varenye', build: EAT.jam, bites: 2, note: 'You finish the cherry varenye, stone by stone, from the spoon: never stirred into the tea.' });
-    honeyPot(K, T, 0.42, 1.12, z + 0.02);
+    rosette(K, T, 0.30, 0.93, z + 0.02, 'c#7a1020/0.25'); rosette(K, T, 0.42, 0.49, z + 0.02, 'c#d9822a/0.3'); jamJar(K, T, 0.35, -0.55, z + 0.02, 'c#7a1020/0.25');
+    help(T, 0.30, 0.93, z + 0.12, { name: 'spoonful of cherry varenye', build: EAT.jam, bites: 2, note: 'You finish the cherry varenye, stone by stone, from the spoon: never stirred into the tea.' });
+    honeyPot(K, T, 0.70, 1.28, z + 0.02);
     lemons(K, T, -0.05, -0.95, z + 0.02);
     watermelon(K, T, -2.6, 0.1, top);
     help(T, -1.88, -0.2, top + 0.35, { name: 'slice of watermelon', build: EAT.watermelon, bites: 4, note: 'You finish the watermelon. Astrakhan, in November: the robots will not say how.' });
@@ -145,13 +145,6 @@ export default function (f) {
     // ---- green things and light: a fern by the courtyard doors, a paper lantern by the glass, coves
     { const p = fr(85.3, 37.6), h = pot(K, p, 0, 0, 0.6, 1.2, MAT.GZHEL, 'tall'); fern(K, L, p, 0, 0, h, 0.95, 31); p.block(-0.6, 0.6, -0.6, 0.6, 0, 1.4); }
     floorCandleLantern(K, fr(91.0, 18.3), 0, 0, teaFlames);
-
-    // ---- the sign: СПАНЬЯ, over the way into the banya (the one sign in the place)
-    { const SG = fr(90.5, 40.23, 2), w = 4.4, tall = 1.35, sz = 8.95;
-      SG.bev('oak_light#9a7448', -w / 2 - 0.12, w / 2 + 0.12, 0.02, 0.1, sz - tall / 2 - 0.12, sz + tall / 2 + 0.12, 0.02);
-      f.sign(SG, 0, sz, w, tall, drawSpanya, { y: 0.13, rough: 0.6 });
-      f.label(SG, 0, 0.2, sz, { label: 'read the sign', title: 'СПАНЬЯ', kicker: 'Spanya: the banya of Anna\'s Basement',
-        text: 'Spa and banya, for Anya. Lettered by the robots as a scribe of the Moscow Printing Yard would have lettered the heading of a psalter in 1650: tall ustav capitals, the first one a great cinnabar initial with a sprig growing out of it, the Н and the Ь sharing a stem, the я written the old way as ꙗ, a titlo over the whole and stops of four red dots either side.\nThe robots wished it noted that it took them eleven days, and that a psalter would have been quicker.' }); }
 
     // ---- THE NAIL CORNER, at the cloud window, set off from the tea table by a slatted screen: one throne (Wegner's
     // Papa Bear, grown into a throne) turned to the window, a copper foot basin before it, the technician's low stool,
@@ -213,26 +206,33 @@ export default function (f) {
   // =================================================================================================================
   {
     // ---- the cold plunge: a round cedar tub, raised, bronze hoops, hinoki steps up its east side
-    const PX = 101.8, PY = 46.4, R = 2.6, PH = 3.0, P = fr(PX, PY, 0);
+    const PX = 101.8, PY = 46.4, R = 2.6, PH = 3.0, P = fr(PX, PY, 2);
     cedarTub(K, P, R, PH);
     vessel(K, P, MAT.WATERD, 0, 0, 0, [[0, PH - 0.45], [R - 0.23, PH - 0.45], [0, PH - 0.44]], 40);
     vessel(K, P, 'c#9ac4c4/0.05', 0, 0, 0, [[0, PH - 0.38], [R - 0.23, PH - 0.38], [0, PH - 0.375]], 40);
     for (let i = 0; i < 3; i++) P.bev(MAT.HINOKI, R - 0.1 + (2 - i) * 0.66, R + 0.56 + (2 - i) * 0.66, -1.5, 1.5, 0, (i + 1) * PH / 3 - 0.04, 0.02);
     tube(K, P, MAT.BRONZE, [[R + 1.85, 1.6, 0], [R + 1.85, 1.6, 3.0], [R + 1.3, 1.6, 3.9], [R + 0.4, 1.6, 4.2], [R - 0.3, 1.6, 3.9], [R - 0.6, 1.6, PH - 0.5]], 0.05, 10);
     for (const [a, b] of [[R, R * 0.6], [R * 0.6, R]]) P.block(-a, a, -b, b, 0, PH + 0.1);
-    P.block(R - 0.1, R + 1.95, -1.5, 1.5, 0, PH);
+    for (let i=0;i<3;i++) {
+      const edge = PX-R+0.1-(2-i)*0.66;
+      f.surface(edge-0.66,edge,PY-1.5,PY+1.5,F+(i+1)*PH/3-0.04);
+    }
     const waterH = F + PH - 0.38;
     later.push(ctx => {
       const ring = rings(ctx, W, [PX, PY, waterH], R - 0.3);
-      lieSpots(ctx, W, [{ at: [PX + R - 0.6, PY, F + PH + 0.5], eye: [PX + 0.6, PY, waterH + 0.85], look: [PX - 9, PY - 1, waterH + 1.4], label: 'step into the cold plunge', reach: 7, size: 2.2, then: c => { ring(); noise(c, 'splash'); c.flash?.(['It is twelve degrees. Your whole body says one word, and it is not a polite one. Then it is wonderful.', 'In to the neck. The heat goes out of you like a held breath. You have never been so awake.', 'Cold. Cold. COLD. And then, somehow, warm.'][Math.floor(Math.random() * 3)]); } }]);
+      lieSpots(ctx, W, [{ at: [PX - R + 0.6, PY, F + PH + 0.5], eye: [PX + 0.6, PY, waterH + 0.85], look: [PX - 9, PY - 1, waterH + 1.4], label: 'step into the cold plunge', reach: 7, size: 2.2, then: c => { ring(); noise(c, 'splash'); c.flash?.(['It is twelve degrees. Your whole body says one word, and it is not a polite one. Then it is wonderful.', 'In to the neck. The heat goes out of you like a held breath. You have never been so awake.', 'Cold. Cold. COLD. And then, somehow, warm.'][Math.floor(Math.random() * 3)]); } }]);
     });
     f.label(fr(PX - R - 0.4, PY), 0, 0, 3.4, { label: 'look at the plunge', title: 'The cold plunge', kicker: 'kupel', text: 'After the parnaya, into the cold: twelve degrees, fed from a spring under the rock. At the Sanduny baths in Moscow it is a marble pool under a vault of columns; in a village it is the river, or a hole cut in the ice, or a snowdrift. Here, a tub of red cedar.\nIn to the neck, for as long as you can bear it. Out. Tea. Back into the steam.' });
     { const G = fr(PX, PY); glowOnly(() => akari(K, G, 0, 0, CL, 3.0, 1.0, 1.7)); f.lamp(PX, PY, F + 6.9, { power: 1.0, kind: 'lamp' }); }
     floorLantern(K, fr(105.9, 41.4), 0, 0, 4.0, 0.45); floorLantern(K, fr(105.9, 54.4), 0, 0, 4.0, 0.45); floorLantern(K, fr(84.9, 54.4), 0, 0, 4.0, 0.45);
 
-    // over the plunge, on the east wall: Hokusai's great wave (the cold water, in its glory), between two candles
-    f.framed(fr(106.48, PY, 1), 0, 6.1, 3.0, 2.05, 'hokusai_great_wave', { frame: 'oak_light#9a7448', mat: 0, border: 0.12, title: 'Under the Wave off Kanagawa', kicker: 'Katsushika Hokusai, 1830-33', text: 'The great wave, about to fall on three boats of rowers, with Fuji small and calm beyond it. A woodblock print in Prussian blue, from the Thirty-six Views of Mount Fuji. Hung over the plunge as a warning.', foot: 'Art Institute of Chicago. Public domain (CC0).' });
-    for (const x of [-2.0, 2.0]) sconce(K, fr(106.48, PY, 1), x, 5.8, banyaFlames);
+    { const SG = fr(106.46, PY, 1), w = 5.0, tall = 1.58, sz = 6.25;
+      SG.bev('oak_light#9a7448', -w / 2 - 0.12, w / 2 + 0.12, 0.02, 0.1, sz - tall / 2 - 0.12, sz + tall / 2 + 0.12, 0.02);
+      f.sign(SG, 0, sz, w, tall, drawSpanya, { y: 0.13, rough: 0.6 });
+      f.label(SG, 0, 0.2, sz, { label: 'read the sign', title: 'СПАНЬЯ', kicker: 'Spanya: the banya of Anna\'s Basement',
+        text: 'Spa and banya, for Anya. Lettered by the robots as a scribe of the Moscow Printing Yard would have lettered the heading of a psalter in 1650: tall ustav capitals, the first one a great cinnabar initial with a sprig growing out of it, the Н and the Ь sharing a stem, the я written the old way as ꙗ, a titlo over the whole and stops of four red dots either side.\nThe robots wished it noted that it took them eleven days, and that a psalter would have been quicker.' }); }
+
+    for (const x of [-3.15, 3.15]) sconce(K, fr(106.48, PY, 1), x, 5.8, banyaFlames);
     // ---- the north wall between the two doors: a slate bench with a glow under it, bronze taps, wooden basins; the
     // clock above it; a cove of light
     { const B = fr(94.6, 55.03, 2), hw = 2.4, d = 1.5, h = 1.6;
@@ -338,7 +338,7 @@ export default function (f) {
     const throwLines = ['You throw a ladle of water on the stones. They answer with a crack and a roar, and the heat comes down over you like a blanket from the ceiling.', 'Psssshhh. The steam rolls up to the ceiling and falls on your shoulders. The thermometer pretends not to notice.', 'Another ladle. The air turns to velvet. Your ears are hot through the felt hat.', 'The banshchik would have thrown a little mint water on. You threw the whole ladle. Bold.', 'The stones hiss and the steam is soft, light, exactly right: lyogky par.'];
     let throws = 0;
     later.push(ctx => {
-      const st = steam(ctx, W, { rect: [85.5, 94.5, 61, 72], h: F + 6.0, n: 24, alpha: 0.055, size: 2.8, rise: 0.6, spread: 2.8, warm: 1, burstN: 32, top: 4.2, seed: 5 });
+      const st = steam(ctx, W, { rect: [86.4, 93.7, 61.2, 70.5], h: F + 3.8, n: 28, alpha: 0.087, size: 3.7, rise: 0.8, spread: 3.15, warm: 1, burstN: 32, top: 3.45, seed: 5 });
       const pour = () => { st.burst(SC[0], SC[1], F + SH + 1.2); noise(ctx, 'hiss'); parnaya.dim?.(); ctx.flash?.(throws >= 5 ? 'The thermometer has started reading in Fahrenheit out of spite.' : throwLines[throws % throwLines.length]); throws++; };
       const q = W(BX, BY, F + 1.2); ctx.interact.push({ x: q.x, y: q.y, z: q.z, reach: 6, size: 1.0, label: () => 'take the ladle and throw water on the stones', act: pour });
       const p = W(SC[0] - 0.6, SC[1] + 0.8, F + SH + 1.3); ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 9, size: 1.8, label: () => 'throw a ladle of water on the stones', act: pour });

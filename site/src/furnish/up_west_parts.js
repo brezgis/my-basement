@@ -44,9 +44,9 @@ export function parts(K) {
     for (const sx of [-1, 1]) {
       leg(f, W, [sx * (hw - 0.18), d - 0.35, sz + 0.62], [sx * (hw - 0.08), d - 0.15, 0], 0.065, 0.035);          // front legs run up into the arms
       leg(f, W, [sx * (hw - 0.18), 0.5, sz - 0.02], [sx * (hw - 0.1), 0.12, 0], 0.06, 0.035);
-      f.bev(W, sx * (hw - 0.26), sx * (hw - 0.1), 0.35, d - 0.25, sz - 0.12, sz - 0.02, 0.02, { grain: 'y' });   // side rails
+      f.bev(W, sx * (hw - 0.18) - 0.08, sx * (hw - 0.18) + 0.08, 0.35, d - 0.25, sz - 0.12, sz - 0.02, 0.02, { grain: 'y' });   // side rails
       // the arm: a flat paddle, wider at the front
-      put(f, W, bev(sx * hw - 0.2, sx * hw + 0.02, 0.45, d - 0.12, sz + 0.62, sz + 0.7, 0.02, { grain: 'y' }));
+      put(f, W, bev(sx * (hw - 0.09) - 0.11, sx * (hw - 0.09) + 0.11, 0.45, d - 0.12, sz + 0.62, sz + 0.7, 0.02, { grain: 'y' }));
       leg(f, W, [sx * (hw - 0.1), 0.5, sz + 0.62], [sx * (hw - 0.14), 0.32, sz - 0.04], 0.03, 0.03);
     }
     f.bev(W, -hw + 0.12, hw - 0.12, d - 0.32, d - 0.2, sz - 0.15, sz - 0.03, 0.015);
@@ -276,11 +276,11 @@ export function parts(K) {
     put(f, 'c#1a1410/0.95', L([[0.74, Z0], [0.74, Z1], [0, Z1]], 16, Math.PI / 2, Math.PI));      // the firebox's back
     put(f, 'c#1a1410/0.95', L([[0, Z0 + 0.01], [0.84, Z0 + 0.01]], 16));
     put(f, M.EMBER, L([[0, Z0 + 0.03], [0.5, Z0 + 0.03]], 12));             // the bed of embers
-    for (const [dy, dz, rz] of [[0.05, 0.12, 0.15], [-0.15, 0.13, -0.2], [0.1, 0.3, 0.05]]) { const g = new THREE.CylinderGeometry(0.09, 0.08, 0.95, 8).rotateZ(Math.PI / 2 + rz); g.translate(x, y + dy, Z0 + dz); g.clearGroups(); put(f, 'c#3a2416/0.9', g); }
     put(f, M.GLASS, L([[0.875, Z0], [0.875, Z1]], 8, -W0, 2 * W0));
     for (const sg of [-1, 1]) { const a = -Math.PI / 2 + sg * W0; f.box(M.IRON, x + Math.cos(a) * 0.87 - 0.03, x + Math.cos(a) * 0.87 + 0.03, y + Math.sin(a) * 0.87 - 0.03, y + Math.sin(a) * 0.87 + 0.03, Z0, Z1); }
-    tube(f, M.BRASS, [[x + 0.55, y - 0.85, 1.7], [x + 0.7, y - 0.95, 1.6]], 0.02, 4);
-    f.cyl(M.IRON, x, y, 3.05, ceil - 0.02, 0.24, 0.24, 14);
+    tube(f, M.BRASS, [[x + 0.53, y - 0.67, 1.8], [x + 0.62, y - 0.79, 1.8], [x + 0.62, y - 0.79, 1.55], [x + 0.53, y - 0.67, 1.55]], 0.028, 6);
+    f.cyl(M.IRON, x, y, 3.04, ceil, 0.24, 0.24, 14);
+    f.cyl(M.IRON, x, y, ceil - 0.10, ceil + 0.02, 0.36, 0.36, 14);
     f.block(x - 1.0, x + 1.0, y - 1.0, y + 1.0, 0, 3.1);
     return { x, y, z: Z0 + 0.06 };
   }

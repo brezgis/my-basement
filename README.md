@@ -78,8 +78,7 @@ The rest of the query parameters are the lab's (`~/projects/school/README.md`).
 
 ## State (22 November 2026)
 
-First furnished version. Every room is furnished and walkable; the robot staff are not made yet (each furnish file's
-header lists STAFF POSTS for them). The house's cellar door (`~/projects/my_house/site/src/garden/cellar.js`) and this
+First furnished version. Every room is furnished and walkable. Nine robots work the furnished rooms. Terry also makes rounds of the courtyard pool and tub. Approach a staff member and press E to talk or order. Use `?staff=0` for an empty house or `?at=court&staff=lineup` to see the cast together. The house's cellar door (`~/projects/my_house/site/src/garden/cellar.js`) and this
 site's way back up (`HOUSE_ADDRESS` in `site/src/campus.js`) are wired but the house does not point here until this
 site has a public address (`SPANYA_ADDRESS` there). The guest book on the concierge's desk (`site/src/guestbook.js`)
 needs this site's address in the guest-book service's `GB_ORIGINS` and 'basement' in its `GB_PLACES` before it works

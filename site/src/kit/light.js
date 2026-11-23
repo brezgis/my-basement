@@ -18,7 +18,7 @@ export function makeLight(K) {
     const prof = kind === 'drum' ? [[r0, z0], [r0, z1]] : [[r0, z0], [(r0 * 2 + r1) / 3, z0 + (z1 - z0) / 3], [(r0 + r1 * 2) / 3, z0 + 2 * (z1 - z0) / 3], [r1, z1]];
     const seg = kind === 'pleat' ? pleats * 2 : 28;
     put(f, o.mat ?? 'shade', lathe(prof, { seg, mod: pl }), { at: [x, y, 0] });
-    put(f, o.lining ?? 'e#ffe2b4/1.7', lathe(prof.map(([r, z]) => [r * 0.975, z]), { seg: 24, flip: true }), { at: [x, y, 0] });
+    put(f, o.lining ?? 'shade', lathe(prof.map(([r, z]) => [r * 0.975, z]), { seg: 24, flip: true }), { at: [x, y, 0] });
     const trim = o.trim ?? 'c#cdbb98/0.8';
     for (const [r, z] of [[r0, z0], [r1, z1]]) put(f, trim, lathe([[r * (kind === 'pleat' ? 1.04 : 1.01), z - 0.012], [r * (kind === 'pleat' ? 1.045 : 1.015), z + 0.012]], { seg: 28 }), { at: [x, y, 0] });
     // spider and bulb
@@ -92,8 +92,14 @@ export function makeLight(K) {
     const kind = o.kind ?? 'tulip', metal = o.metal ?? (kind === 'lantern' ? BRONZE : BRASS);
     put(f, metal, lathe([[0, 0], [0.18, 0], [0.18, 0.02], [0.14, 0.04], [0.06, 0.06], [0, 0.06]], { seg: 16, sy: 1.35 }), { rx: -Math.PI / 2, at: [x, 0.0, z] });
     if (kind === 'lantern') {
-      put(f, metal, sweep([[0, 0.05, 0], [0, 0.32, 0.02], [0, 0.42, 0.12]], 0.02, { seg: 6 }), { at: [x, 0, z] });
-      lanternBody(f, x, 0.42, z - 0.55, 0.32, 0.5, metal, o.glass ?? 'c#d9c08a/0.35');
+      const s = o.size ?? 1, arm = 0.35 + 0.16 * s, base = z - 0.5 * s;
+      put(f, metal, sweep([[0, 0.05, -0.03], [0, arm * 0.3, 0.17], [0, arm * 0.63, 0.26], [0, arm, 0.26], [0, arm, 0.207]], 0.022, { seg: 8 }), { at: [x, 0, z] });
+      put(f, metal, sweep([[0, 0.06, -0.17], [0, arm * 0.25, -0.08], [0, arm * 0.48, 0.24]], 0.014, { seg: 6 }), { at: [x, 0, z] });
+      lanternBody(f, x, arm, base, 0.32 * s, 0.5 * s, metal, o.glass ?? (o.lit ? 'e#f2bd72/0.95' : 'c#d9c08a/0.35'));
+      if (o.lit) {
+        K.lampAt(f, x, arm + 0.23, base + 0.06 * s, o.power ?? 0.5);
+        K.lamps[K.lamps.length - 1].halo = 0.55 * s;
+      }
     } else {
       const arm = [[0, 0.05, -0.05], [0, 0.22, -0.08], [0, 0.36, 0.0], [0, 0.4, 0.12]];
       put(f, metal, sweep(arm, 0.018, { seg: 6 }), { at: [x, 0, z] });
@@ -106,7 +112,7 @@ export function makeLight(K) {
         put(f, o.lit ? 'e#f6e7cf/1.4' : (o.glass ?? 'c#eee6d6/0.25'), g, { at: [x, 0.4, z + 0.13] });
       }
     }
-    if (o.lit) { K.lampAt(f, x, 0.45, z + 0.25, o.power ?? 0.5); K.lamps[K.lamps.length - 1].halo = 0.55; }
+    if (o.lit && kind !== 'lantern') { K.lampAt(f, x, 0.45, z + 0.25, o.power ?? 0.5); K.lamps[K.lamps.length - 1].halo = 0.55; }
   }
   // An Arts-and-Crafts lantern body: tapering box with four glass panels and an overhanging cap,
   // centred at (x, y), bottom at z, w wide at the top and h tall.
@@ -128,9 +134,19 @@ export function makeLight(K) {
     put(f, metal, lathe([[0, -0.08], [0.06, -0.08], [0.2, -0.04], [0.22, 0], [0, 0]], { seg: 16 }), { at: [x, y, zc - 0.01] });
     const bottom = zc - drop;
     if (kind === 'lantern') {
-      const links = []; for (let z = zc - 0.12; z > bottom + 0.75; z -= 0.12) links.push(xf(lathe(Array.from({ length: 5 }, (_, i) => { const a = i / 4 * TAU; return [0.035 + 0.008 * Math.cos(a), 0.06 * Math.sin(a) * 0.9]; }), { seg: 6, sy: 0.5 }), { ry: Math.PI / 2, rz: (Math.round((zc - z) / 0.12) % 2) * Math.PI / 2, at: [0, 0, z] }));
-      put(f, metal, merge(links), { at: [x, y, 0] });
-      lanternBody(f, x, y, bottom, 0.62, 0.68, metal, o.lit ? 'e#f2c77e/1.2' : (o.glass ?? 'c#c9a868/0.3'));
+      const s = o.size ?? 1, bodyHeight = 0.68 * s, chainTop = zc - 0.075, chainBottom = bottom + bodyHeight + 0.2;
+      const count = Math.max(1, Math.ceil((chainTop - chainBottom) / 0.1)), spacing = (chainTop - chainBottom) / count;
+      const links = [];
+      for (let i = 0; i < count; i++) {
+        const z = chainTop - (i + 0.5) * spacing, a = (i % 2) * Math.PI / 2;
+        const pts = Array.from({ length: 13 }, (_, j) => {
+          const t = j / 12 * TAU, r = 0.041 * Math.cos(t);
+          return [r * Math.cos(a), r * Math.sin(a), z + 0.61 * spacing * Math.sin(t)];
+        });
+        links.push(sweep(pts, 0.009, { seg: 5 }));
+      }
+      if (chainTop > chainBottom) put(f, metal, merge(links), { at: [x, y, 0] });
+      lanternBody(f, x, y, bottom, 0.62 * s, bodyHeight, metal, o.lit ? (o.glass ?? 'e#f2c77e/1.2') : (o.glass ?? 'c#c9a868/0.3'));
     } else if (kind === 'schoolhouse') {
       put(f, metal, lathe([[0.012, bottom + 0.62], [0.012, zc - 0.08]], { seg: 6 }), { at: [x, y, 0] });
       put(f, metal, lathe([[0.15, bottom + 0.5], [0.16, bottom + 0.52], [0.16, bottom + 0.58], [0.06, bottom + 0.63], [0, bottom + 0.64]], { seg: 18 }), { at: [x, y, 0] });
@@ -141,7 +157,10 @@ export function makeLight(K) {
       for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + 0.5; put(f, metal, sweep([[0, 0, zc - 0.06], [Math.cos(a) * 0.62, Math.sin(a) * 0.62, bottom + 0.3]], 0.008, { seg: 3 }), { at: [x, y, 0] }); }
       put(f, o.lit ? 'e#f6e3c4/1.3' : 'marble#e8dcc8', lathe([[0, bottom], [0.3, bottom + 0.02], [0.55, bottom + 0.15], [0.66, bottom + 0.3], [0.64, bottom + 0.31], [0.52, bottom + 0.18], [0.28, bottom + 0.07], [0, bottom + 0.05]], { seg: 28 }), { at: [x, y, 0] });
     }
-    if (o.lit) { K.lampAt(f, x, y, bottom + 0.3, o.power ?? 0.8); K.lamps[K.lamps.length - 1].halo = 0.8; }
+    if (o.lit) {
+      K.lampAt(f, x, y, bottom + (kind === 'lantern' ? 0.12 : 0.3), o.power ?? 0.8);
+      K.lamps[K.lamps.length - 1].halo = 0.8;
+    }
   }
 
   return { tableLamp, floorLamp, candle, jarCandle, pillarCandle, sconce, ceilingLight, shadeAt };

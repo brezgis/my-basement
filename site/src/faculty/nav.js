@@ -36,6 +36,14 @@ export function makePlan(world, area) {
   const X0 = Math.min(...boxes.map(b => b.x0)), Z0 = Math.min(...boxes.map(b => b.z0));
   const NX = Math.max(1, Math.ceil((Math.max(...boxes.map(b => b.x1)) - X0) / CELL)), NZ = Math.max(1, Math.ceil((Math.max(...boxes.map(b => b.z1)) - Z0) / CELL)), N = NX * NZ;
   const walk = new Uint8Array(N), clear = new Float32Array(N), wall = new Uint8Array(N), door = new Int16Array(N).fill(-1), lane = new Uint8Array(N), fy = new Float32Array(N);
+  // Actual body clearance within a navigable cell matters when smoothing a
+  // diagonal past a shelf corner. Keep only obstacles within a radius of it.
+  const radius = (area.radius ?? 0) + 0.04;
+  const edges = area.radius ? new Array(N) : null;
+  const fits = (c, x, z) => !edges?.[c]?.some(b => {
+    const dx = Math.max(0, b.x0 - x, x - b.x1), dz = Math.max(0, b.z0 - z, z - b.z1);
+    return dx * dx + dz * dz < radius * radius;
+  });
   let cells = [], version = 0, myDoors = [], cores = [], corePts = [];
 
   const cellOf = (x, z) => { const i = Math.floor((x - X0) / CELL), k = Math.floor((z - Z0) / CELL); return i < 0 || k < 0 || i >= NX || k >= NZ ? -1 : k * NX + i; };
@@ -43,6 +51,7 @@ export function makePlan(world, area) {
   const inBoxes = (x, z) => boxes.some(b => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1);
 
   function rebuild() {
+    edges?.fill(null);
     walk.fill(0); wall.fill(0); door.fill(-1); lane.fill(0);
     const surfs = (world.surfaces ?? []).filter(s => s.x1 > X0 && s.x0 < X0 + NX * CELL && s.z1 > Z0 && s.z0 < Z0 + NZ * CELL);
     const flats = surfs.filter(s => !s.ramp && Math.abs(s.h - y) < 0.75), ramps = surfs.filter(s => s.ramp && Math.max(s.h, s.h2) > y - 0.3 && Math.min(s.h, s.h2) < y + top);
@@ -52,7 +61,7 @@ export function makePlan(world, area) {
       if (ramps.some(s => x >= s.x0 - 0.1 && x <= s.x1 + 0.1 && z >= s.z0 - 0.1 && z <= s.z1 + 0.1)) continue;      // nobody stands on a stair
       if (area.links?.some(b => x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1)) { walk[c] = 1; continue; }      // a doorway between two of its rooms: the threshold is floor
       if (area.open) { if (area.ok && !area.ok(x, z)) continue; fy[c] = world.ground ? world.ground(x, z) : y; walk[c] = 1; continue; }                  // out of doors: the land itself
-      let h = -1e9; for (const s of flats) if (x >= s.x0 && x <= s.x1 && z >= s.z0 && z <= s.z1 && s.h > h) h = s.h;
+      let h = -1e9; for (const s of flats) if (x >= s.x0 && x <= s.x1 && z >= s.z0 && z <= s.z1 && s.h > h && (!s.contains || s.contains(x, z))) h = s.h;
       if (h < -1e8 && world.ground) { const g = world.ground(x, z); if (Math.abs(g - y) < 0.75) h = g; }
       if (h < -1e8 && world.surfaces) continue;                                                                 // no floor here (a stair well)
       if (h > -1e8) fy[c] = h;
@@ -62,6 +71,15 @@ export function makePlan(world, area) {
       const i0 = Math.max(0, Math.floor((b.x0 - X0) / CELL)), i1 = Math.min(NX - 1, Math.floor((b.x1 - X0) / CELL));
       const k0 = Math.max(0, Math.floor((b.z0 - Z0) / CELL)), k1 = Math.min(NZ - 1, Math.floor((b.z1 - Z0) / CELL));
       for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) { const c = k * NX + i; if (isWall) wall[c] = 1; else walk[c] = 0; }
+      if (edges && !isWall) {
+        const halo = Math.ceil(radius / CELL);
+        for (let k = Math.max(0, k0 - halo); k <= Math.min(NZ - 1, k1 + halo); k++) {
+          for (let i = Math.max(0, i0 - halo); i <= Math.min(NX - 1, i1 + halo); i++) {
+            const c = k * NX + i;
+            if (walk[c]) (edges[c] ??= []).push(b);
+          }
+        }
+      }
     };
     const stops = new Set(doors.map(d => d.stop));
     for (const b of colliders) {
@@ -70,6 +88,11 @@ export function makePlan(world, area) {
       if (b.y0 >= yb + top || b.y1 <= yb + BAND_LO) continue;
       stamp(b, false);
       if (b.y1 >= yb + 6.4 && b.y0 <= yb + 1.5) stamp(b, true);                  // walls and tall cases block the view too
+    }
+    // An opener plans for the position of the open leaf before it sets
+    // off, including the interval before the swinging leaf becomes solid.
+    if (area.radius) for (const d of doors) {
+      if (d.box?.off && d.box.y0 < y + top && d.box.y1 > y + BAND_LO) stamp(d.box, false);
     }
     for (const d of fixed) if (d.stop && d.stop.y0 < y + 3 && d.stop.y1 > y + 1) { stamp(d.stop, false); stamp(d.stop, true); }
     // Door cells: the opening itself, a little either side of the leaf
@@ -94,7 +117,7 @@ export function makePlan(world, area) {
       if (k < NZ - 1) { relax(c, c + NX, 3); if (i < NX - 1) relax(c, c + NX + 1, 4); if (i > 0) relax(c, c + NX - 1, 4); } else clear[c] = Math.min(clear[c], 3);
     }
     cells = [];
-    for (let c = 0; c < N; c++) { clear[c] /= 3; if (walk[c]) cells.push(c); }
+    for (let c = 0; c < N; c++) { clear[c] /= 3; if (walk[c] && !fits(c, cx(c), cz(c))) walk[c] = 0; if (walk[c]) cells.push(c); }
     // Lanes (see the head of the file)
     const doorPts = (world.doors ?? []).filter(d => (d.y0 ?? y) < y + 3 && (d.y1 ?? y + 7) > y + 1).map(d => [d.cx, d.cz]);
     // (the narrower openings only: an opening over 6.5 ft wide is part of the room, not a way through it)
@@ -145,12 +168,12 @@ export function makePlan(world, area) {
     if (d >= 0 && !opener && !myDoors[d].isOpen) return false;
     return clear[c] >= need;
   }
-  const freeAt = (x, z, need, opener) => free(cellOf(x, z), need, opener);
+  const freeAt = (x, z, need, opener) => { const c = cellOf(x, z); return free(c, need, opener) && fits(c, x, z); };
 
   // ---- How far it is to walk from (x, z) to the cells around, with someone's body (bx, bz, br) in the way: so
   // a robot can tell a spot it can reach without squeezing past them. reachD(c): feet, or Infinity.
   const fd = new Float32Array(N), fgen = new Uint32Array(N), fq = new Int32Array(N); let fg = 0;
-  function flood(x, z, need, maxD, bx = 0, bz = 0, br = 0) {
+  function flood(x, z, need, maxD, bx = 0, bz = 0, br = 0, opener = false) {
     fg++; let c0 = cellOf(x, z); if (c0 < 0 || !walk[c0]) c0 = nearest(x, z, need, 2.5); if (c0 < 0) return 0;
     const R = maxD / CELL, br2 = br * br; let h = 0, t = 0;
     fd[c0] = 0; fgen[c0] = fg; fq[t++] = c0;
@@ -159,7 +182,7 @@ export function makePlan(world, area) {
       const i = c % NX, k = (c - i) / NX;
       for (const [di, dk, w] of NB8) {
         const ii = i + di, kk = k + dk; if (ii < 0 || kk < 0 || ii >= NX || kk >= NZ) continue;
-        const n = kk * NX + ii; if (fgen[n] === fg || !free(n, need, false)) continue;
+        const n = kk * NX + ii; if (fgen[n] === fg || !free(n, need, opener)) continue;
         if (br && (cx(n) - bx) ** 2 + (cz(n) - bz) ** 2 < br2) continue;
         fgen[n] = fg; fd[n] = d + w; fq[t++] = n;
       }
@@ -243,7 +266,7 @@ export function makePlan(world, area) {
     const nodes = search(c0, c1, need, opener);
     if (!nodes) return null;
     const pts = nodes.map(c => ({ x: cx(c), z: cz(c) }));
-    if (c1 === cellOf(x1, z1)) pts[pts.length - 1] = { x: x1, z: z1 };      // the very spot, not the middle of its cell
+    if (c1 === cellOf(x1, z1) && fits(c1, x1, z1)) pts[pts.length - 1] = { x: x1, z: z1 };      // the very spot, not the middle of its cell
     const out = [{ x: x0, z: z0 }];
     if (moved && pts.length > 1) out.push(pts[0]);      // pressed against something: out to open floor first, not on through it
     let a = 0;
@@ -319,13 +342,24 @@ export class Mover {
     if (this.wait > 0) { this.wait -= dt; this.v = 0; return 'waiting'; }
     const p = this.path[this.i];
     const dx = p.x - this.x, dz = p.z - this.z, L = Math.hypot(dx, dz);
-    // Doors ahead
-    if (L > 0.01) for (let s = 0.3, look = Math.min(L, 3.2); s <= look; s += 0.25) {
-      const c = plan.cellOf(this.x + (dx / L) * s, this.z + (dz / L) * s), d = c >= 0 ? plan.door[c] : -1;
-      if (d >= 0 && !plan.doors[d].isOpen) {
-        if (this.opener) { this.onDoor?.(plan.doors[d]); this.wait = 0.7; return 'waiting'; }
-        this.path = null; return 'failed';
+    // Inspect the approach across waypoint breaks. An automatic opener waits
+    // outside the entire swing until both glass leaves have cleared its route.
+    let leftToCheck = this.opener ? 8 : 3.2, ax = this.x, az = this.z;
+    for (let i = this.i; i < this.path.length && leftToCheck > 0; i++) {
+      const next = this.path[i], dx = next.x - ax, dz = next.z - az, len = Math.hypot(dx, dz);
+      if (len > 0) for (let s = 0; s <= Math.min(len, leftToCheck); s += 0.25) {
+        const c = plan.cellOf(ax + dx * s / len, az + dz * s / len);
+        const leaf = c >= 0 ? plan.doors[plan.door[c]] : null;
+        if (!leaf) continue;
+        if (!leaf.isOpen) {
+          if (!this.opener) { this.path = null; return 'failed'; }
+          this.onDoor?.(leaf); this.v = 0; this.wait = 0.35; return 'waiting';
+        }
+        if (leaf.stop?.off === false || (this.opener && leaf.openFraction < 0.975)) {
+          this.v = 0; return 'waiting';
+        }
       }
+      ax = next.x; az = next.z; leftToCheck -= len;
     }
     if (this.avoid && L > 0.01 && this.avoid(this.x + (dx / L) * Math.min(L, 1.1), this.z + (dz / L) * Math.min(L, 1.1))) {
       this.v = Math.max(0, this.v - dt * 6); this.blockedFor += dt;

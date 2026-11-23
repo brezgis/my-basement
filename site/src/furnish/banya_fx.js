@@ -13,12 +13,13 @@
 //                 page's mute and volume (the shared sound.js has only struck notes)
 //   lieSpots()    places to lie (or sit) where the eye is put somewhere a seat cannot put it: looking up from a table
 //   walkOn()      surfaces the walker can step up onto (the polok's tiers)
+import { burningLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { NOISE, makeFlames } from '../flame.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const tone = '#include <tonemapping_fragment>\n#include <colorspace_fragment>';
-const addTracked = (ctx, mesh, at, size = 1) => { mesh.frustumCulled = false; ctx.scene.add(mesh); ctx.track?.(mesh, ctx.zoneAt(at.x, at.y, at.z, size)); return mesh; };
+const addTracked = (ctx, mesh, at, size = 1, zone) => { mesh.frustumCulled = false; ctx.scene.add(mesh); ctx.track?.(mesh, zone ?? ctx.zoneAt(at.x, at.y, at.z, size)); return mesh; };
 
 // ---- candle flames (pool_chapel_fx.js's, as it does them) -----------------------------------------------------------
 export function flames(ctx, W, list, at) {
@@ -123,7 +124,9 @@ void main() { float r = dot(vUv, vUv); if (r > 1.0) discard; float n = noise(vUv
   ${tone}
 }`,
     }));
-    bm.renderOrder = 5; bm.name = 'banya steam burst'; addTracked(ctx, bm, mid, 1);
+    bm.renderOrder = 5; bm.name = 'banya steam burst'; bm.frustumCulled = false; bm.visible = false;
+    ctx.scene.add(bm);
+    ctx.track?.(bm, ctx.zoneAt(mid.x, mid.y, mid.z, 1), () => BU.uT.value - BU.uT0.value < 8.3);
     let thick = 0;
     burst = (X, Y, hh) => { const p = W(X, Y, hh); BU.uO.value.set(p.x, p.y, p.z); BU.uT0.value = BU.uT.value; thick = 1; };
     ctx.animated.push((t, dt) => { BU.uT.value = t; thick = Math.max(0, thick - (dt ?? 0.016) / 40); U.uA.value = (o.alpha ?? 0.06) * (1 + 2.2 * thick); });
@@ -303,8 +306,10 @@ export function wash(ctx, W, list, at) {
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     vertexShader: 'attribute vec3 aU; varying vec3 vU; void main() { vU = aU; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform float uK; varying vec3 vU;
-void main() { float v = vU.y, e = smoothstep(0.0, 0.08, vU.x) * smoothstep(0.0, 0.08, 1.0 - vU.x);
-  float f = pow(1.0 - v, 2.2) * e * vU.z; gl_FragColor = vec4(vec3(1.0, 0.58, 0.22) * f * uK, 1.0); }`,
+void main() { float v = vU.y, edge = 0.07 + 0.14 * v;
+  float ends = smoothstep(0.0, edge, vU.x) * smoothstep(0.0, edge, 1.0 - vU.x);
+  float f = pow(1.0 - v, 2.8) * ends * vU.z;
+  gl_FragColor = vec4(vec3(1.0, 0.58, 0.22) * f * uK, 1.0); }`,
   }));
   m.renderOrder = 1; m.name = 'banya coves'; addTracked(ctx, m, at, 1);
   ctx.animated.push(() => { U.uK.value = 0.32 + 0.4 * (ctx.day?.night ?? 0); });
@@ -319,9 +324,7 @@ export function stoveFire(ctx, W, o) {
   const g = new THREE.Group(); g.position.set(o0.x, o0.y, o0.z); g.rotation.y = Math.atan2(o1.x - o0.x, o1.z - o0.z);      // local +z out of the mouth, x across it
   const uT = { value: 0 }, w = o.w ?? 1.1, d = o.d ?? 0.4;
   g.add(makeFlames(THREE, mergeGeometries, uT, [[0, 0, 0, w * 0.85, (o.tall ?? w) * 1.05, 0], [0, w * 0.18, d * 0.25, w * 0.6, (o.tall ?? w) * 0.85, 3.7], [0, -w * 0.2, -d * 0.2, w * 0.55, (o.tall ?? w) * 0.75, 8.1]], 0.12));
-  const logMat = new THREE.MeshStandardMaterial({ color: 0x241710, roughness: 1, emissive: 0x9a2c08, emissiveIntensity: 0.15 });
-  for (const [dx, dz, up, len, rot, rad] of [[0.02, d * 0.2, 0.08, w * 0.85, 0.08, 0.07], [-0.03, -d * 0.2, 0.08, w * 0.8, -0.1, 0.065], [0.0, 0.0, 0.19, w * 0.7, 0.4, 0.06]]) {
-    const l = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 0.9, len, 8).rotateZ(Math.PI / 2), logMat); l.rotation.y = rot; l.position.set(dx, up, dz); g.add(l); }
+  g.add(burningLogs(ctx.materials.bark, w, d));
   const emb = new THREE.Mesh(new THREE.PlaneGeometry(w * 0.95, d * 0.95).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
     uniforms: { uT }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -343,6 +346,6 @@ void main() { float r = length(vP) / 1.6, f = pow(max(0.0, 1.0 - r), 2.0) * (0.7
   }));
   const fp = W(o.c[0] + o.n[0] * 1.5, o.c[1] + o.n[1] * 1.5, (o.floor ?? 0.4) + 0.02); fl.position.set(fp.x, fp.y, fp.z); fl.renderOrder = 1;
   g.traverse(n => { n.userData.cat = 'fire'; }); fl.userData.cat = 'fire';
-  addTracked(ctx, g, o0, 1); addTracked(ctx, fl, fp, 1);
-  ctx.animated.push(t => { uT.value = t; logMat.emissiveIntensity = 0.15 + 0.05 * Math.sin(t * 6.3) + 0.03 * Math.sin(t * 14.1); fl.material.uniforms.uK.value = 0.18 + 0.32 * (ctx.day?.night ?? 0); });
+  addTracked(ctx, g, o0, 1, o.zone); addTracked(ctx, fl, fp, 1, o.zone);
+  ctx.animated.push(t => { uT.value = t; fl.material.uniforms.uK.value = 0.18 + 0.32 * (ctx.day?.night ?? 0); });
 }

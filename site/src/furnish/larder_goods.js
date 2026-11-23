@@ -120,12 +120,18 @@ export function goods(K, P, flame = () => {}) {
     K.sign(sub, 0, 0.03 + Math.sin(t) * h * 0.5, h / 2 * Math.cos(t), w - 0.12, h - 0.12, draw, { cw: 160, ch: Math.round(160 * h / w), tilt: t });
   }
 
-  // ---- a bottle lying in a bin, its neck toward the room: only the shoulder, neck and foil show (the body is in the cell)
-  const LIE = [[0.11, 0.5], [0.11, 0.66], [0.1, 0.72], [0.06, 0.78], [0.04, 0.84], [0.036, 0.97], [0.042, 0.99], [0, 1.0]];
-  function bottleLying(f, x, yFront, z, col, foil, label) {
-    put(f, col, lathe(LIE, { seg: 8 }), { rx: -Math.PI / 2, at: [x, yFront - 1.0, z] });
-    put(f, foil, new THREE.CylinderGeometry(0.043, 0.041, 0.15, 8, 1).translate(x, yFront - 0.09, z));
-    if (label) put(f, label, new THREE.CylinderGeometry(0.112, 0.112, 0.12, 8, 1, true).translate(x, yFront - 0.44, z));
+  // A complete bottle lying on its shoulder and heel, with its neck toward the room.
+  function bottleLying(f, x, yFront, shelf, kind, col, foil, label) {
+    const profile = BOT[kind], length = profile.at(-1)[1], radius = Math.max(...profile.map(([r]) => r));
+    const segments = 8;
+    const center = shelf + radius, back = yFront - length;
+    put(f, col, lathe(profile, { seg: segments }), { rx: -Math.PI / 2, at: [x, back, center] });
+    put(f, foil, lathe([[0.043, length - 0.145], [0.043, length - 0.026], [0.04, length + 0.004], [0, length + 0.004]], { seg: segments }), { rx: -Math.PI / 2, at: [x, back, center] });
+    if (label) {
+      const halfWrap = Math.PI * 0.92;
+      const paper = lathe([[radius + 0.002, 0.29], [radius + 0.002, 0.42]], { seg: 7, th0: -Math.PI / 2 - halfWrap, th1: -Math.PI / 2 + halfWrap });
+      put(f, label, paper, { rx: -Math.PI / 2, at: [x, back, center] });
+    }
   }
   // ---- glass for the bar: a coupe; a stack of coupes upside down; a cut-glass punch bowl on its foot with a ladle
   const COUPE = [[0, 0], [0.12, 0], [0.12, 0.012], [0.02, 0.03], [0.014, 0.32], [0.1, 0.36], [0.2, 0.42], [0.195, 0.43], [0.09, 0.37], [0, 0.36]];
@@ -169,9 +175,9 @@ export function goods(K, P, flame = () => {}) {
   // ---- a lush plant in a clay pot: many big leaves on arching stems in three tiers (a fiddle-leaf fig, a rubber plant)
   function lushPlant(f, x, y, z, s = 1, o = {}) {
     const pr = 0.45 * s, ph = 0.8 * s, rr = (() => { let k = Math.round((x * 7 + y * 13 + z * 3) * 1000) % 2147483646 + 1; return () => ((k = (k * 16807) % 2147483647) / 2147483647); })();
-    ves(f, o.pot ?? 'c#b8755a/0.85', x, y, z, [[0, 0], [pr * 0.7, 0], [pr * 0.95, ph * 0.85], [pr * 1.05, ph * 0.86], [pr * 1.05, ph], [pr * 0.9, ph * 0.88], [0, ph * 0.86]], 16);
-    f.cyl('c#3b2a1f/1', x, y, z + ph * 0.84, z + ph * 0.87, pr * 0.9, pr * 0.9, 12);
-    const stems = [], leaves = [], top = ph * 0.86, n = o.n ?? 30, H0 = o.height ?? 2.4;
+    ves(f, o.pot ?? 'c#b8755a/0.85', x, y, z, [[0, 0], [pr * 0.7, 0], [pr * 0.95, ph * 0.85], [pr * 1.05, ph * 0.86], [pr * 1.05, ph], [pr * 0.97, ph], [pr * 0.9, ph * 0.87], [0, ph * 0.85]], 16);
+    ves(f, 'soilbed', x, y, z, [[pr * 0.927, ph * 0.906], [pr * 0.55, ph * 0.91], [0, ph * 0.914]], 16);
+    const stems = [], leaves = [], top = ph * 0.91, n = o.n ?? 30, H0 = o.height ?? 2.4;
     for (let i = 0; i < n; i++) {
       const a = i * 2.39996 + rr() * 0.5, tier = i / n, H = (0.4 + tier * 0.9 + rr() * 0.25) * H0 * s, lean = (0.25 + (1 - tier) * 0.45) * H * 0.6;
       const end = [Math.cos(a) * lean, Math.sin(a) * lean, top + H];

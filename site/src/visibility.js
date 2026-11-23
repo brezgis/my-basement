@@ -190,6 +190,7 @@ export function makeVisibility({ rooms, portals, footprints = [], quality = {} }
     return !!cut(s.rect, screenRect(box));
   }
   const isSmall = zone => !!zone && part(zone).small;
-  return { zoner, zoneOfBox, inView, isSmall, roomAt, cellOf, update, shows, state, portals: P, ids, inHouse,
+  const occupied = zone => !!zone && part(zone).inRoom && state.here.includes(part(zone).room);
+  return { zoner, zoneOfBox, inView, isSmall, occupied, roomAt, cellOf, update, shows, state, portals: P, ids, inHouse,
     visMs: () => (state.frames ? +(state.ms / state.frames).toFixed(3) : null), resetMs: () => { state.ms = 0; state.frames = 0; } };
 }

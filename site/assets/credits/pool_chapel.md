@@ -14,3 +14,5 @@ Code borrowed (credited in the files' headers):
 - The lectern's page (the last paragraph of *On the Origin of Species*, first edition, 1859) is set as Vesper Street sets it.
 
 No models, no textures. About 0.16 MB of new pictures (one JPEG).
+
+The pool panel uses [NMW – Römisches Mosaik 1](https://commons.wikimedia.org/wiki/File:NMW_-_R%C3%B6misches_Mosaik_1.jpg), photographed by Wolfgang Sauber, resized for display. The photograph and this resized copy are licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

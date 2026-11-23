@@ -2,6 +2,7 @@
 // (banya.js places them). Everything is built in a kit frame (x along, y out toward the front, z up) and goes in
 // through K.put, so it is drawn with the room it stands in. Leaves, palms and candles are grown and lit the way the
 // Pool next door does them (pool_chapel_parts.js), written again here so that the two files stay each its own.
+import { storedLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 
 const TAU = Math.PI * 2;
@@ -57,9 +58,10 @@ export function pot(K, f, x, y, r, h, mat = MAT.CLAY, style = 'urn') {
     ? [[0, 0], [r * 0.55, 0], [r * 0.6, h * 0.06], [r * 0.5, h * 0.1], [r * 0.82, h * 0.35], [r, h * 0.7], [r * 0.95, h * 0.88], [r * 1.06, h * 0.92], [r * 1.06, h], [r * 0.96, h], [r * 0.94, h * 0.93], [0, h * 0.93]]
     : style === 'bowl' ? [[0, 0], [r * 0.5, 0], [r * 0.85, h * 0.35], [r, h], [r * 0.93, h], [r * 0.9, h * 0.9], [0, h * 0.9]]
       : [[0, 0], [r * 0.78, 0], [r * 0.92, h * 0.85], [r * 1.02, h * 0.87], [r * 1.02, h], [r * 0.95, h], [r * 0.92, h * 0.92], [0, h * 0.92]];
-  vessel(K, f, mat, x, y, 0, P, r > 0.6 ? 20 : 14);
-  K.put(f, MAT.SOIL, K.geom.lathe([[0, h * 0.9], [r * 0.9, h * 0.9], [0, h * 0.905]], { seg: 12 }), { at: [x, y, 0] });
-  return h * 0.9;
+  const [innerRadius, soilHeight] = P.at(-2);
+  vessel(K,f,mat,x,y,0,P.slice(0,-1),r>0.6?24:18);
+  f.cyl(MAT.SOIL,x,y,soilHeight-0.025,soilHeight+0.005,innerRadius,innerRadius,24);
+  return soilHeight;
 }
 // A kentia palm, after Frond's on Vesper Street
 export function palm(K, L, f, x, y, z, s = 1, seed = 1) {
@@ -78,6 +80,7 @@ export function fern(K, L, f, x, y, z, s = 1, seed = 2) {
   for (let i = 0; i < 20; i++) {
     const az = i * 2.4 + rnd() * 0.4, ll = (1.3 + rnd() * 0.9) * s, up = 0.7 + rnd() * 0.9, c = Math.cos(az), sn = Math.sin(az), col = LEAF[i % 3];
     const pt = t => [x + c * ll * t * 0.95, y + sn * ll * t * 0.95, z + ll * (up * t - (up + 0.55) * t * t)];
+    K.put(f, col, K.geom.sweep([0,0.16,0.3,0.44,0.58,0.72,0.86,1].map(pt), 0.014*s, {seg: 4}));
     for (let j = 1; j <= 7; j++) { const t = 0.08 + 0.9 * j / 7, p = pt(t), q = 0.26 * s * Math.sin(Math.PI * Math.min(1, 0.15 + t)); for (const sd of [-1, 1]) L.leaf(f, col, p, az + sd * 1.25, -0.2, q, 0.045 * s, { shape: 'oval', fold: 0.2, droop: 0.3 }); }
   }
 }
@@ -234,8 +237,14 @@ export function jamJar(K, f, x, y, z, jam = 'c#7a1020/0.25', cap = 'c#efe2c4/0.9
   vessel(K, f, 'c#a8322a/0.8', x, y, z + 0.33, [[0.105, 0], [0.108, 0], [0.108, 0.02], [0.105, 0.02]], 10);
 }
 export function rosette(K, f, x, y, z, jam = 'c#7a1020/0.25') {
-  vessel(K, f, MAT.GLASS, x, y, z, [[0, 0], [0.05, 0], [0.05, 0.03], [0.13, 0.07], [0.14, 0.08], [0.12, 0.08], [0, 0.04]], 12, { mod: (t, j) => (j >= 3 ? 1 + 0.06 * Math.cos(t * 8) : 1) });
-  vessel(K, f, jam, x, y, z + 0.035, [[0, 0], [0.1, 0.02], [0, 0.025]], 10);
+  vessel(K, f, MAT.GLASS, x,y,z, [[0,0],[0.08,0],[0.09,0.025],[0.18,0.085],[0.19,0.12],[0.17,0.12],[0.15,0.08],[0,0.035]], 24);
+  vessel(K, f, jam, x,y,z, [[0,0.036],[0.145,0.082],[0.159,0.099],[0.13,0.095],[0,0.094]], 24);
+  for (let i=0;i<6;i++) {
+    const a=i*2.4, r=0.044*Math.sqrt(i);
+    ball(K,f,jam,x+r*Math.cos(a),y+r*Math.sin(a),z+0.097,0.044,[1,0.86,0.68],10);
+  }
+  ball(K,f,MAT.NICKEL,x+0.105,y+0.032,z+0.11,0.038,[1.3,0.8,0.24]);
+  tube(K,f,MAT.NICKEL,[[x+0.13,y+0.045,z+0.11],[x+0.18,y+0.065,z+0.13],[x+0.29,y+0.10,z+0.145]],0.009,6);
 }
 // a turned honey pot (a little lime-wood barrel) with its dipper
 export function honeyPot(K, f, x, y, z) {
@@ -289,17 +298,25 @@ export function fruitBowl(K, f, x, y, z, seed = 6) {
   vessel(K, f, MAT.CHINA, x, y, z, [[0, 0], [0.22, 0], [0.24, 0.03], [0.12, 0.08], [0.1, 0.18], [0.3, 0.24], [0.55, 0.36], [0.68, 0.46], [0.66, 0.48], [0.5, 0.36], [0, 0.3]], 24);
   vessel(K, f, MAT.GZHEL, x, y, z + 0.4, [[0.6, 0], [0.685, 0.06], [0.68, 0.075], [0.6, 0.02]], 24);
   const Z = z + 0.3;
-  const put = (kind, k) => { const a = k * 2.39 + rnd() * 0.4, rr = Math.min(0.46, 0.1 + Math.sqrt(k) * 0.15), px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr, pz = Z + (rr < 0.3 ? 0.14 : 0.03) + (k > 7 ? 0.13 : 0);
-    const F = FRUIT[kind], col = FCOL[kind][k % FCOL[kind].length];
-    vessel(K, f, col, px, py, pz, F.prof, 12, { rx: (rnd() - 0.5) * 0.5, rz: rnd() * 6 });
-    if (kind !== 'mandarin') tube(K, f, MAT.TWIG, [[px, py, pz + F.prof[F.prof.length - 2][1] - 0.02], [px + 0.015, py, pz + F.prof[F.prof.length - 2][1] + 0.05]], 0.007, 3);
-    else ball(K, f, 'c#4d6d3c/0.6', px, py, pz + 0.146, 0.012, [1, 1, 0.5], 5);
-    (out[kind] ??= []).push([px, py, pz]); };
-  let k = 0;
-  for (let i = 0; i < 4; i++) put('apple', k++);
-  for (let i = 0; i < 3; i++) put('mandarin', k++);
-  for (let i = 0; i < 2; i++) put('pear', k++);
-  put('pomegranate', k++);
+  // Fit the lowest point of each tilted fruit to the inside curve of the dish.
+  const fruit = (kind, dx, dy, tilt, turn) => {
+    const F = FRUIT[kind], px = x+dx, py = y+dy;
+    const orient = g => g.rotateY(tilt).rotateZ(turn);
+    const body = orient(K.geom.lathe(F.prof,{ seg:20, mod:(a,j)=>1+0.025*Math.cos(5*a+j*0.2) }));
+    body.computeBoundingBox();
+    const pz = Z + 0.12*Math.hypot(dx,dy) - body.boundingBox.min.z;
+    const at = [px,py,pz], col = FCOL[kind];
+    K.put(f,col[Math.floor(rnd()*col.length)],body,{at});
+    const crown = F.prof.at(-1)[1];
+    if (kind==='apple' || kind==='pear') {
+      K.put(f,MAT.TWIG,orient(K.geom.sweep([[0,0,crown-0.009],[0.008,0,crown+0.028],[0.019,0.005,crown+0.052]],0.007,{seg:5})),{at});
+    }
+    (out[kind] ??= []).push(at);
+  };
+  fruit('pear', -0.37,-0.11,1.24,0.7); fruit('pear',0.29,0.23,1.1,2.1);
+  fruit('apple',-0.23,0.22,0.8,0.32); fruit('apple',0.15,-0.20,0.65,1.9);
+  fruit('apple',0.03,0.08,0.9,2.7); fruit('pomegranate',-0.12,-0.36,1.0,0.75);
+  fruit('mandarin',0.40,-0.07,0.41,1.7); fruit('mandarin',-0.46,0.16,0.63,2.0);
   // a bunch of black grapes over the rim, on a stalk
   const gx = x + 0.45, gy = y - 0.3;
   tube(K, f, MAT.TWIG, [[gx - 0.1, gy + 0.05, Z + 0.34], [gx, gy, Z + 0.3]], 0.008, 3);
@@ -311,21 +328,35 @@ export function fruitBowl(K, f, x, y, z, seed = 6) {
 // a slice cut from it lying beside (from the table in Kustodiev's Merchant's Wife at Tea)
 export function watermelon(K, f, x, y, z) {
   plate(K, f, x, y, z, 0.62);
-  const zc = z + 0.44;
-  K.put(f, 'c#2e5a2a/0.45', new THREE.SphereGeometry(0.42, 20, 10, 0, TAU, 0, Math.PI / 2), { rz: Math.PI, at: [x, y, zc] });
-  for (let i = 0; i < 9; i++) K.put(f, 'c#4f7a3a/0.5', new THREE.SphereGeometry(0.4215, 3, 8, i * TAU / 9, 0.12, 0, Math.PI / 2), { rz: Math.PI, at: [x, y, zc] });      // stripes
-  K.put(f, 'c#f0ead6/0.6', new THREE.RingGeometry(0.36, 0.42, 28), { rx: -Math.PI / 2, at: [x, y + 0.004, zc] });
-  K.put(f, 'c#d8343a/0.55', new THREE.CircleGeometry(0.365, 28), { rx: -Math.PI / 2, at: [x, y + 0.007, zc] });
-  for (let i = 0; i < 14; i++) { const a = i * 2.4, r = 0.1 + (i % 4) * 0.06; K.put(f, 'c#1a1410/0.3', new THREE.SphereGeometry(0.016, 5, 3).scale(1, 0.35, 1.7).rotateY(a), { at: [x + Math.cos(a) * r, y + 0.012, zc + Math.sin(a) * r] }); }
+  const zc = z + 0.445, at = [x,y,zc];
+  K.put(f,'c#355c2e/0.58',new THREE.SphereGeometry(0.42,36,15,0,TAU,0,Math.PI/2).rotateX(-Math.PI/2),{at});
+  for (let i=0;i<12;i++) {
+    const stripe = new THREE.SphereGeometry(0.421,4,12,i*TAU/12,0.082+0.035*Math.sin(i),0,Math.PI/2);
+    K.put(f,'c#637d3b/0.57',stripe.rotateX(-Math.PI/2),{at});
+  }
+  K.put(f,'c#e2e0aa/0.7',new THREE.RingGeometry(0.372,0.42,36),{at});
+  K.put(f,'melon_flesh',new THREE.CircleGeometry(0.372,36),{at});
+  for (let i=0;i<19;i++) {
+    const a=i*2.4, r=0.16+0.12*Math.sin(i*1.8)**2;
+    K.put(f,'c#492d25/0.5',new THREE.SphereGeometry(0.012,7,5).scale(1.55,0.7,0.28).rotateZ(a),{at:[x+r*Math.cos(a),y+r*Math.sin(a),zc+0.003]});
+  }
   // the slice beside it
   K.put(f, MAT.CHINA, K.geom.lathe([[0, 0], [0.2, 0], [0.24, 0.02], [0, 0.015]], { seg: 14 }), { at: [x + 0.72, y - 0.3, z] });
   slice(K, f, x + 0.72, y - 0.3, z + 0.02, 0.6);
 }
 // a watermelon slice: three nested wedges of a disc (rind, white, flesh) standing on the rind, seeds on both faces
-const sliceParts = (r = 0.3, t = 0.07) => [['c#2e5a2a/0.45', r, t], ['c#f0ead6/0.6', r * 0.93, t + 0.004], ['c#d8343a/0.55', r * 0.87, t + 0.008]];
+const sliceParts = (r = 0.3, t = 0.07) => [['c#2e5a2a/0.45', r, t], ['c#f0ead6/0.6', r * 0.93, t + 0.004], ['melon_flesh', r * 0.87, t + 0.008]];
 export function slice(K, f, x, y, z, turn = 0) {
-  for (const [m, r, t] of sliceParts()) K.put(f, m, new THREE.CylinderGeometry(r, r, t, 14, 1, false, -0.45, 0.9).rotateY(Math.PI), { rz: turn, at: [x, y, z + 0.3] });
-  for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { const a = -0.3 + i * 0.12, r = 0.13 + (i % 2) * 0.05; K.put(f, 'c#1a1410/0.3', new THREE.SphereGeometry(0.012, 5, 3).scale(1, 0.3, 1.6), { rz: turn, at: [x + Math.sin(a) * r * Math.cos(turn), y + Math.sin(a) * r * Math.sin(turn) + s * 0.04, z + 0.3 - Math.cos(a) * r] }); }
+  for (const [m,r,t] of sliceParts()) {
+    const g = new THREE.CylinderGeometry(r,r,t,20,1,false,-0.54,1.08).rotateX(Math.PI/2).translate(0,0.15,0).rotateZ(turn);
+    K.put(f,m,g,{at:[x,y,z+0.039]});
+  }
+  for (let i=0;i<6;i++) {
+    const a = -0.36+i*0.14, r=0.13+(i%2)*0.052;
+    const g = new THREE.SphereGeometry(0.009,6,4).scale(0.7,1.55,0.28);
+    g.translate(r*Math.sin(a),0.15-r*Math.cos(a),0).rotateZ(turn);
+    K.put(f,'c#492d25/0.5',g,{at:[x,y,z+0.079]});
+  }
 }
 // The salon of pictures above a sideboard (a buffet): oak, panelled doors, a shelf-back with plates on it
 export function buffet(K, f, w, o = {}) {
@@ -454,7 +485,7 @@ export function robeRail(K, f, x0, x1, o = {}) {
   for (let i = 0; i < n; i++) {
     const x = x0 + (x1 - x0) * (i + 0.5) / n;
     K.put(f, MAT.OAK, K.geom.lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0.055, 0.36], [0, 0.37]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.12, zr] });
-    if (i !== o.empty) K.coatOnPeg(f, x, 0.22, zr - 0.05, cols[i % cols.length], 'coat', { squash: 1.3 });
+    if (i !== o.empty) K.coatOnPeg(f, x, 0.22, zr - 0.05, cols[i % cols.length], 'robe');
   }
   if (o.bench === false) return;
   const d = 1.25, h = 1.5;
@@ -650,7 +681,7 @@ export function drumStove(K, f, o = {}) {
   f.cyl(STEEL, 0, 0, h + 0.95, ceil, 0.28, 0.28, 14);
   // the firebox: a steel box standing out of the drum's front, dark inside (the fire itself is banya_fx.js's
   // stoveFire), a pane of glass across its mouth in a steel frame, a brass knob
-  const fy0 = r - 0.15, fy1 = r + 0.36;
+  const fy0 = r - 0.025, fy1 = r + 0.49;
   f.box('c#140c08/0.9', -0.6, 0.6, fy0, fy0 + 0.04, 1.2, 2.95);
   for (const sx of [-1, 1]) f.box(STEEL, sx * 0.6 - (sx > 0 ? 0 : 0.08), sx * 0.6 + (sx > 0 ? 0.08 : 0), fy0, fy1, 1.12, 3.03);
   f.box(STEEL, -0.68, 0.68, fy0, fy1, 1.12, 1.2); f.box(STEEL, -0.68, 0.68, fy0, fy1, 2.95, 3.03);
@@ -659,7 +690,7 @@ export function drumStove(K, f, o = {}) {
   for (const [x0, x1, z0, z1] of [[-0.68, -0.58, 1.12, 3.03], [0.58, 0.68, 1.12, 3.03], [-0.68, 0.68, 1.12, 1.22], [-0.68, 0.68, 2.93, 3.03]]) f.box(STEEL, x0, x1, fy1 - 0.015, fy1 + 0.03, z0, z1);
   ball(K, f, MAT.BRASS, 0.62, fy1 + 0.06, 2.1, 0.05, [1, 1, 1], 6);
   // a stack of birch logs beside it
-  for (let i = 0; i < 7; i++) roll(K, f, 'c#e6e0d2/0.7', 1.9 + (i % 3 - 1) * 0.36, -0.6 + 0.0, 0.18 + Math.floor(i / 3) * 0.31 + 0.15, 0.16, 1.4, { rz: Math.PI / 2 + (i % 2) * 0.08, seg: 9 });
+  storedLogs(K,f,1.86,-.6,.30,1.35,.15,3,3);
   f.block(-1.2, 1.2, -1.2, 1.2, 0, ceil);
   f.block(1.4, 2.4, -1.4, 0.2, 0, 1.4);
   return { fire: [0, r, 2.1], box: { y: (fy0 + fy1) / 2, z: 1.25, w: 1.15, d: fy1 - fy0 - 0.1 } };
@@ -716,6 +747,10 @@ export function floorLantern(K, f, x, y, tall = 4.2, r = 0.55) {
   for (let k = 0; k < 3; k++) { const a = k * TAU / 3; tube(K, f, 'c#1e1a16/0.6', [[x + Math.cos(a) * r * 0.9, y + Math.sin(a) * r * 0.9, 0], [x + Math.cos(a) * r * 0.75, y + Math.sin(a) * r * 0.75, 0.6]], 0.02, 3); }
   const P = []; for (let k = 0; k <= 10; k++) { const t = k / 10; P.push([r * (0.92 + 0.08 * Math.sin(Math.PI * t)) * (1 - 0.03 * Math.pow(Math.sin(t * Math.PI * 7), 2)), 0.6 + t * tall]); }
   vessel(K, f, 'shade', x, y, 0, [[0, 0.6], ...P, [0, 0.6 + tall]], 20);
+  for (let i=0;i<=12;i++) {
+    const t=i/12, rr=r*(0.92+0.08*Math.sin(Math.PI*t));
+    vessel(K,f,'c#987c59/0.85',x,y,0.6+t*tall,[[rr-0.012,-0.014],[rr+0.004,-0.008],[rr+0.004,0.008],[rr-0.012,0.014]],24);
+  }
   f.block(x - r, x + r, y - r, y + r, 0, 2);
 }
 // Built-in open shelves on a wall frame, lit: honey timber, a strip of amber light under each shelf, and on them the

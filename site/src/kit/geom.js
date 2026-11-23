@@ -287,11 +287,11 @@ export function pillow(w, d, t, o = {}) {
   const face = s => tk.map(V => tk.map(U => {
     const g = Math.pow(Math.max(0, 1 - Math.abs(U) ** 2.6), 0.55) * Math.pow(Math.max(0, 1 - Math.abs(V) ** 2.6), 0.55);
     const x = U * w / 2 * (1 - pinch * (1 - V * V)), y = V * d / 2 * (1 - pinch * (1 - U * U));
-    let z = s * (t / 2 * g + 0.006) + (o.dent ? -o.dent * Math.exp(-(U * U + V * V) / 0.25) * (s > 0 ? 1 : 0.4) : 0);
+    let z = s * t / 2 * g + (o.dent ? -g * o.dent * Math.exp(-(U * U + V * V) / 0.25) * (s > 0 ? 1 : 0.4) : 0);
     if (lump) z += s * lump * g * Math.sin(U * 3 + ph[0]) * Math.sin(V * 2.5 + ph[1]);
     return [x, y, z];
   }));
-  return merge([grid(face(1)), grid(face(-1), { flip: true })]);
+  return weld(merge([grid(face(1)), grid(face(-1), { flip: true })]));
 }
 
 // ---- cloth -------------------------------------------------------------------------------

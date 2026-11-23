@@ -18,12 +18,22 @@ export function makeSoft(K) {
   // A stuffed pillow standing on a seat, leaning back by tilt; (x, y, z) is its bottom middle.
   function cushion(f, x, y, z, w, h, colour = K.SAGE, o = {}) {
     const r = R(f, x, y, z), t = o.thick ?? Math.min(0.5, 0.3 * Math.min(w, h)), tilt = o.tilt ?? 0.4;
-    const g = pillow(w, h, t, { n: o.n ?? 7, pinch: 0.08, dent: (o.dent ?? 0.05) * Math.min(1, Math.min(w, h) / 1.4), lump: 0.02, rng: r });
+    const g = pillow(w, h, t, { n: o.n ?? 11, pinch: 0.08, dent: (o.dent ?? 0.05) * Math.min(1, Math.min(w, h) / 1.4), lump: 0.02, rng: r });
     const ry = (r() - 0.5) * 0.12 + (o.roll ?? 0);
-    put(f, fab(colour, o.base ?? 'linen'), g, { rx: -Math.PI / 2 + tilt, ry, rz: o.turn ?? 0, at: [x, y + Math.sin(tilt) * h / 2 * 0, z + Math.cos(tilt) * h / 2] });
-    if (o.piping) put(f, fab(o.piping), sweep(rectPath(w * 0.96, h * 0.96, 18), 0.014, { seg: 4 }), { rx: -Math.PI / 2 + tilt, ry, rz: o.turn ?? 0, at: [x, y, z + Math.cos(tilt) * h / 2] });
+    const transform = { rx: -Math.PI / 2 + tilt, ry, rz: o.turn ?? 0 };
+    xf(g, transform);
+    g.computeBoundingBox();
+    const at = [x, y, z - g.boundingBox.min.z - 0.045];
+    put(f, fab(colour, o.base ?? 'linen'), g, { at });
+    if (o.piping) {
+      const seam = [], side = (u, v) => seam.push([u*w/2*(1-0.08*(1-v*v)), v*h/2*(1-0.08*(1-u*u)), 0]);
+      for (let i = 0; i < 12; i++) side(-1+i/6,-1);
+      for (let i = 0; i < 12; i++) side(1,-1+i/6);
+      for (let i = 0; i < 12; i++) side(1-i/6,1);
+      for (let i = 0; i <= 12; i++) side(-1,1-i/6);
+      put(f, fab(o.piping), sweep(seam, 0.012, { seg: 4 }), { ...transform, at });
+    }
   }
-  const rectPath = (w, h, n) => { const p = []; for (let i = 0; i <= n; i++) { const a = i / n * TAU, c = Math.cos(a), s = Math.sin(a); p.push([Math.sign(c) * Math.abs(c) ** 0.45 * w / 2, Math.sign(s) * Math.abs(s) ** 0.45 * h / 2, 0]); } return p; };
 
   // Cloth laid over a box top a by b (half sizes) at height z, centred on (cx, cy), hanging
   // l, r (along -x, +x), bk, fr (along -y, +y) feet over the edges. Returns hem points for fringe.
@@ -213,8 +223,8 @@ export function makeSoft(K) {
     put(f, COTTON, softBox(-w / 2 + 0.04, w / 2 - 0.04, 0.22, len - 0.32, 1.48, 1.96, 0.12, { n: [4, 8, 1], welt: 0.012, crown: 0.02, noBottom: true }));
     // duvet, turned down at the head
     const duvet = fab(o.duvet ?? 'curtain#e9e4d9', 'curtain'), yTurn = 2.05, yFoot = len - 0.32, b = (yFoot - yTurn) / 2;
-    cloth(f, duvet, { cx: 0, cy: yTurn + b, z: 2.04, a: w / 2 - 0.02, b, l: 0.72, r: 0.72, fr: o.foot === false ? 0.75 : 0.22, rho: o.foot === false ? 0.14 : 0.1, folds: 0.07, freq: 0.75, lumps: 0.075, wrinkle: 0.015, ph: r() * 6, thick: 0.07, res: 0.3 });
-    cloth(f, duvet, { cx: 0, cy: yTurn + 0.42, z: 2.13, a: w / 2 + 0.04, b: 0.42, l: 0.45, r: 0.45, bk: 0.12, rho: 0.07, folds: 0.03, freq: 1.0, ph: r() * 6, thick: 0.05, res: 0.26 });
+    cloth(f, duvet, { cx: 0, cy: yTurn + b, z: 1.985, a: w / 2 - 0.02, b, l: 0.72, r: 0.72, fr: o.foot === false ? 0.75 : 0.22, rho: o.foot === false ? 0.14 : 0.1, folds: 0.07, freq: 0.75, lumps: 0.075, wrinkle: 0.015, ph: r() * 6, thick: 0.095, res: 0.23 });
+    cloth(f, duvet, { cx: 0, cy: yTurn + 0.42, z: 2.08, a: w / 2 + 0.04, b: 0.42, l: 0.45, r: 0.45, bk: 0.12, rho: 0.07, folds: 0.03, freq: 1.0, ph: r() * 6, thick: 0.05, res: 0.26 });
     // quilt folded across the foot
     throwBlanket(f, -w / 2 - 0.06, w / 2 + 0.06, len - 2.17, len - 0.53, 2.17, quilt, { over: 'foot', rho: 0.12 });
     // pillows: Euro shams standing at the back, sleeping pillows in front, an accent in the middle
@@ -222,8 +232,8 @@ export function makeSoft(K) {
     for (let i = 0; i < np; i++) {
       const x = -w / 2 + 0.15 + (i + 0.5) * pw, sz = Math.min(2.15, pw - 0.08);
       cushion(f, x, 0.36 + (uph ? 0.3 : 0), 1.93, sz, sz, o.sham ?? K.LINEN, { tilt: 0.3, thick: 0.55, dent: 0.03, turn: (r() - 0.5) * 0.05 });
-      const sp = pillow(Math.min(2.6, pw - 0.15), 1.6, 0.5, { n: 6, pinch: 0.06, dent: 0.07, lump: 0.02, rng: r });
-      put(f, COTTON, sp, { rx: -0.25 + (r() - 0.5) * 0.08, rz: (r() - 0.5) * 0.06, at: [x, 1.05 + (uph ? 0.25 : 0), 2.34] });
+      const sp = pillow(Math.min(2.6, pw - 0.15), 1.65, 0.56, { n: 12, pinch: 0.06, dent: 0.07, lump: 0.02, rng: r });
+      put(f, COTTON, sp, { rx: -0.25 + (r() - 0.5) * 0.08, rz: (r() - 0.5) * 0.06, at: [x, 1.16 + (uph ? 0.25 : 0), 2.19] });
     }
     if (o.accent) cushion(f, 0, 1.6 + (uph ? 0.25 : 0), 2.02, 1.6, 0.95, o.accent, { tilt: 0.3, thick: 0.34, dent: 0.0 });
     K.seat(f, 0, len - 1.2, 2.2, 'sit on the bed'); f.block(-w / 2, w / 2, 0, len, 0, 2.2);
@@ -304,8 +314,25 @@ export function makeSoft(K) {
   // A towel folded in thirds and hung over a rail running along x at (y, z): front hangs down
   // drop feet, back a little less. w: towel width along the rail.
   function hangingTowel(f, x, y, z, w = 1.5, drop = 1.3, colour = TERRY, o = {}) {
-    const r = R(f, x, z);
-    cloth(f, fab(colour, 'wool'), { cx: x, cy: y, z: z + (o.rail ?? 0.035), a: w / 2, b: 0.001, fr: drop, bk: drop * (o.back ?? 0.75), rho: (o.rail ?? 0.035) + 0.02, folds: 0.025, freq: 1.4, ph: r() * 6, thick: 0.05, res: 0.14 });
+    const rand = R(f, x, z), phase = rand() * TAU, slant = (rand() - 0.5) * 0.09;
+    const radius = (o.rail ?? 0.035) + 0.026, fabric = fab(colour, 'wool'), panels = 14;
+    // A continuous U-shaped cross section hugs the rail. Pleats deepen toward the free ends.
+    const surface = (u, v) => {
+      const front = v >= 0.5, h = front ? (v - 0.5) * 2 : Math.max(0, 1 - 4 * v);
+      const arc = Math.PI * Math.min(1, Math.max(0, (v - 0.25) * 4));
+      const fold = Math.sin(u * 3.8 * Math.PI + phase + 0.35 * h);
+      const depth = -radius * Math.cos(arc) + h * (0.035 + 0.065 * fold);
+      const end = front ? drop : drop * (o.back ?? 0.75);
+      const height = radius * Math.sin(arc) - h * (end + slant * (u - 0.5) + 0.026 * fold);
+      return [x + (u - 0.5) * w * (1 - 0.045 * h), y + depth, z + height];
+    };
+    put(f, fabric, sheet(surface, panels, 16, { thick: 0.021 }));
+    const hem = sheet((u, v) => {
+      const p = surface(u, 0.938 + 0.023 * v);
+      p[1] += 0.007;
+      return p;
+    }, panels, 1);
+    put(f, shade(fabric, 0.88), hem);
   }
   // A stack of folded towels or linen at (x, y, z): n pieces, w by d each.
   function foldedStack(f, x, y, z, n = 3, colours = [TERRY], o = {}) {
@@ -368,8 +395,35 @@ export function makeSoft(K) {
     }
     if (hangers.length) { put(f, o.hanger ?? 'oak_light#b08a60', merge(hangers)); put(f, o.hook ?? 'c#9a9590/0.3/1', merge(hooks)); }
   }
+  function bathrobe(f, x, y, z, colour) {
+    const s = f.sub(x, y + 0.10, z);
+    const mat = fab(colour ?? 'wool#e9e1d1');
+    const rows = [[-3.68,.50,.17],[-3.57,.51,.18],[-2.7,.45,.17],[-1.68,.30,.14],
+      [-1.15,.35,.17],[-.57,.44,.17],[-.31,.48,.12],[-.15,.29,.10],[-.04,.09,.065]];
+    put(s, mat, loft(rows.map(([z,a,b]) => ({ z,a,b })), { seg: 40,
+      mod: (t,j) => 1 + (j < 4 ? .09 : .04)*Math.cos(9*t + .17*j),
+      lift: (t,j) => j < 2 ? .045*Math.sin(3*t+.4) : 0 }));
+    for (const sign of [-1,1]) {
+      const sleeve = [[-1.72,.095,.085,.52],[-1.65,.13,.12,.52],[-1.07,.145,.12,.54],
+        [-.62,.17,.13,.49],[-.34,.18,.13,.40],[-.26,.13,.09,.36]];
+      put(s, mat, loft(sleeve.map(([z,a,b,dx]) => ({z,a,b,x:sign*dx,y:.04})), { seg:16 }));
+    }
+    const ribbon = (points, width) => put(s, mat, sheet((u,v) => {
+      const i = Math.min(points.length-2, Math.floor(v*(points.length-1))), k = v*(points.length-1)-i;
+      const [a,b] = points.slice(i,i+2);
+      return [a[0]+(b[0]-a[0])*k+(u-.5)*width, a[1]+(b[1]-a[1])*k+.016*Math.sin(Math.PI*u), a[2]+(b[2]-a[2])*k];
+    },4,points.length-1,{thick:.028,flip:true}));
+    ribbon([[-.11,.045,-.07],[-.23,.14,-.34],[-.16,.18,-.69],[.10,.18,-1.22],[.20,.14,-1.61]],.13);
+    ribbon([[.10,.05,-.08],[.22,.15,-.34],[.15,.19,-.66],[-.03,.20,-1.0]],.12);
+    put(s, mat, loft([[-1.67,.32,.152],[-1.54,.33,.16]].map(([z,a,b])=>({z,a,b})),{seg:24}));
+    ribbon([[.15,.17,-1.55],[.20,.22,-1.71],[.16,.21,-2.13],[.22,.19,-2.37]],.095);
+    ribbon([[.18,.17,-1.57],[.26,.20,-1.74],[.29,.18,-2.09]],.09);
+    put(s, mat, sweep([[-.07,0,-.12],[-.05,-.06,.07],[.05,-.06,.07],[.07,0,-.12]],.024,{seg:6}));
+  }
+
   // A coat on a peg: hangs from the peg at (x, y, z) with its back to the wall (broad side toward +y).
   function coatOnPeg(f, x, y, z, colour = 'wool#4a4038', kind = 'coat', o = {}) {
+    if (kind === 'robe') return bathrobe(f, x, y, z, colour);
     const r = R(f, x, z), g = garment(kind, r);
     put(f, fab(colour, 'wool'), g.cloth, { rz: Math.PI / 2 + (r() - 0.5) * 0.15, s: [o.squash ?? 1.6, 1, 1], at: [x, y + 0.1, z + 0.18] });
   }
@@ -419,6 +473,21 @@ export function makeSoft(K) {
   const SHOE = { loafer: ['leather', 'c#2a1d16/0.7'], boot: ['leather#5a3a28', 'c#1f1813/0.8'], sneaker: ['linen#e9e5dc', 'c#e8e4dc/0.7'], flat: ['leather#2a2a2a', 'c#1a1714/0.7'], slipper: ['wool#a89a88', 'c#5a4a3e/0.9'] };
   // A pair of shoes at (x, y, z), toes toward +y (turn: extra yaw). colour overrides the upper.
   function shoes(f, x, y, z = 0, kind = 'loafer', colour, o = {}) {
+    if (kind === 'slipper') {
+      for (const side of [-1,1]) {
+        const T = { rz: (o.turn ?? 0) + side * .085, at: [x + side*.235,y + side*.05,z] };
+        const shape = (t,u) => {
+          const width = .205 * Math.pow(Math.max(0,Math.sin(Math.PI*t)),.31) * (.86+.18*t-.13*Math.exp(-((t-.35)**2)/.035));
+          return [side*.029*Math.sin(t*Math.PI*1.6)+width*u, t*.96-.46];
+        };
+        put(f,'leather#907457',sheet((u,v)=>[...shape(v,2*u-1),.05],8,16,{thick:.05}),T);
+        put(f,fab(colour ?? 'wool#e9dfca'),sheet((u,v)=>{
+          const t = .46+.53*v, across = 2*u-1, arch = Math.sqrt(Math.max(0,1-across*across));
+          return [...shape(t,across),.051+.19*arch*(1-.88*v)*Math.pow(1-v,.3)];
+        },12,11,{thick:.025}),T);
+      }
+      return;
+    }
     const r = R(f, x, y, z), g = shoeGeo(kind), [up, so] = SHOE[kind] ?? SHOE.loafer, U = colour ? fab(colour, 'leather') : up;
     for (const s of [-1, 1]) {
       const T = { rz: (o.turn ?? 0) + s * 0.06 + (r() - 0.5) * 0.12, at: [x + s * 0.2 + (r() - 0.5) * 0.03, y + (r() - 0.5) * 0.08, z] };

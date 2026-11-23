@@ -34,7 +34,7 @@
 //   The Chapel   X 70.0, Y 106.0, facing west (the table)               the sacristan: trims the candles, lights the incense;
 //                                                                       stands still and says nothing unless spoken to
 //   Things to serve from: the tray of water (The Pool, the robes' bench, west wall), the towel shelves (The Pool, east wall).
-import { MAT, leaves, pot, palm, fern, pillar, taper, candleCluster, lounger, drumTable, carafeTray, robes, towelShelves, lantern, stoneBench, poolRail, archOutline, zafu, tilePanel, plankBench, lectern, roll } from './pool_chapel_parts.js';
+import { MAT, leaves, pot, palm, fern, pillar, taper, candleCluster, lounger, drumTable, carafeTray, robes, towelShelves, lantern, stoneBench, poolRail, archOutline, zafu, plankBench, lectern, roll } from './pool_chapel_parts.js';
 import { flames, poolWater, steam, wash, glassBoxes, oculus, bowl } from './pool_chapel_fx.js';
 import * as THREE from 'three';
 
@@ -46,6 +46,15 @@ export default function (f) {
   const F = POOL.floor;                                                    // 0.4 (the Chapel's is the same)
   const L = leaves(K);
   const poolFlames = [], chapelFlames = [], poolLamps = [], poolWash = [], chapelWash = [];
+
+  f.inZone('o:courtyard', () => {
+    const left = f.fr(68.7, 15.9, 0.34), right = f.fr(73.3, 16.7, 0.34);
+    lounger(K, left, { w: 2.25, len: 5.6, fabric: 'linen#d5cab0', wood: 'oak_light#916f4e', tilt: 0.55 });
+    lounger(K, right, { w: 2.25, len: 5.6, fabric: 'linen#9cad9d', wood: 'oak_light#916f4e', tilt: 0.69 });
+    const table = f.fr(71, 19.0, 0.34);
+    const h = drumTable(K, table, 0, 0, 0.68, 1.27);
+    carafeTray(K, table, 0, 0, h);
+  });
 
   // ---- a lining of stone: boxes in front of a wall, cut round its openings ----------------------------------------
   // the rectangle a0..a1 (along the wall) by z0..z1, less the holes [a0, a1, z0, z1]: vertical strips between the
@@ -96,31 +105,15 @@ export default function (f) {
       if (axis === 'Y') { for (const [s0, s1, h0, h1] of around(a0, a1, F + 0.02, F + 3.3, holes)) f.box(DADO, Math.min(c, c + t), Math.max(c, c + t), s0, s1, h0, h1); for (const [s0, s1] of around(a0, a1, F + 3.3, F + 3.42, holes).map(r => [r[0], r[1]])) f.box(CAP, Math.min(c, c + k), Math.max(c, c + k), s0, s1, F + 3.3, F + 3.42); }
       else { for (const [s0, s1, h0, h1] of around(a0, a1, F + 0.02, F + 3.3, holes)) f.box(DADO, s0, s1, Math.min(c, c + t), Math.max(c, c + t), h0, h1); for (const [s0, s1] of around(a0, a1, F + 3.3, F + 3.42, holes).map(r => [r[0], r[1]])) f.box(CAP, s0, s1, Math.min(c, c + k), Math.max(c, c + k), F + 3.3, F + 3.42); }
     };
-    const OPEN = [[60.9, 66.7, F - 1, F + 8.5]];
-    dado('Y', WL + 0.02, 1, 46.4, 72.45, OPEN); dado('Y', WR - 0.02, -1, 46.4, 72.45, OPEN);
-    // ... and on round the courtyard's wall: its facets (as spanya.js sets them out: the circle of 24 ft to the wall's
-    // middle, 1.5 thick, three facets each side between the side walls and the door bay, a window in each with a 1 ft
-    // pier at the stretch's ends and 0.5 between), full height on the piers and under the sills; the bay's two piers
-    { const XC = 60, YC = 28, Rf = 24.75 + 0.02, rad = d => d * Math.PI / 180, aP = Math.acos(17 / 24) * 180 / Math.PI, dB = Math.asin(4.45 / 24) * 180 / Math.PI;
-      const band = (mat, P0, P1, o0, o1, h0, h1) => {
-        const dx = P1[0] - P0[0], dy = P1[1] - P0[1], L2 = Math.hypot(dx, dy); if (L2 < 0.05) return;
-        const mx = (P0[0] + P1[0]) / 2, my = (P0[1] + P1[1]) / 2, nl = Math.hypot(mx - XC, my - YC), nx = (mx - XC) / nl, ny = (my - YC) / nl;
-        const g = new THREE.BoxGeometry(L2, h1 - h0, o1 - o0).toNonIndexed();
-        const uv = g.attributes.uv, P = g.attributes.position; for (let i = 0; i < P.count; i++) uv.setXY(i, uv.getX(i) * L2, uv.getY(i) * (h1 - h0));
-        g.rotateY(Math.atan2(dy, dx)); const om = (o0 + o1) / 2; g.translate(mx + nx * om, (h0 + h1) / 2, -(my + ny * om));
-        f.mesh(mat, g);
-      };
-      const pt = (a, r = Rf) => [XC + r * Math.cos(rad(a)), YC + r * Math.sin(rad(a))];
-      for (const [from, to] of [[180 - aP, 90 + dB], [90 - dB, aP]]) for (let i = 0; i < 3; i++) {
-        const A = pt(from + (to - from) * i / 3), B = pt(from + (to - from) * (i + 1) / 3), L2 = Math.hypot(B[0] - A[0], B[1] - A[1]), m = (i === 0 || i === 2) ? 1.0 : 0.5;
-        const at = t => [A[0] + (B[0] - A[0]) * t / L2, A[1] + (B[1] - A[1]) * t / L2], piers = [[0, m - 0.12], [L2 - m + 0.12, L2]];
-        for (const [t0, t1] of piers) { band(DADO, at(t0), at(t1), 0.14, 0.2, F + 0.02, F + 3.3); band(CAP, at(t0), at(t1), 0.14, 0.24, F + 3.3, F + 3.42); }
-        band(DADO, at(m - 0.12), at(L2 - m + 0.12), 0.14, 0.2, F + 0.02, F + 0.78); band(CAP, at(m - 0.12), at(L2 - m + 0.12), 0.14, 0.24, F + 0.78, F + 0.88);
-      }
-      const yb = 28 + Math.sqrt(24 * 24 - 4.45 * 4.45) + 0.75;      // the door bay's room face
-      for (const [x0, x1] of [[55.6, 56.85], [63.15, 64.4]]) { f.box(DADO, x0, x1, yb + 0.14, yb + 0.2, F + 0.02, F + 3.3); f.box(CAP, x0, x1, yb + 0.14, yb + 0.24, F + 3.3, F + 3.42); } }
-    dado('Y', WL2 + 0.02, 1, 74.05, YN - 0.05, []); dado('Y', WR2 - 0.02, -1, 74.05, YN - 0.05, []);
-    dado('X', YN - 0.02, -1, WL2 + 0.08, WR2 - 0.08, [[57.1, 62.9, F - 1, F + 9.0]]);
+    const OPEN = [[61.15, 66.45, F - 1, F + 8.5]];
+    dado('Y', WL + 0.02, 1, 46.4, 72.5, OPEN); dado('Y', WR - 0.02, -1, 46.4, 72.5, OPEN);
+    const bayY = 28 + Math.sqrt(24 ** 2 - 4.45 ** 2) + 0.75;
+    dado('X', bayY, 1, 55.55, 64.45, [[56.66, 63.34, F - 1, F + 10]]);
+    // The hall narrows here. Cover each short return as well as its long face.
+    dado('X', 72.5, -1, WL, WL2 + 0.02, []);
+    dado('X', 72.5, -1, WR2 - 0.02, WR, []);
+    dado('Y', WL2 + 0.02, 1, 72.5, YN - 0.05, []); dado('Y', WR2 - 0.02, -1, 72.5, YN - 0.05, []);
+    dado('X', YN - 0.02, -1, WL2 + 0.08, WR2 - 0.08, [[57.4, 62.6, F - 1, F + 9.0]]);
     // the frieze high in the tall part
     const FZ = F + 13.4;
     f.box(FRIEZE, WL2 + 0.02, WL2 + 0.08, 74.05, YN - 0.05, FZ, FZ + 0.6); f.box(FRIEZE, WR2 - 0.08, WR2 - 0.02, 74.05, YN - 0.05, FZ, FZ + 0.6);
@@ -159,7 +152,9 @@ export default function (f) {
       poolWash.push([...fr.map(x0 + 0.1, 1.36), ...fr.map(x1 - 0.1, 1.36), F, 0.9, 1.2, 1.2]);
     };
     const planter = (fr, x0, x1, palmX) => {
-      fr.box(DADO, x0, x1, 0, 1.25, 0, 1.35); fr.box(CAP, x0 - 0.04, x1 + 0.04, -0.02, 1.31, 1.35, 1.43); fr.box('plaster#3a2c22', x0 + 0.1, x1 - 0.1, 0.1, 1.15, 1.35, 1.38);
+      fr.box(DADO, x0, x1, 0, 1.25, 0, 1.35); for (const [a, b] of [[-0.02, 0.1], [1.15, 1.31]]) fr.box(CAP, x0 - 0.04, x1 + 0.04, a, b, 1.35, 1.43);
+      for (const [a, b] of [[x0 - 0.04, x0 + 0.1], [x1 - 0.1, x1 + 0.04]]) fr.box(CAP, a, b, 0.1, 1.15, 1.35, 1.43);
+      fr.box('soilbed', x0 + 0.1, x1 - 0.1, 0.1, 1.15, 1.35, 1.38);
       fr.block(x0, x1, 0, 1.31, 0, 1.6);
       const m = (id, x, sc, turn) => f.model(id, fr, x, 0.62, 1.37, 0, { scale: sc, turn });
       m('fern_clump_b', x0 + 1.0, 0.95, 0.3); m('fern_clump_c', x1 - 1.0, 0.95, 2.0); m('mossy_rock_03', (x0 + x1) / 2 - 0.9, 0.13, 0.7); m('st_river_stone', (x0 + x1) / 2 + 1.1, 1.2, 0.4);
@@ -170,14 +165,12 @@ export default function (f) {
     const tW = wW(79.25, WL2), tE = wE(79.25, WR2);
     bench(tW, 0.25, 5.0);  planter(tW, -5.0, -0.3, -2.6);            // west: the bench Y 74.25..79, the planter Y 79.55..84.25
     planter(tE, -5.0, -0.25, -2.4); bench(tE, 0.3, 5.0, { c1: 'linen#3f5a44', c2: 'linen#ddd2bb' });      // east: the planter to the south, the bench by the north wall
-    // one picture in glazed tile set into the tall part's west wall, above the bench and the planter: a garden of gold after
-    // Klimt's Tree of Life, in a tile surround (the east wall is left calm)
-    for (const [fr, kind, title, kicker, text] of [[tW, 'garden', 'The garden', 'a tile panel, after Gustav Klimt', "A tree whose branches roll up into spirals over a meadow of flowers, on a gold ground: after the Tree of Life in Klimt's frieze for the Palais Stoclet, Brussels (1905 to 1911), made here in glazed tile."]]) {
-      const pw = 7.6, ph = 5.6, zc = 8.2;
-      fr.box(CAP, -pw / 2 - 0.22, pw / 2 + 0.22, -0.06, 0.02, zc - ph / 2 - 0.22, zc + ph / 2 + 0.22);
-      f.sign(fr.sub(0, 0.0), 0, zc, pw, ph, tilePanel(kind), { rough: 0.35, y: 0.045 });
-      f.label(fr, 0, 0.2, zc, { label: 'look at the tiles', title, kicker, text, size: 3, reach: 12 });
-    }
+    f.framed(tW.sub(0, 0.10), 0, 8.05, 8.15, 5.45, 'nile_boat_mosaic', {
+      frame: CAP, mat: 0, border: 0.11, label: 'look at the mosaic', reach: 13,
+      title: 'A boat on the Nile', kicker: 'Roman mosaic · National Museum Cardiff',
+      text: 'A crew works beneath the mast. Beyond the boat, the river is filled with birds, buildings and a crocodile.',
+      foot: 'Photographed by Wolfgang Sauber. Wikimedia Commons · CC BY-SA 3.0.'
+    });
     // the north wall, either side of the chapel's doors: lit shelves above head height with jars, a fern in a vase, rolled towels
     for (const [x0, x1] of [[46.4, 55.4], [64.6, 73.6]]) {
       const zs = F + 6.3, sh2 = 'tile_hex#e7e1d3';
@@ -185,8 +178,12 @@ export default function (f) {
       f.box('e#ffb060/1.8', x0 + 0.2, x1 - 0.2, YN - 0.58, YN - 0.54, zs - 0.18, zs - 0.15);
       poolWash.push([x1 - 0.1, YN - 0.035, x0 + 0.1, YN - 0.035, zs, 2.4, 0, 0.9], [x1 - 0.1, YN - 0.035, x0 + 0.1, YN - 0.035, zs - 0.18, -2.6, 0, 0.6]);
       const s2 = f.fr(x0, YN - 0.33, zs, 0);
-      f.model('st_terracotta_jar_1', s2, 1.0, 0, 0.01, 0, { scale: 0.5 }); f.model('st_clay_pot_7', s2, 2.2, 0, 0.01, 0, { scale: 0.9 }); f.model('fern_clump_d', s2, 2.2, 0, 0.01 + 0.42, 0, { scale: 0.3, turn: 1.3 });
-      f.model('ceramic_vase_02', s2, 4.5, 0, 0.01, 0, { scale: 0.75 }); f.model('fern_clump_a', s2, 4.5, 0, 0.01 + 0.76 - 0.12, 0, { scale: 0.5, turn: x0 });      // a fern spilling from a stoneware vase (no bare branches: STYLE.md)
+      // Build the wall shelf as one room furnishing. Each fern grows from its pot's soil.
+      s2.lathe(MAT.CLAY, 1, 0, [[0,0],[0.18,0],[0.27,0.19],[0.24,0.45],[0.13,0.56],[0.14,0.61],[0.11,0.61],[0.1,0.49]], { seg: 20 });
+      for (const [x,r,h,glaze] of [[2.25,0.23,0.42,MAT.GLAZE],[4.5,0.27,0.68,MAT.GLAZE2]]) {
+        const soil = pot(K,s2,x,0,r,h,glaze);
+        fern(K,L,s2,x,0,soil,0.32,h*100);
+      }
       for (let k = 0; k < 5; k++) roll(K, s2, [MAT.TERRY, MAT.TERRY2, MAT.TERRY3, MAT.TERRY, MAT.TERRY4][k], 6.4 + (k % 3) * 0.32 + (k > 2 ? 0.16 : 0), 0, 0.16 + (k > 2 ? 0.28 : 0), 0.15, 0.5, { rz: Math.PI / 2 });
     }
     // light: up the tiles from the foot of the low walls; down the tiles of the tall part from a cove under its ceiling
@@ -256,13 +253,18 @@ export default function (f) {
     lining(mE, rectP(96.02, 122.98, Z0, Z1), EAST.map(l => archP(l.a, l.zc, LW, LHt)), T1);
     const gz = F + 2.8 + GH / 2, rz = F + 12.6, roseZ = F + 13.2;
     lining(mN, rectP(62.02, 87.98, Z0, Z1), [archP(75, gz, GW, GH), roundP(65.6, rz, RD), roundP(84.4, rz, RD)], T1);
-    lining(mS, [[62.02, Z0], [72.68, Z0], [72.68, F + 8.24], [77.32, F + 8.24], [77.32, Z0], [87.98, Z0], [87.98, Z1], [62.02, Z1]], [roundP(75, roseZ, ROSE)], T2);
+    // Match the structural doorway. The oak jambs and head extend through this facing.
+    lining(mS, [[62.02, Z0], [72.75, Z0], [72.75, F + 7.8], [77.25, F + 7.8], [77.25, Z0], [87.98, Z0], [87.98, Z1], [62.02, Z1]], [roundP(75, roseZ, ROSE)], T2);
     // the glass, 0.12 out from the wall at the back of each opening; a candle on each lancet's sill
     const E = 0.12, pane = (id, kind, map, a, zc, w, ht, back) => { const [X, Y] = map(a, E), [X1, Y1] = map(a + 1, E), [Xs, Ys] = map(a, 1); const sx = X1 - X, sy = Y1 - Y, nx = Xs - X, ny = Ys - Y; const right = (nx * sy - ny * sx) > 0 ? [sx, sy] : [-sx, -sy];
       panes.push({ id, kind, X, Y, h: zc, w, ht, ux: right[0], uy: right[1], back }); };
     WEST.forEach((l, i) => { pane(west[i], 'lancet', mW, l.a, l.zc, LW, LHt, T1 - E); const [X, Y] = mW(l.a, 0.6); pillar(K, f.fr(X, Y, l.sill, 0), 0, 0, 0.01, 0.4 + (i % 3 === 1 ? 0.2 : 0), 0.12, chapelFlames); });
     EAST.forEach((l, i) => { pane(east[i], 'lancet', mE, l.a, l.zc, LW, LHt, T1 - E); const [X, Y] = mE(l.a, 0.6); pillar(K, f.fr(X, Y, l.sill, 0), 0, 0, 0.01, 0.4 + (i % 3 === 1 ? 0.2 : 0), 0.12, chapelFlames); });
-    pane('ingression', 'great', mN, 75, gz, GW, GH, T1 - E); for (const [d, t] of [[-2.2, 0.7], [-1.7, 0.45], [1.9, 0.55], [2.4, 0.38]]) { const [X, Y] = mN(75 + d, 0.6); pillar(K, f.fr(X, Y, F + 2.8, 0), 0, 0, 0.01, t, 0.14, chapelFlames); }
+    const [shelfX, shelfY] = mN(75, 0);
+    const ledge = f.fr(shelfX, shelfY, F, 2);
+    ledge.bev('oak_light#795c41', -3.1, 3.1, -0.03, 1.38, 2.65, 2.80, 0.035);
+    for (const x of [-2.4, 2.4]) ledge.bev('walnut', x - 0.09, x + 0.09, 0.3, 1.27, 2.46, 2.65, 0.035);
+    pane('ingression', 'great', mN, 75, gz, GW, GH, T1 - E); for (const [d, t] of [[-2.2, 0.7], [-1.7, 0.45], [1.9, 0.55], [2.4, 0.38]]) { const [X, Y] = mN(75 + d, 1.12); pillar(K, f.fr(X, Y, F + 2.8, 0), 0, 0, 0.01, t, 0.14, chapelFlames); }
     pane('snow', 'round', mN, 65.6, rz, RD, RD, T1 - E); pane('benard', 'round', mN, 84.4, rz, RD, RD, T1 - E);
     pane('rose', 'round', mS, 75, roseZ, ROSE, ROSE, T2 - E);
     // amber light from a cove at the foot of the rock, washing up it

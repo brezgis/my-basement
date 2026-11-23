@@ -8,7 +8,7 @@ import { lathe, sweep } from '../kit/geom.js';
 const TAU = Math.PI * 2;
 export const C = {
   PORC: 'c#efe9dd/0.18', BRASS: 'c#b08d4a/0.3/1', COPPER: 'c#b0643a/0.3/1', CHROME: 'c#d4d6d8/0.12/1', IRON: 'c#2b2724/0.5/1',
-  SPRUCE: 'c#d6bf98/0.85', SPRUCE2: 'c#c9ae84/0.85', OAKP: 'c#8a6440/0.6', WALNUT: 'c#5a3e2a/0.55', GREEN: 'c#2f4b3b/0.45',
+  SPRUCE: 'oak_light#d6c6a8', SPRUCE2: 'oak_light#c5b08b', OAKP: 'c#8a6440/0.6', WALNUT: 'walnut', GREEN: 'c#2f4b3b/0.45',
   CREAM: 'c#e8dfcb/0.5', BLACK: 'c#18140f/0.35', LEAF: ['c#4f6b3c/0.7', 'c#5d7a45/0.7', 'c#46613a/0.75', 'c#6b8550/0.7'],
 };
 
@@ -92,7 +92,14 @@ export function parts(K) {
     for (let i = -2; i <= 2; i++) f.box('c#e0c48a/0.9', x + i * len * 0.16 - 0.025, x + i * len * 0.16 + 0.025, y - r * 0.55, y + r * 0.55, z + r * 1.14, z + r * 1.18);
   }
   // a cheese wheel, upright, its edge rounded (a Comté, a Gruyère); rind colour
-  function wheel(f, x, y, z, r, h, rind = 'c#b98a4a/0.8') { const e = Math.min(0.05, h * 0.3); ves(f, rind, x, y, z, [[0, 0], [r - e, 0], [r, e], [r, h - e], [r - e, h], [0, h]], 18); }
+  function wheel(f, x, y, z, r, h, rind = 'c#b98a4a/0.8') { const e=Math.min(0.055,h*0.23);
+    const profile=[[0,0],[r-e,0],[r,e],[r+0.012,h*0.47],[r,h-e],[r-e,h],[0,h]];
+    const g=lathe(profile,{seg:32,mod:(a,j)=>1+0.012*Math.sin(3*a+x)+0.006*Math.sin(7*a+j*0.18)});
+    const {position,uv} = g.attributes;
+    // Project the cut faces in the plane of the wheel so the rind grain keeps its scale at the centre.
+    for (let i=0;i<position.count;i++) if (position.getZ(i)===0 || Math.abs(position.getZ(i)-h)<0.001)
+      uv.setXY(i,position.getX(i)+x,position.getY(i)+y);
+    put(f,rind,g,{at:[x,y,z]}); }
   // a wedge out of a wheel: a sector from angle a0 to a1 (radians), radius r, height h, standing at (x, y) of its point
   function wedgeGeom(r, h, a0, a1) {
     const s = new THREE.Shape(); s.moveTo(0, 0); const n = Math.max(3, Math.ceil((a1 - a0) * 5)); for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n; s.lineTo(Math.cos(a) * r, Math.sin(a) * r); } s.lineTo(0, 0);
@@ -142,7 +149,7 @@ export function parts(K) {
 
   // ---- cheese, closer: a wedge with its rind, its paste, a few eyes on the cut faces and the stamp on its rind; the top of
   //      a blue with its veins; a goat's log in ash, cut; a cloth-bound wheel
-  const CHEESE = { comte: ['c#e9cf86/0.55', 'c#9a6a34/0.85', true], manchego: ['c#efe2b0/0.6', 'c#4a3a2a/0.85', false], brie: ['c#f3ead2/0.6', 'c#f4f0e6/0.95', false] };
+  const CHEESE = { comte: ['c#ead59e/0.6', 'cheese_rind#c59a6e', true], manchego: ['c#efe2b0/0.6', 'c#4a3a2a/0.85', false], brie: ['c#f3ead2/0.6', 'c#f4f0e6/0.95', false] };
   function cheeseWedge(f, x, y, z, r, h, a0, a1, kind) {
     const [paste, rind, eyes] = CHEESE[kind];
     wedge(f, x, y, z, r, h, a0, a1, paste, rind);

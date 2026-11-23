@@ -98,9 +98,9 @@ export function makeBath(K) {
 
   // ---- toilet ---------------------------------------------------------------------------------------------
   // A close-coupled toilet against the wall, centred at x: oval bowl, cistern with a lever, a wooden
-  // seat with its lid up. o.seat: the seat's material.
+  // seat with its lid up. o.seat: the seat's material, or 'porcelain' to match the bowl.
   function toilet(f, x = 0, o = {}) {
-    const s = f.sub(x, 0), m = o.mat ?? PORCELAIN, seatM = woodOf(o.seat ?? OAK);
+    const s = f.sub(x, 0), m = o.mat ?? PORCELAIN, seatM = o.seat === 'porcelain' ? m : woodOf(o.seat ?? OAK);
     put(s, m, softBox(-0.8, 0.8, 0.05, 0.62, 1.55, 2.62, 0.07, { n: [2, 1, 2] }));
     put(s, m, softBox(-0.84, 0.84, 0.02, 0.66, 2.62, 2.73, 0.04, { n: [2, 1, 1], crown: 0.01 }));
     put(s, o.metal ?? BRASS, merge([xf(lathe([[0, 0], [0.05, 0], [0.04, 0.03], [0, 0.035]], { seg: 10 }), { rx: -Math.PI / 2, at: [-0.55, 0.62, 2.45] }), sweep([[-0.55, 0.65, 2.45], [-0.4, 0.68, 2.44], [-0.28, 0.69, 2.42]], 0.018, { seg: 5, caps: true })]));

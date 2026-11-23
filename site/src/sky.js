@@ -42,7 +42,9 @@ uniform vec3 uCam, uSun; uniform float uOpK;
 varying vec2 vUv; varying float vSeed, vOp, vAspect, vSharp; varying vec3 vSunL;
 void main() {
   vUv = uv; vSeed = aParam.x; vOp = aParam.y * uOpK; vAspect = aParam.z; vSharp = aParam.w;
-  vec3 F = normalize(uCam - aPos), R = normalize(cross(vec3(0.0, 1.0, 0.0), F)), U = cross(F, R);
+  vec3 F = normalize(uCam - aPos + vec3(0.0, 0.0, 1e-5));
+  vec3 axis = abs(F.y) > 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
+  vec3 R = normalize(cross(axis, F)), U = cross(F, R);
   vSunL = normalize(vec3(dot(uSun, R) / aSize.x, dot(uSun, U) / aSize.y, dot(uSun, F)));
   gl_Position = projectionMatrix * viewMatrix * vec4(aPos + R * position.x * aSize.x + U * position.y * aSize.y, 1.0);
 }`;
@@ -89,7 +91,7 @@ void main() {
 // uNight: the night sky's own glow (moonlit blue overhead, a little paler toward the horizon),
 // added to the analytic sky, which is black once the sun is down; so the island stands out
 // against the sky at night and the moonlit reflections are blue rather than nothing.
-function makeDome(gain, night) {
+function makeDome(gain, night, below = null) {
   const sky = new Sky();
   sky.scale.setScalar(9000);
   const u = sky.material.uniforms;
@@ -98,6 +100,12 @@ function makeDome(gain, night) {
   sky.material.fragmentShader = sky.material.fragmentShader
     .replace('uniform float mieDirectionalG;', 'uniform float mieDirectionalG;\n\t\tuniform float uGain;\n\t\tuniform vec3 uNight;')
     .replace('gl_FragColor = vec4( retColor, 1.0 );', 'gl_FragColor = vec4( retColor * uGain + uNight * ( 0.55 + 0.75 * pow( 1.0 - abs( direction.y ), 3.0 ) ), 1.0 );');
+  if (below) {
+    u.uBelow = below;
+    sky.material.fragmentShader = sky.material.fragmentShader
+      .replace('uniform vec3 uNight;', 'uniform vec3 uNight;\n\t\tuniform vec3 uBelow;')
+      .replace('retColor * uGain + uNight', 'mix( retColor * uGain, uBelow, smoothstep( 0.0, 0.85, -direction.y ) ) + uNight');
+  }
   return sky;
 }
 
@@ -105,7 +113,9 @@ export function buildSky(scene, renderer, centre) {
   // (the sky you see is held a little under the sky that lights things, so the colours of the
   // evening are not washed out by an eye opened wide for the lamplit street)
   const gain = { value: 0.55 }, domeGain = { value: 0.4 }, nightSky = { value: new THREE.Color(0, 0, 0) };
-  const dome = makeDome(domeGain, nightSky); dome.userData.cat = 'sky:dome'; scene.add(dome);
+  const lowerSky = { value: new THREE.Color(0, 0, 0) };
+  const dome = makeDome(domeGain, nightSky, lowerSky);
+  dome.renderOrder = -1000; dome.frustumCulled = false; dome.userData.cat = 'sky:dome'; scene.add(dome);
   // A second dome in a scene of its own, from which room reflections and soft sky light are taken.
   const envScene = new THREE.Scene(), envDome = makeDome(gain, nightSky); envScene.add(envDome);
   // Below the horizon the reflections see garden, not more sky; without this, ceilings glow.
@@ -171,25 +181,32 @@ export function buildSky(scene, renderer, centre) {
   const stars = (() => {
     const s = rng(77), N = 1400, pos = new Float32Array(N * 3), cols = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
-      const band = i > N * 0.55; let x, y, z;
-      do {
-        x = s() * 2 - 1; y = s(); z = s() * 2 - 1;
-        if (band) { const a = s() * Math.PI * 2, off = (s() - 0.5) * 0.3; x = Math.cos(a); z = Math.sin(a) * 0.4 + off; y = Math.abs(Math.sin(a) * 0.85 + off * 0.5); }
-      } while (Math.hypot(x, y, z) < 0.2 || y < 0.03);
+      const band = i > N * 0.62, a = s() * Math.PI * 2, elevation = 2 * s() - 1;
+      const radial = Math.sqrt(1 - elevation * elevation), off = (s() - 0.5) * 0.25;
+      const x = band ? Math.cos(a) : radial * Math.cos(a);
+      const y = band ? Math.sin(a) * 0.83 + off * 0.5 : elevation;
+      const z = band ? Math.sin(a) * 0.56 + off : radial * Math.sin(a);
       const l = Math.hypot(x, y, z), mag = band ? 0.25 + s() * 0.4 : 0.4 + s() * 0.7, warm = s();
       pos.set([(x / l) * 2700, (y / l) * 2700, (z / l) * 2700], i * 3);
       cols.set([mag * (0.85 + warm * 0.15), mag * (0.88 + warm * 0.06), mag * (1.0 - warm * 0.18)], i * 3);
     }
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
-    const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 2.2, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    const disc = document.createElement('canvas'); disc.width = disc.height = 16;
+    const g = disc.getContext('2d'), edge = g.createRadialGradient(8, 8, 1, 8, 8, 8);
+    edge.addColorStop(0, '#fff'); edge.addColorStop(0.55, 'rgba(255,255,255,0.7)'); edge.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = edge; g.fillRect(0, 0, 16, 16);
+    const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+      size: 3.0, sizeAttenuation: false, map: new THREE.CanvasTexture(disc), vertexColors: true, transparent: true,
+      opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+    }));
     pts.frustumCulled = false; pts.renderOrder = -3;
     return pts;
   })();
   scene.add(stars);
 
   // ---- moon
-  const moon = new THREE.Mesh(new THREE.CircleGeometry(38, 72), new THREE.MeshBasicMaterial({ color: 0xf4f1e6, fog: false, transparent: true, toneMapped: false }));
+  const moon = new THREE.Mesh(new THREE.CircleGeometry(38, 72), new THREE.MeshBasicMaterial({ color: 0xf4f1e6, fog: false, transparent: true, depthWrite: false, toneMapped: false }));
   moon.renderOrder = -3; scene.add(moon);
   { // the moon's face: seas and craters, drawn once (it is worth a look through the telescope)
     const c = document.createElement('canvas'); c.width = c.height = 512; const g = c.getContext('2d');
@@ -232,7 +249,7 @@ export function buildSky(scene, renderer, centre) {
     if (up) { sunTransmittance(Math.sin(Math.max(el, 0)), T); const m = Math.max(T[0], T[1], T[2]); sun.color.setRGB(T[0] / m, T[1] / m, T[2] / m); sun.intensity = 4.6 * smoothstep(el, -0.03, 0.09) * (0.45 + 0.55 * m); }      // full low sun by 5 degrees up: the golden hour
     else { sun.color.set(0xa8bde6); sun.intensity = 0.42 + 0.5 * smoothstep(-el, 0.02, 0.25); }      // moonlight, full once the twilight has gone
     fill.position.set(-lampDir.x, 0.5, -lampDir.z).normalize().multiplyScalar(300).add(centre); fill.intensity = 0.6 * state.light;
-    moon.position.copy(lampDir).multiplyScalar(2650); moon.lookAt(0, 0, 0); moon.material.opacity = up ? 0 : 0.95; state.moonUp = !up; state.moonDir.copy(lampDir);
+    moon.material.opacity = up ? 0 : 0.95; state.moonUp = !up; state.moonDir.copy(lampDir);
 
     hemi.intensity = key(kh, 'hemi') * 0.5; key(kh, 'fog', scene.fog.color); key(kh, 'shade', uShadeCol.value); uShadeCol.value.multiplyScalar(1 + 0.9 * state.light);
     hemi.color.copy(scene.fog.color).lerp(new THREE.Color(0xe6e2d6), 0.6 * state.light);
@@ -241,10 +258,11 @@ export function buildSky(scene, renderer, centre) {
     hemi.color.lerp(new THREE.Color(0x6f84b0), dark); hemi.groundColor.set(0x8a7a5c).lerp(new THREE.Color(0x2c2a2a), dark);
     hemi.intensity += 0.55 * dark;
     nightSky.value.setRGB(0.010, 0.018, 0.040).multiplyScalar(dark);
+    lowerSky.value.copy(scene.fog.color).multiplyScalar(0.32 * (1 - dark));
     state.skyCol.copy(hemi.color); state.sunCol.copy(sun.color); state.sunK = up ? clamp(sun.intensity / 4.6, 0, 1) : 0;
     uLitCol.value.copy(sun.color).multiplyScalar(up ? 0.8 + 1.9 * state.light : 0.16).lerp(uShadeCol.value, up ? 0 : 0.5);
     stars.material.opacity = smoothstep(state.night, 0.55, 1);
-    cloudUniforms.uOpK.value = lerp(0.35, 1, state.light);
+    cloudUniforms.uOpK.value = lerp(0.49, 1, state.light);
 
     envGround.material.color.set(0x394426).multiplyScalar(lerp(0.08, 1, state.light));
     envTarget?.dispose();
@@ -263,7 +281,11 @@ export function buildSky(scene, renderer, centre) {
     C.forEach((c, i) => { aPos.setXYZ(i, c.pos.x, c.pos.y, c.pos.z); aSize.setXY(i, c.sx, c.sy); aParam.setXYZW(i, c.seed, c.op, c.aspect, c.sharp); });
     aPos.needsUpdate = aSize.needsUpdate = aParam.needsUpdate = true;
     cloudUniforms.uCam.value.copy(camera.position); cloudUniforms.uSun.value.copy(state.sunDir);
-    dome.position.copy(camera.position).setY(0); stars.position.copy(dome.position);
+    // The sky and celestial objects only depend on viewing direction. Clouds stay at their own world altitudes.
+    dome.position.copy(camera.position);
+    stars.position.copy(camera.position);
+    moon.position.copy(camera.position).addScaledVector(state.moonDir, 2650);
+    moon.lookAt(camera.position);
   }
 
   // Indoors with no window in view, clouds, stars and moon need not be drawn

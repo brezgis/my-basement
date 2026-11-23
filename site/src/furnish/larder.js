@@ -2,7 +2,7 @@
 // In the house's settled key (notes/STYLE.md, first section): stone rooms of pale coursed stone, slate and honey boards,
 // oak furniture, lit by candles and lanterns and by light on stone; and, for this room at Anna's word, PLUSH and warm
 // in its furniture: a friend's den for an evening, after Vesper Street's Low Tide Records (its listening room, its
-// crates), Slow Hand Coffee's counter and the rooftop bar's string of small lights (town_walk/site/src/shops/).
+// crates) and Slow Hand Coffee's counter (town_walk/site/src/shops/).
 //
 // THE LISTENING ROOM (X 13.5 to 35.8 by Y 40.8 to 72.5, east to X 42.75 by the courtyard glass; the north part two
 //   storeys high with the stair along the north wall (its foot at X 37), the gallery over the west strip and the
@@ -12,7 +12,7 @@
 //     stools, an oak back shelf of wine, cups and jars against the stone with one wash of light down it;
 //   the listening lounge, south-west: the record wall in honey oak (records, two big speakers, a valve amplifier,
 //     the house's turntable), a deep velvet sofa piled with cushions and a throw, two leather armchairs, a leather
-//     ottoman with a tray, a pouf, a big rug, crates of records, a string of small lights, candles;
+//     ottoman with a tray, a pouf, a big rug, crates of records, shaded wall lights and candles;
 //   the tasting table, south-east by the glass: one massive oak table, a bench each side, candles, cheese, bread,
 //     fruit, wine; a mossy boulder and a fern at the foot of the glass.
 //   In the double height: an olive in a clay jar, and an iron corona of candles hung from the bridge (the room's lamp).
@@ -33,10 +33,12 @@
 //   The lounge: a post by the turntable [20.1, 44.4] facing south (2 ft before the record wall).
 //   The Cave, the affineur: home [8.5, 60.5], faces [5, 61.5] (the Comté rack); posts [3.6, 59.5] facing north (the
 //     rack), [3.6, 52.6] facing south (the bottles), [4.6, 55.0] facing west (the table laid for two).
+import { stoveFire } from './banya_fx.js';
+import { storedLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { parts, C, EAT } from './larder_parts.js';
 import { goods } from './larder_goods.js';
-import { flames } from './larder_fx.js';
+import { flames, hangingGlobes } from './larder_fx.js';
 
 export default function (f) {
   const FLAMES = [];      // every wick in the two rooms: [{ X, Y, h, s }], drawn alight by larder_fx.js
@@ -51,7 +53,7 @@ export default function (f) {
   const prof = name => { part = name; };
 
   // the palette
-  const WAL = 'c#b08250/0.6', WAL2 = 'c#a07446/0.6', WALD = 'c#6a4a2e/0.6', OAK = 'c#c08a58/0.6', HONEY = 'c#c99a62/0.55', STONE = 'c#b8ae9e/0.6', STONE2 = 'c#b0a492/0.85', OAKT = 'oak_light', OAKD = 'c#7a5636/0.6';
+  const WAL = 'walnut#bd9876', WAL2 = 'walnut#ac8966', WALD = 'walnut#8a7059', OAK = 'oak_light#c09c75', HONEY = 'oak_light#d8bb90', STONE = 'limestone_smooth#ccc2ae', STONE2 = 'limestone_smooth#b5ac97', OAKT = 'oak_light', OAKD = 'oak_light#997451';
   const SPRUCE = C.SPRUCE, BRASS = C.BRASS, COPPER = C.COPPER, GLOW = 'e#ff9a48/1.1', BULB = 'e#ffc070/1.5';
   const GREEN = 'linen#8a9478', OCHRE = 'linen#c9b48a', CREAMW = 'linen#e8e0cc', SHEEP = 'wool#f2ece0', LEATHER = 'linen#d8ccb4';
   const PRES = ['c#d9822a/0.3', 'c#4a1a2a/0.3', 'c#a8401e/0.3', 'c#7a1020/0.3', 'c#d98a2a/0.3', 'c#7a8a3a/0.35', 'c#d9a43a/0.3', 'c#5a1a3a/0.3'];
@@ -188,17 +190,28 @@ export default function (f) {
   //   the tasting table: south-east, by the courtyard glass.
   // =============================================================================================================
 
+  // A counter slab with a rectangular cutout, covered at the corners by the basin's lip.
+  function cutCounter(frame, mat, x0, x1, y0, y1, z0, z1, left, right, back, front) {
+    frame.box(mat, x0, left, y0, y1, z0, z1);
+    frame.box(mat, right, x1, y0, y1, z0, z1);
+    frame.box(mat, left, right, y0, back, z0, z1);
+    frame.box(mat, left, right, front, y1, z0, z1);
+  }
+
   prof('back bar');
   // ---- the back bar on the west wall, under the gallery: an old bar's furniture in honey oak, worn: a deep base cabinet of
   //      panelled doors with brass pulls under a working top (ice well, speed rail, glasses on a cloth), and over it an open
   //      hutch: chamfered posts, nosed shelves with brass gallery rails, a back of dark-stained planks so the bottles read,
   //      a stepped crown. Stocked two and three deep, in groups; two little shaded lamps and candles so the glass sparkles.
   { const B = fr(13.5, 64.4, 3), x0 = -3.9, x1 = 3.9, zt = 3.0;     // x = 64.4 - Y (Y 60.5 to 68.3); +y east, into the room
-    B.box(OAKD, x0 + 0.1, x1 - 0.1, 0.2, 1.8, 0, 0.3); B.bev(OAKT, x0, x1, 0.04, 1.95, 0.3, zt - 0.1, 0.02);
+    const iceX = 2.27, iceY = 0.94, wellHalf = 0.61;
+    B.box(OAKD, x0 + 0.1, x1 - 0.1, 0.2, 1.8, 0, 0.3);
+    B.bev(OAKT, x0, x1, 0.04, 1.95, 0.3, zt - 0.51, 0.02);
+    cutCounter(B, OAKT, x0, x1, 0.04, 1.95, zt - 0.53, zt - 0.1, iceX - wellHalf, iceX + wellHalf, iceY - wellHalf, iceY + wellHalf);
     for (let i = 0; i < 4; i++) { const a0 = x0 + 0.08 + i * 1.935, a1 = a0 + 1.86, m = (a0 + a1) / 2;          // four panelled doors, each with a brass bin pull
       B.bev(OAKT, a0, a1, 1.95, 2.0, 0.4, zt - 0.2, 0.012); B.bev(OAKT, a0 + 0.2, a1 - 0.2, 2.0, 2.04, 0.62, zt - 0.42, 0.03);
-      B.box(BRASS, m - 0.14, m + 0.14, 2.04, 2.08, zt - 0.62, zt - 0.56); }
-    B.bev(OAKT, x0 - 0.06, x1 + 0.06, 0.02, 2.12, zt - 0.1, zt + 0.08, 0.03); P.put(B, OAKT, new THREE.CylinderGeometry(0.09, 0.09, x1 - x0 + 0.12, 10).rotateZ(Math.PI / 2).translate(0, 2.12, zt - 0.01));      // the worn top and its bullnose
+      K.cupPull(B, m, 2.042, zt - 0.6); }
+    cutCounter(B, OAKT, x0 - 0.06, x1 + 0.06, 0.02, 2.12, zt - 0.102, zt + 0.08, iceX - wellHalf, iceX + wellHalf, iceY - wellHalf, iceY + wellHalf); P.put(B, OAKT, new THREE.CylinderGeometry(0.09, 0.09, x1 - x0 + 0.12, 10).rotateZ(Math.PI / 2).translate(0, 2.12, zt - 0.01));      // the worn top and its bullnose
     B.block(x0, x1, 0, 2.2, 0, zt + 0.08);
     const z = zt + 0.08;
     // the hutch above
@@ -230,8 +243,20 @@ export default function (f) {
     G.clothJar(B, 0.4, 0.6, 8.75, 0.24, 0.62, 'c#d98a2a/0.3', 'c#e8e0cc/0.9'); G.clothJar(B, 3.0, 0.6, 8.75, 0.22, 0.55, 'c#7a8a3a/0.35', 'c#b83a32/0.9');
     // the working top: a steel ice well with a scoop, a speed rail of pouring bottles on the front, glasses upside down
     // on a cloth, a bell jar of the house's croissants, a bowl of lemons and oranges, a bunch of flowers, two lamps, candles
-    { B.box('c#c6c2ba/0.25/1', 0.9, 2.1, 0.35, 1.55, z - 0.35, z + 0.02); for (let i = 0; i < 6; i++) ball(B, 'c#e6eef0/0.05', 1.1 + (i % 3) * 0.4, 0.6 + Math.floor(i / 3) * 0.5, z - 0.08, 0.08, 4); tube(B, 'c#c6c2ba/0.2/1', [[1.3, 0.9, z], [1.5, 1.1, z + 0.15]], 0.04, 6);
-      B.box('c#c6c2ba/0.25/1', -1.4, 1.4, 2.12, 2.2, zt - 0.75, zt - 0.6); for (let i = 0; i < 4; i++) G.bottle(B, 'spirit', -1.0 + i * 0.62, 2.3, zt - 1.25, [AMB, CLR, AMB, GRN, CLR, AMB][i], { label: LAB, spout: true, seg: 7 });      // the speed rail
+    {
+      K.basin(B, 'c#908d86/0.32/0.85', iceX, iceY, z + 0.019, 0.675, 0.675, 0.44, { rim: 0.085, e: 10 });
+      const ice = K.geom.softBox(-0.065, 0.065, -0.066, 0.066, 0, 0.11, 0.027, { n: [1, 1, 1] });
+      for (let i = 0; i < 14; i++) {
+        const x = iceX - 0.37 + (i % 5) * 0.154, y = iceY - 0.34 + Math.floor(i / 5) * 0.17;
+        K.put(B, i % 3 ? 'c#dce7e2/0.26/0.15' : 'c#ebeeea/0.18/0.2', ice.clone(), { rz: 1.9 * i, at: [x, y, z - 0.39] });
+      }
+      K.put(B, BRUSH0, K.geom.loft([{ a: 0.025, b: 0.025, z: 0 }, { a: 0.105, b: 0.2, z: 0.035 }, { a: 0.098, b: 0.19, z: 0.1 }, { a: 0.082, b: 0.172, z: 0.092 }, { a: 0.025, b: 0.025, z: 0.015 }], { seg: 16 }), { rz: 0.41, at: [iceX + 0.11, 1.23, z - 0.25] });
+      tube(B, BRUSH0, [[iceX + 0.05, 1.39, z - 0.17], [iceX - 0.02, 1.56, z - 0.12], [iceX - 0.1, 1.75, z + 0.07]], 0.031, 8, true);
+      const speedRail = zt - 1.25;
+      B.bev(BRUSH0, -1.49, 1.49, 2.034, 2.58, speedRail - 0.038, speedRail, 0.016);
+      B.bev(BRUSH0, -1.48, 1.48, 2.55, 2.59, speedRail - 0.02, speedRail + 0.44, 0.016);
+      for (const x of [-1.47, 1.47]) B.bev(BRUSH0, x - 0.019, x + 0.019, 2.045, 2.571, speedRail - 0.02, speedRail + 0.43, 0.012);
+      for (let i = 0; i < 4; i++) G.bottle(B, 'spirit', -1.0 + i * 0.62, 2.31, speedRail, [AMB, CLR, AMB, GRN][i], { label: LAB, spout: true, seg: 8 });
       G.cupStack(B, -1.6, 1.05, z, 3, C.PORC); G.cupStack(B, -1.15, 1.2, z, 2, 'c#3a3632/0.3');
       { const x = -0.5, y = 1.2; ves(B, 'c#8a5a32/0.6', x, y, z, [[0, 0], [0.18, 0], [0.32, 0.08], [0.4, 0.2], [0.38, 0.21], [0.3, 0.1], [0, 0.04]], 14); for (const [dx, dy, k] of [[-0.12, -0.06, 'lemon'], [0.12, 0.05, 'orange'], [0, 0.1, 'lemon']]) P.fruit(B, k, x + dx, y + dy, z + 0.05 + (dx === 0 && dy === 0 ? 0.1 : 0), 0.9); }
       K.posy(B, 3.3, 1.0, z, ['c#f2ead8/0.8', 'c#e8b0a8/0.8', 'c#f4dede/0.8'], { jar: 'c#e8dcc4/0.4' });
@@ -245,15 +270,26 @@ export default function (f) {
   // ---- the corner behind the bar, past the end of the back bar (X 13.5 to 16.5, Y 68.3 to 72.5, under the gallery): the
   //      glass station: a deep sink in a stone top, racks of clean glasses on the wall, the dumb-waiter's hatch, a little lamp
   { const Gs = fr(13.5, 70.4, 3), x0 = -2.05, x1 = 2.05;      // x = 70.4 - Y (Y 68.35 to 72.45); +y east
-    Gs.box(WAL, x0, x1, 0.04, 1.9, 0.3, 2.98); Gs.box(OAKD, x0 + 0.1, x1 - 0.1, 0.2, 1.75, 0, 0.3); Gs.box(STONE, x0 - 0.02, x1 + 0.02, 0.02, 2.06, 2.98, 3.1);
-    Gs.box('c#c6c2ba/0.25/1', -1.3, 0.1, 0.4, 1.6, 2.6, 3.11); Gs.box('c#8a8680/0.3/1', -1.2, 0.0, 0.5, 1.5, 2.62, 2.66);      // the sink
-    tube(Gs, 'c#c6c2ba/0.2/1', [[-0.6, 0.25, 3.1], [-0.6, 0.25, 3.9], [-0.6, 0.55, 4.05], [-0.6, 0.85, 3.85]], 0.03, 6);
+    const sinkLeft = -1.46, sinkRight = 0.18, sinkBack = 0.51, sinkFront = 1.62, worktop = 3.1;
+    Gs.box(OAKD, x0 + 0.1, x1 - 0.1, 0.2, 1.75, 0, 0.3);
+    Gs.bev(WALD, x0, x1, 0.06, 1.88, 0.3, 2.46, 0.019);
+    cutCounter(Gs, WAL, x0, x1, 0.06, 1.9, 2.44, 2.983, sinkLeft, sinkRight, sinkBack, sinkFront);
+    cutCounter(Gs, STONE, x0 - 0.03, x1 + 0.03, 0.04, 2.06, 2.981, worktop, sinkLeft, sinkRight, sinkBack, sinkFront);
+    Gs.bev(STONE, x0 - 0.03, x1 + 0.03, 0.04, 0.13, worktop - 0.005, worktop + 0.3, 0.02, { grain: 'x' });
+    K.basin(Gs, 'c#aaa9a2/0.28/0.86', -0.64, 1.065, worktop + 0.018, 0.9, 0.635, 0.55, { rim: 0.105, e: 10 });
+    K.tap(Gs, -0.64, 0.26, worktop, { mat: C.CHROME, height: 0.96, reach: 0.79 });
+    for (const [left, right] of [[x0 + 0.08, -0.04], [0.04, x1 - 0.08]]) {
+      K.shakerDoor(Gs, WAL, left, right, 0.49, 2.65, 1.9, { hinge: left < 0 ? 'left' : 'right', knobZ: 2.39 });
+    }
+    const apron = Gs.sub(-0.72, 1.955, 2.51, 0);
+    tube(apron, BRASS, [[-0.42, -0.025, 0], [-0.42, 0.14, 0], [0.42, 0.14, 0], [0.42, -0.025, 0]], 0.018, 7, true);
+    K.hangingTowel(apron, -0.021, 0.14, 0.015, 0.57, 0.79, 'linen#a19a7f');
     Gs.block(x0, x1, 0, 2.06, 0, 3.1);
     // the hatch of the dumb-waiter, in the west wall: an oak door in a brass frame, and its bell-push
     Gs.box(BRASS, 0.35, 1.95, 0.02, 0.07, 3.5, 5.3); Gs.bev(OAK, 0.45, 1.85, 0.07, 0.12, 3.6, 5.2, 0.015); Gs.cyl(BRASS, 1.65, 0.14, 4.4, 4.5, 0.04, 0.04, 8);
     // two racks of clean glasses on the wall above, upside down, and a candle lamp at the end
     for (const z of [6.0, 7.2]) { Gs.bev(OAK, x0 + 0.1, x1 - 0.1, 0.04, 0.85, z - 0.08, z, 0.015); for (let i = 0; i < 6; i++) ves(Gs, 'glass', x0 + 0.45 + i * 0.62, 0.45, z, [[0, 0], [0.1, 0], [0.11, 0.32], [0.1, 0.32], [0, 0.3]], 8); }
-    for (let i = 0; i < 4; i++) ves(Gs, 'glass', 1.2 + (i % 2) * 0.3, 1.2 + Math.floor(i / 2) * 0.3, 3.1, [[0, 0], [0.1, 0], [0.11, 0.32], [0.1, 0.32], [0, 0.3]], 8);      // drying on the stone
+    for (let i = 0; i < 4; i++) ves(Gs, 'glass', 1.2 + (i % 2) * 0.3, 1.2 + Math.floor(i / 2) * 0.3, 3.12, [[0, 0], [0.1, 0], [0.11, 0.32], [0.1, 0.32], [0, 0.3]], 8);      // drying on the stone
     Gs.bev('c#e8e0cc/0.9', 0.95, 1.9, 0.9, 1.7, 3.1, 3.12, 0.005);      // on a linen cloth
     G.tableLampB(Gs, -1.7, 1.2, 3.1, 1.0);
   }
@@ -265,7 +301,7 @@ export default function (f) {
     Cn.box(OAKT, -h, h, 0.1, 2.4, 0.3, 3.2); for (const x of [-h, h]) Cn.bev(OAKT, x - 0.12, x + 0.12, 0.05, 2.55, 0.3, 3.2, 0.03);
     for (let i = 0; i < 28; i++) { const x = -h + 0.14 + i * (2 * h - 0.28) / 27; Cn.cyl(OAKT, x, 2.4, 0.32, 3.15, 0.105, 0.105, 8); }      // the front, fluted: a row of half-round reeds
     Cn.box(BRASS, -h, h, 2.38, 2.52, 0.3, 0.38); Cn.box(BRASS, -h, h, 2.38, 2.52, 3.12, 3.2);
-    Cn.box('marble', -h - 0.2, h + 0.2, -0.05, 2.62, 3.2, TOP); hcyl(Cn, 'marble', 'x', 0, 2.62, (3.2 + TOP) / 2, 2 * h + 0.4, (TOP - 3.2) / 2, (TOP - 3.2) / 2, 12);      // a marble top with a rounded front edge
+    Cn.bev('marble', -h - 0.22, h + 0.22, -0.08, 2.73, 3.19, TOP, 0.052);      // honed stone, eased on all four edges
     hcyl(Cn, BRASS, 'x', 0, 3.1, 0.6, 2 * h, 0.04, 0.04, 10); for (const x of [-h + 0.3, 0, h - 0.3]) tube(Cn, BRASS, [[x, 2.52, 0.6], [x, 3.1, 0.6]], 0.03, 5);      // the foot rail
     Cn.block(-h - 0.2, h + 0.2, -0.05, 2.8, 0, TOP);
     // the machine: a two-group lever machine, after the house's (my_house coffee_bar.js), its groups toward the robot:
@@ -329,169 +365,63 @@ export default function (f) {
   { const S = fr(23.3, 64.6, 1); for (const x of [-2.6, -0.85, 0.9, 2.65]) barStool(S, x, 0, 2.5, Math.PI); }      // q 1: x runs north, +y west; four stools facing west, to the counter, backs to the room
 
   prof('record wall');
-  // ---- the record wall on the south wall, west of the hall's opening (X 13.6 to 26.2). Built in three depths: the record
-  //      shelves against the wall; a walnut console standing out of them with the decks on a slate plinth and the amps on
-  //      an open shelf at eye height; and two big horn speakers standing free on the floor in front of the side bays,
-  //      2 ft out from the shelves. The sofa and the armchair face it.
-  { const S = fr(19.9, 40.75, 0), x0 = -6.3, x1 = 6.3, d = 1.25, top = 8.3, cb = 2.35;     // x = X - 19.9; y = Y - 40.75, +y north into the room
-    const WSPK = 'c#6a4226/0.45', SLATE = 'c#4a6272/0.75', PLINTH = 'c#34312d/0.55', HORN = 'c#b07840/0.45', METAL = 'c#3a3836/0.35/1', BRUSH = 'c#c6c2ba/0.3/1', BAKE = 'c#2a1a10/0.35', RUB = 'c#141210/0.8';
-    const latheY = (fr0, mat, prof, x, y, z, seg = 20) => P.put(fr0, mat, P.latheG(prof, seg), { rx: -Math.PI / 2, at: [x, y, z] });      // turned out along +y (toward the room)
-    const ring = (fr0, mat, x, y, z, R, r, seg = 24) => P.put(fr0, mat, new THREE.TorusGeometry(R, r, 5, seg).rotateX(Math.PI / 2).translate(x, y, z));
-    // spines: records seen end-on, in n bands (one band per shelf; the shelf boards stand in front of the gaps)
-    const spines = (seed, n = 1) => (g, W, H) => { const r = D.rnd(seed); D.fill(g, W, H, '#1a120c');
-      for (let b = 0; b < n; b++) { const y0 = H * b / n, bh = H / n; let x = r() * 6;
-        while (x < W) { const w = 3 + r() * 5, c = ['#2a2622', '#e8e0cc', '#3e5a46', '#b5853a', '#7a2a1e', '#26364f', '#c9b48a', '#5a3a22', '#8a8278', '#1c1c1c'][Math.floor(r() * 10)];
-          if (r() < 0.06) { x += 10 + r() * 14; continue; }      // a gap where records are out
-          g.fillStyle = c; g.fillRect(x, y0 + bh * (0.06 + r() * 0.05), w - 0.7, bh * 0.86); if (r() < 0.35) { g.fillStyle = 'rgba(240,230,210,0.55)'; g.fillRect(x + w * 0.3, y0 + bh * 0.25, Math.max(0.8, w * 0.3), bh * (0.2 + r() * 0.35)); } x += w; } } };
-    const cover = (bg, fg, kind, title) => (g, W, H) => { D.fill(g, W, H, bg);
-      if (kind === 0) { for (let i = 0; i < 5; i++) D.disc(g, W * (0.25 + i * 0.12), H * 0.45, W * (0.16 - i * 0.02), i % 2 ? bg : fg); }
-      else if (kind === 1) { for (let i = 0; i < 9; i++) D.rect(g, W * 0.12, H * (0.12 + i * 0.07), W * (0.3 + 0.5 * Math.abs(Math.sin(i))), H * 0.035, fg); }
-      else if (kind === 2) { D.poly(g, [[W * 0.15, H * 0.75], [W * 0.5, H * 0.15], [W * 0.85, H * 0.75]], fg); D.disc(g, W * 0.5, H * 0.55, W * 0.12, bg); }
-      else { for (let i = 0; i < 4; i++) D.rect(g, W * (0.1 + i * 0.2), H * 0.12, W * 0.12, H * 0.62, i % 2 ? fg : '#c9603a'); }
-      D.T(g, title, W / 2, H * 0.88, H * 0.06, fg, { f: D.F.goudy, ls: 2, max: W * 0.86 }); };
-    const sleeve = (x, z, bg, fg, k, t, y = 1.0) => { S.box('c#1a1612/0.6', x - 0.5, x + 0.5, y - 0.04, y - 0.01, z, z + 1.0, { rot: [-0.08, 0, 0] }); f.sign(S, x, z + 0.5, 0.98, 0.98, cover(bg, fg, k, t), { y: y + 0.01, res: 128, tilt: 0.08 }); };
-
-    // the shelves: a back, four uprights, the record rows, a ledge of sleeves face-out, a crown
-    S.box(WAL2, x0, x1, 0.06, 0.12, 0, top);
-    for (const x of [x0, -cb, cb, x1]) S.bev(WAL, x - 0.08, x + 0.08, 0.12, d, 0, top, 0.02);
-    S.box(WALD, x0, x1, 0.12, d, 0, 0.22);
-    for (const sx of [-1, 1]) { const xa = sx < 0 ? x0 + 0.08 : cb + 0.08, xb = sx < 0 ? -cb - 0.08 : x1 - 0.08;      // the side bays, behind the speakers: four rows of records
-      for (const z of [1.33, 2.48, 3.63, 4.78]) S.bev(WAL, xa, xb, 0.12, d, z - 0.07, z, 0.015);
-      f.sign(S, (xa + xb) / 2, 0.22 + 4.6 / 2, xb - xa, 4.6, spines(70 + sx, 4), { y: 0.95, res: 90 }); }
-    for (const z of [5.5, 6.75]) S.bev(WAL, x0, x1, 0.12, d + 0.05, z - 0.08, z, 0.02);
-    // the top row of records, cubbies with dividers standing proud
-    f.sign(S, 0, 6.75 + 0.52, x1 - x0 - 0.2, 1.04, spines(41), { y: 0.95, res: 100 });
-    for (let i = 1; i < 10; i++) { const x = x0 + i * (x1 - x0) / 10; S.box(WAL, x - 0.04, x + 0.04, 0.5, d, 6.75, 7.85); }
-    S.bev(WAL, x0 - 0.12, x1 + 0.12, 0.06, d + 0.2, 7.85, 7.97, 0.02); S.bev(WAL, x0 - 0.18, x1 + 0.18, 0.06, d + 0.28, top - 0.33, top, 0.04);
-    // the sleeves face-out on the ledge at 5.5: three over the decks, two over each speaker; the middle one is what is playing
-    S.box(WAL, x0 + 0.1, x1 - 0.1, d - 0.02, d + 0.04, 5.5, 5.62);      // the lip that holds them
-    [[-1.3, '#b5853a', '#1c1712', 0, 'NIGHT HARBOUR'], [0.0, '#26364f', '#e8e0cc', 1, 'SLOW WATER · TRIO'], [1.3, '#e8e0cc', '#3e5a46', 2, 'PINE AND SALT'],
-     [-4.95, '#3e5a46', '#e8dcc4', 3, 'COLUMBIA GORGE'], [-3.7, '#e8dcc4', '#7a2a1e', 1, 'MOSS'], [3.7, '#7a2a1e', '#f0e6d2', 2, 'RAIN CITY'], [4.95, '#1c1712', '#d9a43a', 0, 'AFTER HOURS']]
-      .forEach(([x, bg, fg, k, t]) => sleeve(x, 5.5, bg, fg, k, t));
-    // the amp shelf over the decks, deeper than the rest so the amps stand out of the wall
-    S.bev(WAL, -cb + 0.08, cb - 0.08, 0.12, 1.75, 4.15, 4.27, 0.02); S.bev(WAL, -cb + 0.08, cb - 0.08, 1.6, 1.75, 4.0, 4.15, 0.01);
-
-    // ---- the console: walnut, 2.55 high, standing 0.85 out of the shelves, two rows of records in cubbies in its front,
-    //      and on it a slate plinth on brass cones carrying the two decks and the mixer
-    { const Cs = S.sub(0, 0, 0), ya = 0.12, yb = 2.1, zt = 2.55;
-      Cs.box(RUB, -cb + 0.15, cb - 0.15, ya + 0.1, yb - 0.15, 0, 0.18);      // the toe kick, set back
-      for (const x of [-cb, cb - 0.1]) Cs.bev(WSPK, x, x + 0.1, ya, yb, 0.18, zt, 0.02);
-      Cs.bev(WSPK, -cb, cb, ya, yb, 0.18, 0.28, 0.02); Cs.bev(WSPK, -cb, cb, ya, yb, 1.33, 1.4, 0.01);
-      Cs.bev(WSPK, -cb - 0.06, cb + 0.06, ya, yb + 0.06, zt - 0.1, zt, 0.03);
-      for (const z of [0.28, 1.4]) f.sign(Cs, 0, z + 0.52, 2 * cb - 0.2, 1.04, spines(11 + z * 10), { y: yb - 0.35, res: 100 });
-      for (let i = 1; i < 4; i++) { const x = -cb + i * cb / 2; Cs.box(WSPK, x - 0.04, x + 0.04, yb - 0.6, yb - 0.02, 0.28, zt - 0.1); }
-      Cs.block(-cb - 0.06, cb + 0.06, ya, yb + 0.06, 0, zt);
-      for (const [x, y] of [[-2.0, 0.45], [2.0, 0.45], [-2.0, 1.75], [2.0, 1.75]]) ves(Cs, BRASS, x, y, zt, [[0, 0], [0.07, 0], [0.02, 0.1], [0, 0.1]], 8);
-      Cs.bev(PLINTH, -cb + 0.05, cb - 0.05, 0.3, 1.95, zt + 0.1, zt + 0.38, 0.04); }
-    const zd = 2.93;
-    // the left deck is the house's record player (E changes the record); the right one is its twin, built here
-    f.recordPlayer(S, -1.3, 1.12, zd);
-    { const Tt = S.sub(1.3, 1.12, zd);
-      Tt.bev('c#2a2622/0.4', -0.85, 0.85, -0.65, 0.65, 0, 0.17, 0.02); Tt.box(BRUSH, -0.8, 0.8, -0.6, 0.6, 0.17, 0.18);
-      Tt.cyl(BRUSH, 0.12, 0, 0.18, 0.25, 0.53, 0.53, 32); for (let i = 0; i < 24; i++) { const a = i / 24 * TAU; Tt.box('c#e8e0cc/0.5', 0.12 + Math.cos(a) * 0.535 - 0.014, 0.12 + Math.cos(a) * 0.535 + 0.014, Math.sin(a) * 0.535 - 0.014, Math.sin(a) * 0.535 + 0.014, 0.19, 0.23); }      // strobe dots on the platter's rim
-      Tt.cyl('c#17140f/0.2', 0.12, 0, 0.25, 0.262, 0.5, 0.5, 32); Tt.cyl('c#c9603a/0.6', 0.12, 0, 0.262, 0.266, 0.16, 0.16, 18); Tt.cyl(BRUSH, 0.12, 0, 0.266, 0.33, 0.012, 0.012, 6);
-      Tt.cyl(BRUSH, -0.62, -0.38, 0.18, 0.37, 0.07, 0.06, 12); tube(Tt, BRUSH, [[-0.8, -0.45, 0.38], [-0.62, -0.38, 0.38], [-0.4, 0.05, 0.37], [-0.32, 0.28, 0.36]], 0.013, 6);
-      Tt.cyl(METAL, -0.86, -0.47, 0.34, 0.42, 0.055, 0.055, 10); Tt.box(RUB, -0.36, -0.26, 0.24, 0.36, 0.3, 0.35); Tt.box('c#b5853a/0.4', -0.33, -0.29, 0.26, 0.31, 0.29, 0.3);
-      Tt.cyl(BRUSH, -0.45, -0.5, 0.18, 0.28, 0.025, 0.025, 6); Tt.box(BRUSH, -0.48, -0.42, -0.5, -0.35, 0.28, 0.3);
-      Tt.cyl(BRUSH, 0.62, 0.5, 0.18, 0.21, 0.04, 0.04, 8); }
-    // the mixer between them: big bakelite knobs, two VU meters glowing amber
-    { const Mx = S.sub(0, 1.12, zd);
-      Mx.bev('c#1a1816/0.4', -0.33, 0.33, -0.55, 0.55, 0, 0.26, 0.02); Mx.box(BRUSH, -0.3, 0.3, -0.52, 0.52, 0.26, 0.27);
-      for (const [x, y] of [[-0.14, 0.32], [0.14, 0.32], [-0.14, 0.05], [0.14, 0.05], [0, -0.2]]) { Mx.cyl(BAKE, x, y, 0.27, 0.36, 0.075, 0.065, 12); Mx.box('c#e8e0cc/0.5', x - 0.006, x + 0.006, y + 0.02, y + 0.06, 0.36, 0.362); }
-      Mx.bev('c#1a1816/0.4', -0.33, 0.33, -0.55, -0.4, 0.26, 0.62, 0.015);
-      for (const x of [-0.15, 0.15]) { Mx.box('e#ffb060/0.9', x - 0.12, x + 0.12, -0.395, -0.385, 0.36, 0.55); Mx.box('c#17140f/0.5', x - 0.004, x + 0.004, -0.385, -0.38, 0.38, 0.52, { rot: [0, 0.4 * (x > 0 ? 1 : -0.6), 0] }); } }
-    // the "now playing" sleeve leaning on the shelves behind the mixer, and the record brush
-    S.box('c#1a1612/0.6', -0.42, 0.42, 0.42, 0.45, zd + 0.02, zd + 0.86, { rot: [-0.12, 0, 0] }); f.sign(S, 0, zd + 0.44, 0.82, 0.82, cover('#c9603a', '#f0e6d2', 0, 'LATE TRAMS'), { y: 0.47, res: 128, tilt: 0.12 });
-    S.bev(OAK, 2.0, 2.22, 1.7, 1.9, zd, zd + 0.06, 0.01); S.box('c#3a3632/0.9', 2.02, 2.2, 1.72, 1.88, zd + 0.06, zd + 0.1);
-
-    // ---- the amps on their shelf at eye height: a big valve amplifier, chrome, four power valves glowing orange in front of
-    //      three black transformer cans; beside it a solid one with a black glass face and two blue-green meters
-    { const zA = 4.27, Va = S.sub(-1.1, 1.05, zA);
-      Va.bev(BRUSH, -1.1, 1.1, -0.6, 0.6, 0, 0.3, 0.03); Va.bev(BAKE, -1.12, 1.12, 0.58, 0.64, 0, 0.32, 0.01);
-      for (const x of [-0.72, 0, 0.72]) Va.bev(RUB, x - 0.25, x + 0.25, -0.55, -0.15, 0.3, 0.78, 0.04);
-      for (let i = 0; i < 4; i++) { const x = -0.78 + i * 0.52;
-        P.put(Va, 'glass', P.latheG([[0.1, 0], [0.12, 0.08], [0.13, 0.3], [0.12, 0.5], [0.08, 0.62], [0.03, 0.66], [0, 0.67]], 12), { at: [x, 0.25, 0.3] });
-        Va.cyl(BAKE, x, 0.25, 0.3, 0.38, 0.12, 0.12, 12); Va.box(METAL, x - 0.07, x + 0.07, 0.21, 0.29, 0.42, 0.78); Va.cyl('e#ff7a2a/1.6', x, 0.25, 0.42, 0.74, 0.035, 0.035, 6);
-        Va.cyl('c#8a8a86/0.2/1', x, 0.25, 0.84, 0.9, 0.06, 0.06, 8); }      // the silvered getter at the top
-      for (const x of [-0.28, 0.28]) { P.put(Va, 'glass', P.latheG([[0.06, 0], [0.065, 0.28], [0.03, 0.34], [0, 0.35]], 10), { at: [x, -0.05, 0.3] }); Va.cyl('e#ff8a3a/1.2', x, -0.05, 0.35, 0.55, 0.02, 0.02, 5); }
-      for (const x of [-0.55, 0, 0.55]) hcyl(Va, BAKE, 'y', x, 0.67, 0.16, 0.07, 0.075, 0.075, 12);
-      Va.box('e#ffb060/0.9', 0.78, 0.98, 0.645, 0.65, 0.1, 0.22); }
-    { const zA = 4.27, Mc = S.sub(1.3, 1.0, zA);
-      Mc.bev('c#1a1816/0.4', -0.9, 0.9, -0.55, 0.5, 0, 0.62, 0.02); Mc.box('c#101418/0.08', -0.87, 0.87, 0.5, 0.53, 0.04, 0.6);
-      for (const x of [-0.4, 0.4]) { Mc.box('e#5ad0c0/0.7', x - 0.28, x + 0.28, 0.53, 0.535, 0.32, 0.54); Mc.box('c#17140f/0.5', x - 0.005, x + 0.005, 0.536, 0.54, 0.34, 0.5, { rot: [0, 0.35, 0] }); }
-      for (let i = 0; i < 5; i++) hcyl(Mc, 'c#d4d6d8/0.15/1', 'y', -0.66 + i * 0.33, 0.57, 0.16, 0.07, 0.06, 0.06, 12);
-      Mc.box(BRUSH, -0.9, 0.9, -0.55, 0.5, 0.62, 0.64); }
-
-    // ---- the speakers: free-standing horn speakers 2 ft out from the shelves, each a walnut bass bin on a plinth with one
-    //      15-inch woofer deep in a cast ring (you see down into the cone), two bass ports you see into, and on top a big
-    //      round wooden horn on a cradle, the compression driver's black can behind its throat, a little tweeter horn above
-    function woofer(fr0, x, y, z) {
-      latheY(fr0, METAL, [[0.6, 0], [0.74, 0], [0.74, 0.08], [0.7, 0.3], [0.6, 0.3], [0.6, 0]], x, y, z, 18);      // the cast ring, standing 0.3 out of the baffle
-      for (let i = 0; i < 6; i++) { const a = i / 6 * TAU + 0.3; hcyl(fr0, BRUSH, 'y', x + Math.cos(a) * 0.67, y + 0.31, z + Math.sin(a) * 0.67, 0.03, 0.022, 0.022, 6); }
-      ring(fr0, RUB, x, y + 0.27, z, 0.57, 0.035, 16);                                                                         // the surround
-      latheY(fr0, 'c#2a2826/0.9', [[0.56, 0.27], [0.45, 0.2], [0.32, 0.12], [0.18, 0.05], [0.13, 0.04], [0, 0.04]], x, y, z, 18);      // the cone, going in deep
-      latheY(fr0, 'c#1a1816/0.6', [[0.13, 0.04], [0.1, 0.1], [0.05, 0.125], [0, 0.13]], x, y, z, 12);                        // the dust cap
+  // Freestanding listening console on tapered feet, sleeves stored on edge.
+  { const S = fr(19.9,40.75), top=2.63;
+    for (const x of [-2.64,2.64]) for (const y of [0.47,1.55])
+      tube(S,WAL,[[x*1.04,y,0.03],[x,y,0.67]],0.075,10,true);
+    S.bev(WAL,-3.05,3.05,0.18,1.95,top-0.12,top,0.035);
+    S.bev(WAL,-3,3,0.23,1.9,0.62,0.74,0.022);
+    S.box(WALD,-2.92,2.92,0.24,0.32,0.74,top-0.12);
+    for (const x of [-2.95,-0.36,2.95]) S.bev(WAL,x-0.05,x+0.05,0.24,1.89,0.74,top-0.12,0.014);
+    const paper = ['c#d5c4a5/0.9','c#4d5a53/0.9','c#88574b/0.9','c#41454d/0.9'];
+    for (let i=0;i<21;i++) {
+      const lean=i<12 ? 0.08 : -0.14, x=-2.83+i*0.085+(i>=12?0.33:0);
+      const sleeve = K.geom.bev(-0.029,0.029,-0.51,0.51,0,1.03,0.005).rotateY(lean);
+      K.put(S,paper[i%4],sleeve,{at:[x,1.18+0.045*Math.sin(i*2),0.746]});
     }
-    for (const sx of [-1, 1]) {
-      const Sp = S.sub(sx * 3.85, 3.35, 0), hw = 1.2, dd = 1.9, H = 3.0;      // front at local y 0 (Y 44.1), back at -1.9
-      Sp.box(RUB, -hw + 0.15, hw - 0.15, -dd + 0.15, -0.15, 0, 0.22);
-      Sp.bev(WSPK, -hw, hw, -dd, -0.1, 0.22, H, 0.06);
-      for (const x of [-hw, hw - 0.12]) Sp.bev(WSPK, x, x + 0.12, -0.12, 0, 0.22, H, 0.03);      // the face frame, standing proud
-      for (const z of [0.22, H - 0.12]) Sp.bev(WSPK, -hw, hw, -0.12, 0, z, z + 0.12, 0.03);
-      Sp.box(SLATE, -hw + 0.12, hw - 0.12, -0.12, -0.08, 0.34, H - 0.12);
-      woofer(Sp, 0, -0.08, 1.75);
-      for (const x of [-0.6, 0.6]) { latheY(Sp, METAL, [[0.14, 0], [0.19, 0], [0.19, 0.04], [0.14, 0.04], [0.14, -0.35]], x, -0.08, 0.68, 14); latheY(Sp, RUB, [[0, -0.35], [0.14, -0.35], [0, -0.349]], x, -0.08, 0.68, 12); }
-      Sp.box(BRASS, -0.25, 0.25, -0.08, -0.065, 2.72, 2.8);
-      // the horn: a cradle of two walnut blocks, the horn turned out toward the room (its mouth flush with the bin's face)
-      for (const y of [-1.5, -0.55]) Sp.bev(WSPK, -0.5, 0.5, y - 0.15, y + 0.15, H, H + 0.45, 0.03);
-      const hz = H + 0.95, hy = -1.35;
-      latheY(Sp, HORN, [[0.12, 0], [0.16, 0.1], [0.24, 0.35], [0.38, 0.65], [0.58, 0.95], [0.82, 1.2], [0.92, 1.28], [0.95, 1.32], [0.88, 1.3], [0.78, 1.2], [0.54, 0.95], [0.34, 0.65], [0.2, 0.35], [0.12, 0.1], [0.08, 0.02]], 0, hy, hz, 22);
-      latheY(Sp, RUB, [[0, 0.03], [0.09, 0.03], [0, 0.032]], 0, hy, hz, 10);                                  // the dark throat
-      hcyl(Sp, RUB, 'y', 0, hy - 0.3, hz, 0.42, 0.24, 0.27, 16); hcyl(Sp, BRUSH, 'y', 0, hy - 0.06, hz, 0.06, 0.13, 0.13, 12);      // the driver's can, its brass-ringed neck
-      Sp.box(BRASS, -0.22, 0.22, hy - 0.52, hy - 0.5, hz - 0.08, hz + 0.08);
-      // the tweeter: a small horn on a short post on the bin's top, behind the big horn's bell
-      { const tz = H + 1.95, ty = -1.0; Sp.cyl(METAL, 0, ty - 0.2, H + 0.45, tz - 0.1, 0.03, 0.03, 6);
-        latheY(Sp, 'c#2a2622/0.4', [[0.04, 0], [0.08, 0.08], [0.16, 0.2], [0.2, 0.25], [0.17, 0.24], [0.07, 0.08], [0.03, 0.01]], 0, ty, tz, 14);
-        hcyl(Sp, RUB, 'y', 0, ty - 0.12, tz, 0.14, 0.08, 0.08, 10); }
-      Sp.block(-hw, hw, -dd, 0, 0, H + 2.2);
+    // Sliding tambour door on the right, recessed pull and a visible shadow line.
+    S.bev(WALD,-0.26,2.86,1.72,1.78,0.80,2.45,0.012);
+    for (let i=0;i<30;i++) {
+      const x=-0.21+i*0.102;
+      S.bev(WAL,x,x+0.091,1.77,1.82,0.81,2.44,0.013,{grain:'z'});
     }
+    S.bev(BRASS,2.49,2.53,1.82,1.88,1.42,1.76,0.012);
+    S.block(-3.05,3.05,0.2,1.95,0,top);
+    f.recordPlayer(S,-1.24,1.03,top);
+    S.bev(WAL,0.6,2.38,0.51,1.53,top,top+0.38,0.028);
+    S.bev('c#b6a78d/0.48/0.7',0.64,2.34,1.53,1.56,top+0.027,top+0.35,0.012);
+    S.box('c#433e34/0.32',0.76,1.73,1.56,1.57,top+0.16,top+0.28);
+    for (const x of [1.92,2.17]) hcyl(S,BRUSH0,'y',x,1.61,top+0.19,0.085,0.078,0.078,16);
+    for (const side of [-1,1]) {
+      const x=side*4.05, turn=side*0.14;
+      const cabinet=(mat,g)=>K.put(S,mat,g.rotateZ(turn),{at:[x,1.0,0]});
+      cabinet(WALD,K.geom.bev(-0.48,0.48,-0.42,0.42,0,0.25,0.025));
+      cabinet(WAL,K.geom.bev(-0.59,0.59,-0.49,0.49,0.25,2.53,0.04));
+      cabinet('linen#827867',K.geom.bev(-0.52,0.52,0.49,0.53,0.33,2.45,0.032));
+      cabinet(BRASS,K.geom.bev(0.28,0.43,0.529,0.54,0.49,0.53,0.004));
+      S.block(x-0.65,x+0.65,0.42,1.61,0,2.53);
+    }
+    f.framed(S, 0, 5.54, 3.22, 2.19, 'shishkin_morning_pine_forest', { frame: WALD, mat: 0.12, border: 0.085,
+      title: 'Morning in a Pine Forest', kicker: 'Ivan Shishkin and Konstantin Savitsky, 1889',
+      text: 'Four bears on a fallen tree in a pine forest, with pale morning light high in the branches.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    for (const x of [-2.66, 2.66]) K.sconce(S, x, 5.53, { kind: 'lantern', metal: 'c#5e4a36/0.36/1', size: 1.14, lit: true, power: 0.37 });
   }
 
   prof('shelf wall');
   // ---- the shelf wall on the west wall, south of the cave's door: preserves, teas and coffees, lit under every shelf -----
-  { const Pq = fr(13.5, 48.4, 3), x0 = -5.9, x1 = 5.9, d = 1.0;      // x = 48.4 - Y (Y 42.5 to 54.3); +y east
-    const SH = [0.45, 1.85, 3.05, 4.15, 5.15, 6.05];
-    G.unit(Pq, x0, x1, SH, d, 6.9, { ups: [x0, 0, x1] });
-    { const y = 0.5;
-      // south bay (x > 0): preserves. Crocks and a basket at the foot; clip jars in a three and a two; jars under cloth and a
-      // trailing plant; books and a candle; two big jars at the top
-      G.crock(Pq, 0.9, y, SH[0], 1.4, 'c#cbbd9e/0.5'); G.crock(Pq, 1.9, y, SH[0], 1.05, 'c#8a5a2a/0.5');
-      Pq.bev('c#a8784a/0.9', 3.5, 5.2, 0.15, 0.85, SH[0], SH[0] + 0.55, 0.04); for (let i = 0; i < 3; i++) P.fruit(Pq, 'quince', 3.9 + i * 0.4, 0.4 + (i % 2) * 0.25, SH[0] + 0.45, 0.9);
-      [[0.6, 'c#d9822a/0.3'], [1.1, 'c#7a1020/0.3'], [3.5, 'c#e8d06a/0.35']].forEach(([x, c]) => G.clipJar(Pq, x, y, SH[1], 0.19, 0.6, c));
-      G.jug(Pq, 5.1, y, SH[1], 1.0, 'c#cbbd9e/0.4');
-      [[0.6, 'c#a8401e/0.3', 'c#e8e0cc/0.9'], [1.12, 'c#d9a43a/0.3', 'c#3a5a8a/0.9'], [1.64, 'c#5a1a3a/0.3', 'c#e8e0cc/0.9']].forEach(([x, c, cl]) => G.clothJar(Pq, x, y, SH[3], 0.16, 0.5, c, cl));
-      G.trailing(Pq, 5.0, 0.7, SH[3], 0.85);
-      G.booksFlat(Pq, 1.1, y, SH[4], 4, ['c#5a3a22/0.6', 'c#c9b48a/0.6', 'c#7a2a1e/0.6', 'c#e8dcc4/0.6']); G.candle(Pq, 2.4, y, SH[4], 0.36, 0.09);
-      G.clothJar(Pq, 1.3, y, SH[5], 0.28, 0.66, 'c#7a8a3a/0.35', 'c#e8e0cc/0.9'); G.clothJar(Pq, 3.6, y, SH[5], 0.26, 0.6, 'c#c9862a/0.3', 'c#b83a32/0.9');
-      // north bay: coffee and tea. Two crocks at the foot; tins; caddies; cups on saucers; glasses on a cloth; a jug and a copper pot
-      G.crock(Pq, -1.0, y, SH[0], 1.3, 'c#3a3632/0.5'); G.crock(Pq, -2.0, y, SH[0], 0.9, 'c#cbbd9e/0.5');
-      [[-0.6, 0.21, 0.62, 'c#2a2622/0.5', 'c#b5853a/0.5'], [-1.1, 0.21, 0.62, 'c#e8dcc4/0.5', 'c#7a2a1e/0.5'], [-1.6, 0.21, 0.62, 'c#2a2622/0.5', 'c#3e5a46/0.5'], [-2.4, 0.16, 0.42, 'c#3e5a46/0.5', 'c#e8dcc4/0.5'], [-2.78, 0.16, 0.42, 'c#3e5a46/0.5', 'c#e8dcc4/0.5']].forEach(([x, r, h, c, b]) => G.coffeeTin(Pq, x, y, SH[1], r, h, c, b));
-      G.caddy(Pq, -1.0, y, SH[2], 0.36, 0.5, 'c#8a1c1c/0.4'); G.caddy(Pq, -1.5, y, SH[2], 0.36, 0.42, 'c#2a2622/0.4');
-      { let zz = SH[3]; for (const [w, d2, t, c] of [[1.6, 0.85, 0.22, 'c#26364f/0.6'], [1.4, 0.8, 0.18, 'c#8a3a2a/0.6'], [1.5, 0.75, 0.2, 'c#e8dcc4/0.6'], [1.2, 0.7, 0.12, 'c#3e5a46/0.6']]) { Pq.bev(c, -1.6 - w / 2, -1.6 + w / 2, y - d2 / 2 + 0.05, y + d2 / 2, zz, zz + t, 0.008); zz += t; } }      // board games
-      G.booksFlat(Pq, -1.3, y, SH[4], 4, ['c#5a3a22/0.6', 'c#c9b48a/0.6', 'c#26364f/0.6', 'c#7a2a1e/0.6']);
-      G.jug(Pq, -1.2, y, SH[5], 0.9, 'c#e8dcc4/0.4'); }
-    // the north bay is the room's bookshelf too: real books (every spine can be taken down with E) in runs with gaps, with
-    // a lamp, a framed photograph leaning, magazines, ceramics; the south bay gets a run of cookery and gardening books
-    K.bookRow(Pq, -5.75, -3.25, 0.1, SH[1], 1.08, 0.92, { subject: ['literature', 'poetry'] });
-    K.bookRow(Pq, -5.75, -3.85, 0.1, SH[2], 0.98, 0.9, { subject: ['travel', 'art'] });
-    K.bookRow(Pq, -5.75, -2.55, 0.1, SH[3], 0.88, 0.88, { subject: ['music', 'film'] });
-    K.bookRow(Pq, -5.75, -2.2, 0.1, SH[4], 0.78, 0.9, { subject: ['mystery', 'scifi'] });
-    K.bookRow(Pq, -5.75, -2.05, 0.1, SH[5], 0.75, 0.85, { subject: ['nature', 'essays'] });
-    K.bookRow(Pq, 2.95, 5.75, 0.1, SH[4], 0.78, 0.9, { subject: ['cooking', 'garden'] });
-    G.tableLampB(Pq, -0.55, 0.5, SH[4], 0.75);
-    G.leaningPrint(Pq, -0.5, 0.2, SH[5], 0.7, 0.55, (g, W, H) => { D.fill(g, W, H, '#e8dcc4'); g.fillStyle = '#6a7a6a'; g.fillRect(W * 0.08, H * 0.1, W * 0.84, H * 0.5); g.fillStyle = '#c9a46a'; g.fillRect(W * 0.08, H * 0.6, W * 0.84, H * 0.3); g.fillStyle = '#3a4a3a'; g.beginPath(); g.moveTo(W * 0.1, H * 0.6); g.lineTo(W * 0.4, H * 0.25); g.lineTo(W * 0.7, H * 0.6); g.fill(); });      // a photograph: hills over a field
-    K.magazines(Pq, 4.7, 0.5, SH[2], 4);
-    for (const [x, c] of [[-3.0, 'c#cbbd9e/0.4'], [-3.4, 'c#3e5a46/0.4']]) ves(Pq, c, x, 0.5, SH[3], [[0, 0], [0.14, 0], [0.2, 0.25], [0.12, 0.5], [0.09, 0.62], [0, 0.62]], 10);
+  { const Pq=fr(13.5,48.4,3), SH=[0.76,1.96,3.22,4.55];
+    // An open oak bookcase against the stone. Leave gaps for the ceramics and tray.
+    for (const x of [-4.45,0,4.45]) for (const y of [0.12,0.93])
+      Pq.bev(WAL,x-0.055,x+0.055,y-0.055,y+0.055,0,4.57,0.014,{grain:'z'});
+    for (const z of SH) Pq.bev(OAK,-4.56,4.56,0.07,1.03,z-0.09,z,0.019);
+    Pq.block(-4.56,4.56,0.07,1.03,0,4.55);
+    K.bookRow(Pq,-4.32,-1.15,0.1,SH[0],1.04,0.86,{subject:['music','film','poetry']});
+    K.bookRow(Pq,0.15,2.8,0.1,SH[1],1.02,0.84,{subject:['cooking','garden','art']});
+    K.bookRow(Pq,-2.4,-0.15,0.1,SH[1],1.03,0.8,{subject:['literature','travel']});
+    G.booksFlat(Pq,-2.8,0.57,SH[3],3,['c#65756a/0.8','c#b59b75/0.85','c#6c4940/0.8']);
+    G.crock(Pq,1.2,0.52,SH[0],1.0,'c#aaa38d/0.5');
+    G.jug(Pq,3.65,0.53,SH[3],0.96,'c#889586/0.4');
+    G.tableLampB(Pq,-0.85,0.53,SH[3],1.05);
     // within reach on the middle shelf: a bowl of apples, the quince paste on its board
     { const z = SH[2];
       bowl(Pq, 3.0, 0.5, z, 0.45, 0.24, 'c#3a3632/0.35', 14); for (const [dx, dy] of [[-0.15, -0.05], [0.15, 0.05], [0, 0.18], [0.05, -0.15]]) fruit(Pq, 'apple', 3.0 + dx, 0.5 + dy, z + 0.08);
@@ -505,10 +435,10 @@ export default function (f) {
   // ---- the listening lounge: a friend's den before the record wall, after Low Tide Records' listening room on Vesper Street
   //      (town_walk/site/src/shops/records.js): a deep rolled-arm sofa in rust velvet piled with cushions and a wool throw,
   //      two worn leather armchairs, a big leather ottoman with a tray for a table, a knitted pouf, a big old rug, crates of
-  //      records on the floor, candles, a plant, a string of small lights along the front of the record wall
+  //      records on the floor, candles and a plant
   f.rug(14.7, 25.8, 43.2, 53.6, F0, 'tabriz'); f.rug(17.2, 22.6, 45.6, 49.6, F0 + 0.025, 'kilim');      // a second rug laid over the first
   K.sofa(fr(20.5, 53.3, 2), 6.5, 'leather#f2b878', ['wool#e8dcc4', 'wool#c9a03a', 'linen#efe6d2', 'wool#a84a2a'], { throw: 'wool#a84a2a' });
-  K.armchair(fr(26.6, 47.0, 1), 'wool#c9b48a', 'wool#a84a2a'); K.pouf(fr(17.0, 46.6, 0), 0, 0, { r: 0.75, h: 1.15, fabric: 'wool#6a7a4a' }); f.seat(fr(17.0, 46.6, 0), 0, 0, 1.15, 'sit on the pouf');
+  f.model('mid_century_lounge_chair',fr(25.35,47.5,1),0,0,0,0,{turn:-0.34,scale:0.91,seat:1.32,collide:true}); K.pouf(fr(17.0, 46.6, 0), 0, 0, { r: 0.75, h: 1.15, fabric: 'wool#6a7a4a' }); f.seat(fr(17.0, 46.6, 0), 0, 0, 1.15, 'sit on the pouf');
   { const A = fr(20.5, 47.6, 0);
     { const tw = 1.4, td = 0.8, h = 1.3;      // the marble coffee table on four brass legs
       for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) A.cyl(C.IRON, sx * (tw - 0.2), sy * (td - 0.15), 0, h - 0.08, 0.04, 0.04, 6);
@@ -532,11 +462,6 @@ export default function (f) {
   sheepskin(fr(20.5, 48.0, 0), 0, 1.2, 0.05, 2.4, 1.2);
   G.lushPlant(fr(26.0, 54.2, 0), 0, 0, 0, 1.15, { n: 20 });
   candleLantern(fr(26.1, 50.6, 0), 0, 0, 0, 0.85); fr(26.1, 50.6, 0).block(-0.5, 0.5, -0.5, 0.5, 0, 1.6);
-  // a string of small warm bulbs hung in loops along the front of the record wall's canopy
-  { const Sg = fr(19.9, 40.75, 0), y = 1.95, zt = 9.0, pts = [];
-    for (let i = 0; i <= 36; i++) { const x = -6.3 + i * 12.6 / 36, u = (i % 12) / 12; pts.push([x, y, zt - 0.7 * Math.sin(Math.PI * u)]); }
-    tube(Sg, C.BLACK, pts, 0.008, 3); pts.forEach(([x, yy, zz], i) => { if (i % 2) ball(Sg, BULB, x, yy, zz - 0.12, 0.05, 6); }); }
-
   prof('banquette');
   // ---- the banquette: a long, deep green-velvet banquette along the pool's wall by the courtyard glass, a row of three
   //      marble tables with little lamps, small oak armchairs opposite, an old mirror over it to double the candlelight.
@@ -591,9 +516,15 @@ export default function (f) {
   }
   // the outside brought in: a mossy boulder and a fern at the foot of the courtyard glass, south of the table
   f.model('mossy_rock_03', fr(37.4, 43.7, 0, 0.01), 0, 0, 0, 0, { scale: 0.3, turn: 0.8, collide: true });
-  f.model('fern_clump_d', fr(40.4, 45.1, 0, 0.01), 0, 0, 0, 0, { turn: 2.0 });
+  { const fpot=fr(40.4,45.1);
+    ves(fpot,'c#9e745c/0.7',0,0,0,[[0,0],[0.38,0],[0.42,0.08],[0.55,0.77],[0.56,0.86],[0.49,0.86],[0.47,0.75]],24);
+    fpot.cyl('soil',0,0,0.73,0.77,0.47,0.47,20);
+    f.model('fern_clump_d',fpot,0,0,0.71,0,{turn:2.0});
+    fpot.block(-0.5,0.5,-0.5,0.5,0,1.48);
+  }
 
-  { const St = fr(41.9, 72.45, 2), IRONS = 'c#2b2724/0.55/1';      // a small cast-iron wood stove on a stone hearth in the corner east of the stair's foot, its flue up through the double height (it glows: it does not cast)
+  f.inZone('r:The Listening Room:big', () => {
+    const St = fr(41.9, 72.45, 2), IRONS = 'c#2b2724/0.55/1';      // a small cast-iron wood stove on a stone hearth in the corner east of the stair's foot, its flue up through the double height (it glows: it does not cast)
     St.bev(STONE2, -0.8, 0.8, 0.05, 2.8, 0, 0.16, 0.03);
     // the firebox is hollow behind a real glass door: a firebrick lining, a bed of embers, three split logs burning, live flames
     St.bev(IRONS, -0.62, 0.62, 0.6, 1.75, 0.55, 0.68, 0.03); St.bev(IRONS, -0.66, 0.66, 0.56, 1.8, 2.08, 2.2, 0.04);
@@ -603,15 +534,16 @@ export default function (f) {
     St.box('e#c0501a/0.25', -0.42, 0.42, 1.765, 1.77, 1.62, 1.72); St.box(BRASS, 0.5, 0.56, 1.8, 1.9, 1.15, 1.45);      // the door stands open a crack: no glass between you and the fire; a warm amber lip of glow along its top; the handle
     St.box('e#e0400a/0.7', -0.47, 0.47, 0.76, 1.68, 0.68, 0.72);      // the embers
     for (const [x, y, r] of [[-0.3, 1.2, 0.06], [0.25, 1.45, 0.05], [0.05, 0.95, 0.055], [-0.1, 1.55, 0.045]]) ball(St, 'e#ff6a1a/0.9', x, y, 0.72, r, 5);
-    for (const [y, z, r, rot] of [[1.05, 0.8, 0.1, 0.12], [1.4, 0.8, 0.09, -0.1], [1.22, 0.97, 0.08, 0.05]]) { hcyl(St, 'c#241710/0.95', 'x', rot, y, z, 0.82, r, r, 7); }
-    for (const [x, y, z, sc] of [[-0.22, 1.25, 0.92, 2.8], [0.2, 1.3, 0.9, 3.2], [0.0, 1.2, 1.06, 2.5], [-0.32, 1.45, 0.86, 2.0], [0.33, 1.1, 0.86, 1.9], [0.08, 1.5, 0.9, 2.2]]) flameAt(St, x, y, z, sc);
+    const [fx,fy] = St.map(0,1.26), [nx,ny] = St.map(0,2.26);
+    f.later(ctx => stoveFire(ctx, f.world, { c:[fx,fy,F0+.72], n:[nx-fx,ny-fy], w:.83,d:.63,tall:.92,floor:F0,zone:'r:The Listening Room:big' }));
     for (const sx of [-0.5, 0.5]) for (const sy of [0.75, 1.6]) St.cyl(IRONS, sx, sy, 0.16, 0.55, 0.05, 0.07, 6);
     { const [lx, ly] = St.map(0, 2.9); const lamp = f.lamp(lx, ly, F0 + 0.35, { power: 0.25, kind: 'candle' }); f.later(() => { lamp.kind = 'fire'; }); }      // a warm flicker on the floor in front
-    St.cyl(IRONS, 0, 1.15, 2.2, 21.4 - F0, 0.2, 0.2, 12); St.block(-0.8, 0.8, 0.05, 2.0, 0, 2.3);
+    St.cyl(IRONS, 0, 1.15, 2.2, 21.82 - F0, 0.2, 0.2, 12); St.block(-0.8, 0.8, 0.05, 2.0, 0, 2.3);
     // a basket of split logs on the hearth beside it
     ves(St, 'c#8a6038/0.95', -0.4, 2.3, 0.16, [[0, 0], [0.32, 0], [0.38, 0.45], [0.36, 0.47], [0, 0.04]], 14); P.put(St, 'c#6a4626/0.9', new THREE.TorusGeometry(0.37, 0.03, 5, 20).translate(-0.4, 2.3, 0.62));
-    for (const [dx, dy, dz] of [[-0.12, -0.08, 0.6], [0.12, -0.05, 0.62], [0, 0.12, 0.66], [-0.05, 0.0, 0.78]]) hcyl(St, 'c#8a6a48/0.9', 'y', -0.4 + dx, 2.3 + dy, 0.16 + dz, 0.7, 0.07, 0.07, 6);
-    hcyl(St, 'c#8a6a48/0.9', 'y', 0.45, 2.35, 0.3, 0.8, 0.12, 0.12, 7); }
+    storedLogs(K,St,-.4,2.3,.21,.69,.115,3,3);
+    storedLogs(K,St,.45,2.35,.16,.75,.12,1,1);
+  });
   G.lushPlant(fr(34.0, 43.9, 0), 0, 0, 0, 1.4, { n: 24 });      // a big plant that has grown big, by the way in
   { const Sb = fr(28.8, 68.3, 2);      // a long low bench against the stair's stone side, facing the room; x = 28.8 - X, +y south
     Sb.bev(OAK, -3.6, 3.6, 0.05, 1.7, 0.15, 1.15, 0.03); Sb.box(OAKD, -3.5, 3.5, 0.1, 1.55, 0, 0.15); Sb.block(-3.6, 3.6, 0, 1.7, 0, 1.4);
@@ -619,26 +551,23 @@ export default function (f) {
     for (const [x, c] of [[-2.9, 'wool#c9b48a'], [-1.9, 'velvet#24402e'], [1.6, 'linen#e8dcc4'], [2.7, 'velvet#b5853a']]) upright(Sb, x, 0.35, 1.5, 1.1, 1.0, c, 0.3, 0.32);
     K.cushion(Sb, 0.6, 0.95, 1.6, 1.4, 1.2, 'wool#e8dcc4', { tilt: Math.PI / 2, thick: 0.2, n: 6 }); }      // a folded blanket
 
-  // colour on the walls: Klimt's farm garden high on the stone over the stair (seen from the floor, the stair and the bridge);
-  // Klimt's Poppy Field high over the stair (the af Klint hangs alone by the banquette)
-  f.framed(fr(29.5, 72.5, 2), 0, 15.8, 5.0, 5.1, 'klimt_poppy_field', { frame: 'c#c9a070/0.5', border: 0.14, mat: 0, title: 'Poppy Field', kicker: 'Gustav Klimt, 1907',
-    text: 'A summer meadow seen close and flat, like a tapestry: red poppies and white daisies all the way up, a few trees, almost no sky. Österreichische Galerie Belvedere, Vienna.', foot: 'Public domain. Image via Wikimedia Commons.' });
-
   prof('the void');
   // ---- the double-height part: an olive in a big clay jar by the pool's wall, a cluster of paper lanterns in the void -------
   { const O = fr(34.4, 66.0, 0); G.lushPlant(O, 0, 0, 0, 2.0, { n: 30, height: 3.2, leaf: 1.0 }); }      // a fiddle-leaf fig grown tall in the double height, in a big clay pot
-  { const zc = 21.8 - F0 - 0.02, V = fr(29.5, 67.2, 0);      // the room's great fixture: twelve smoked-glass globes hanging at different heights in the void, a brass canopy over them
-    V.cyl(BRASS, 0, 0, zc - 0.08, zc, 0.9, 0.9, 20);
-    [[0, 0, 13.6, 0.55], [1.3, 0.4, 14.6, 0.45], [-1.2, 0.6, 14.2, 0.5], [0.5, -1.1, 15.2, 0.42], [-0.6, -0.9, 13.9, 0.48], [1.5, -0.6, 16.0, 0.38], [0.2, 1.4, 15.8, 0.42], [1.0, 1.2, 17.0, 0.34], [0.6, 0.2, 17.6, 0.35]].forEach(([x, y, zz, r], i) => {
-      V.cyl(BRASS, x, y, zz + r * 1.9, zc - 0.08, 0.01, 0.01, 3); V.cyl(BRASS, x, y, zz + r * 1.85, zz + r * 1.98, 0.08, 0.08, 8);
-      ves(V, 'glass', x, y, zz, [[0, 0], [r * 0.6, r * 0.2], [r, r], [r * 0.6, r * 1.8], [r * 0.12, r * 1.9], [0, r * 1.9]], 12); V.cyl(GLOW, x, y, zz + r * 0.45, zz + r * 1.35, 0.025, 0.025, 4); ball(V, BULB, x, y, zz + r * 0.4, 0.05, 5); });
+  { const zc = 21.8 - F0, V = fr(29.5, 67.2, 0);
+    V.cyl(BRASS, 0, 0, zc - 0.08, zc + 0.02, 1.82, 1.82, 32);
+    V.cyl(WALD, 0, 0, zc - 0.14, zc - 0.07, 1.73, 1.78, 32);
+    const globes = [[0, 0, 13.6, 0.55], [1.3, 0.4, 14.6, 0.45], [-1.2, 0.6, 14.2, 0.5], [0.5, -1.1, 15.2, 0.42], [-0.6, -0.9, 13.9, 0.48], [1.5, -0.6, 16.0, 0.38], [0.2, 1.4, 15.8, 0.42], [1.0, 1.2, 17.0, 0.34], [0.6, 0.2, 17.6, 0.35]];
+    for (const [x, y] of globes) V.cyl(BRASS, x, y, zc - 0.23, zc - 0.12, 0.075, 0.09, 10);
+    const world = (x, y, h) => f.world(...V.map(x, y), F0 + h);
+    f.later(ctx => hangingGlobes(ctx, world, zc - 0.2, globes, BRASS, BULB));
     K.lampAt(V, 0, 0, 14.6, 2.6);
   }
 
   // =============================================================================================================
   // THE CAVE (X -2.5 to 12, Y 50 to 64, 8 ft high; its door in the east wall at Y 55.5 to 58.5, swinging in)
   // =============================================================================================================
-  const RINDS = ['c#b98a4a/0.85', 'c#a87a3a/0.85', 'c#c9984a/0.85', 'c#9a6a34/0.85', 'c#b0803e/0.85'];
+  const RINDS = ['cheese_rind#d6aa70','cheese_rind#c6a074','cheese_rind#ebc38b','cheese_rind#cca174'];
 
   prof('vault');
   // ---- the vault: a barrel of pale coursed stone springing from the north and south walls at 7 ft, crowned at 9.5 ------
@@ -663,8 +592,17 @@ export default function (f) {
     for (const z of Z) { R.box(SPRUCE, x0 - 0.1, x1 + 0.1, 0.03, d, z - 0.1, z); R.box(C.SPRUCE2, x0 - 0.12, x1 + 0.12, d - 0.06, d + 0.02, z - 0.13, z + 0.05); }
     R.box(C.SPRUCE2, x0 - 0.15, x1 + 0.15, 0.03, d + 0.05, top, top + 0.12); wash(R, x0, x1, 0.1, 0.2, top + 0.12, top + 0.16); strip(R, x0 + 0.2, x1 - 0.2, 0.05, 0.1, 0.02, 0.07);
     R.block(x0, x1, 0, d, 0, top);
-    Z.forEach((z, k) => { for (let b = 0; b < 2; b++) for (let i = 0; i < 2; i++) { if ((k * 3 + b * 2 + i) % 7 === 5) continue; { const wx = x0 + b * 5.8 + 1.5 + i * 2.75 + (rnd() - 0.5) * 0.08, wy = d / 2 + 0.05; if ((k + b + i) % 5 === 2) P.cutWheel(R, wx, wy, z, 1.05, 0.32, 0.6, RINDS[(k + b) % RINDS.length], 'c#e9cf86/0.55'); else { P.stampedWheel(R, wx, wy, z, 1.05, 0.32, RINDS[(k + b + i) % RINDS.length]); }
-        R.box('c#d9c07a/0.95', wx - 1.0, wx + 1.0, wy - 0.95, wy + 0.95, z + 0.004, z + 0.014); } } });      // straw under each wheel
+    Z.forEach((z,row)=>{
+      for (let slot=0;slot<4;slot++) {
+        if ((row*3+slot)%7===5) continue;
+        const x=x0+1.49+slot*2.88+0.07*Math.sin(row+slot);
+        const y=d/2+0.1*Math.cos(1.8*slot+row), r=0.94+0.09*Math.sin(slot*2.1+row);
+        const h=0.31+0.06*Math.cos(row+slot*2), rind=RINDS[(slot+row)%RINDS.length];
+        if ((row+slot)%4===1) P.wedge(R,x,y,z,r,h,2.18,7.36,'c#eddbad/0.65',rind);
+        else if ((slot+2*row)%6===3) P.clothWheel(R,x,y,z,r*0.79,h*1.28);
+        else P.stampedWheel(R,x,y,z,r,h,rind);
+      }
+    });
   }
 
   prof('bottle rack');
@@ -674,17 +612,28 @@ export default function (f) {
     for (let i = 0; i <= nc; i++) { const x = x0 + i * cw; W.box(WAL2, x - (i % nc ? 0.025 : 0.08), x + (i % nc ? 0.025 : 0.08), 0.06, d, 0.3, top); }
     for (let j = 0; j <= nr; j++) { const z = 0.4 + j * rh; W.box(WAL2, x0, x1, 0.06, d, z - 0.04, z); if (j % 3 === 1) strip(W, x0 + 0.1, x1 - 0.1, 0.07, 0.11, z + 0.02, z + 0.06); }
     W.box(WAL2, x0 - 0.12, x1 + 0.12, 0.02, d + 0.12, top, top + 0.14); strip(W, x0, x1, 0.06, 0.16, top + 0.14, top + 0.18); W.box(WALD, x0, x1, 0.1, d - 0.05, 0, 0.3);
-    for (let i = 0; i < nc; i++) for (let j = 0; j < nr; j++) { if (rnd() < 0.2) continue; G.bottleLying(W, x0 + (i + 0.5) * cw, d - 0.04, 0.4 + (j + 0.5) * rh, pick(WINE), pick(['c#6a1622/0.4', 'c#1a1a14/0.4', 'c#b08d4a/0.3/1', 'c#e8e0cc/0.5', 'c#6a1622/0.4']), (i + j) % 5 === 0 ? 'c#efe6d2/0.8' : null); }
+    for (let i = 0; i < nc; i++) for (let j = 0; j < nr; j++) {
+      if (rnd() < 0.2) continue;
+      const x = x0 + (i + 0.5) * cw + 0.044 * Math.sin(5.9 * i + 1.5 * j);
+      const front = d - 0.05 - 0.09 * (0.5 + 0.5 * Math.cos(4.1 * i - 1.4 * j));
+      const kind = (i + j * 3) % 5 < 2 ? 'burgundy' : 'bordeaux';
+      G.bottleLying(W, x, front, 0.4 + j * rh, kind, pick(WINE), pick(['c#6a1622/0.4', 'c#1a1a14/0.4', 'c#b08d4a/0.3/1', 'c#e8e0cc/0.5', 'c#6a1622/0.4']), (i + j) % 5 === 0 ? 'c#efe6d2/0.8' : null);
+    }
     W.block(x0, x1, 0, d, 0, top);
   }
 
   prof('stone bench');
   // ---- the built-in stone bench across the west end, with sheepskins and cushions; a light behind it ---------------------
   { const Sb = fr(-2.5, 57.0, 3);                           // x = 57 - Y (Y 61.3 to 52.7); +y east
-    Sb.box(STONE2, -4.3, 4.3, 0.02, 1.8, 0, 1.25); Sb.box('c#a89e8e/0.85', -4.35, 4.35, 0.02, 1.9, 1.25, 1.4); strip(Sb, -4.2, 4.2, 0.04, 0.1, 1.4, 1.45);
-    Sb.block(-4.3, 4.3, 0, 1.9, 0, 1.4);
-    for (const [x, w] of [[-2.8, 2.3], [0.0, 2.3], [2.8, 2.3]]) { sheepskin(Sb, x, 1.0, 1.4, w, 1.6); upright(Sb, x, 0.35, 1.5, w - 0.3, 1.2, SHEEP, 0.25, 0.3); f.seat(Sb, x, 1.05, 1.56, 'sit on the bench'); }
-    for (const [x, c] of [[-1.4, 'velvet#4a5a3e'], [1.4, 'velvet#5a1e1e']]) upright(Sb, x, 0.6, 1.56, 0.9, 0.9, c, 0.35, 0.3);
+    Sb.bev(STONE2,-4.15,4.15,0.08,1.59,0,1.23,0.045);
+    Sb.bev('limestone_smooth#cdc5b1',-4.32,4.32,0.04,1.91,1.23,1.43,0.055);
+    Sb.block(-4.32,4.32,0.03,1.91,0,1.58);
+    for (const [x,w] of [[-2.8,2.54],[0,2.65],[2.8,2.55]]) {
+      Sb.cushion('linen#b2a388',x-w/2,x+w/2,0.19,1.76,1.43,1.61,0.075);
+      f.seat(Sb,x,1.01,1.61,'sit on the bench');
+    }
+    K.cushion(Sb,-2.7,0.57,1.62,1.42,1.08,'wool#697361',{tilt:0.29,turn:0.11,thick:0.24});
+    K.cushion(Sb,2.5,0.56,1.62,1.29,0.94,'linen#b38a72',{tilt:0.21,turn:-0.13,thick:0.21});
   }
 
   prof('cave table');
@@ -694,10 +643,10 @@ export default function (f) {
     T.bev(OAK, -1.3, 1.3, -1.0, 1.0, z - 0.12, z, 0.03); for (const [sx, sy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) T.bev(OAKD, sx * 1.05 - 0.08, sx * 1.05 + 0.08, sy * 0.75 - 0.08, sy * 0.75 + 0.08, 0, z - 0.12, 0.02);
     T.block(-1.3, 1.3, -1.0, 1.0, 0, z);
     { const x = -0.35, y = 0.05; T.box('c#efe8d8/0.9', x - 0.6, x + 0.55, y - 0.42, y + 0.4, z, z + 0.008); T.bev(OAK, x - 0.55, x + 0.55, y - 0.35, y + 0.35, z + 0.008, z + 0.08, 0.02); const zz = z + 0.08;
-      P.cheeseWedge(T, x - 0.3, y - 0.2, zz, 0.55, 0.3, 0.15, 0.85, 'comte'); P.blueTop(T, x + 0.3, y + 0.12, zz + 0.002, 0.14); ves(T, 'c#8a7a5a/0.9', x + 0.3, y + 0.12, zz - 0.25, [[0.14, 0.25], [0.14, 0.25], [0, 0.25]], 4);
+      P.cheeseWedge(T, x - 0.3, y - 0.2, zz, 0.55, 0.3, 0.15, 0.85, 'comte'); P.wheel(T,x+0.26,y+0.12,zz,0.155,0.18,'cheese_rind#c3bb9d'); P.blueTop(T,x+0.26,y+0.12,zz+0.18,0.153);
       tube(T, 'c#c6c2ba/0.2/1', [[x + 0.15, y - 0.3, zz + 0.02], [x + 0.45, y - 0.32, zz + 0.02]], 0.02, 4); tube(T, OAKD, [[x + 0.45, y - 0.32, zz + 0.02], [x + 0.65, y - 0.34, zz + 0.02]], 0.03, 5);
       help(T, x - 0.1, y - 0.1, zz + 0.4, { name: 'sliver of thirty-month Comté', build: EAT.comte, bites: 2, note: 'You finish the old Comté. Crystals, caramel, a long walk in a damp forest.' }); }
-    loaf(T, 0.75, 0.45, z, 0.6, 0.18);
+    f.model('st_bread_1',T,0.83,0.48,z+0.003,0,{scale:1.06,turn:-0.47});
     bowl(T, 0.6, -0.45, z, 0.26, 0.14, 'c#e8dcc4/0.35', 12); for (let i = 0; i < 7; i++) ball(T, 'c#8a6a4a/0.8', 0.6 + Math.cos(i * 1.6) * 0.1, -0.45 + Math.sin(i * 1.6) * 0.1, z + 0.08 + (i % 2) * 0.03, 0.045, 6);      // walnuts
     grapes(T, -0.95, -0.55, z, 'c#b9c26a/0.4', 10);
     G.bottle(T, 'spirit', 0.15, 0.6, z, 'c#3a2a14/0.2', { label: 'c#efe6d2/0.8' }); T.cyl('c#c9a46a/0.8', 0.45, 0.75, z, z + 0.12, 0.03, 0.03, 6);      // the clavelin, open, its cork by it
@@ -709,23 +658,62 @@ export default function (f) {
     { const zc = 9.5 - 0.05, zb = 6.0; T.cyl(C.IRON, 0, 0, zb + 1.1, zc, 0.015, 0.015, 3); candleLantern(T, 0, 0, zb, 0.6, { cast: 1.1 }); }      // the cave's one lamp
   }
   // the stool opposite, an apron folded on another by the door; a basket of eggs; herbs, a ham and sausages hung from a pole
-  { const S = fr(3.4, 57.0, 1); S.cyl(OAK, 0, 0, 1.6, 1.72, 0.55, 0.55, 14); for (let i = 0; i < 3; i++) { const a = i / 3 * TAU; tube(S, OAKD, [[Math.cos(a) * 0.3, Math.sin(a) * 0.3, 1.6], [Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0]], 0.05, 5); } S.block(-0.55, 0.55, -0.55, 0.55, 0, 1.72); f.seat(S, 0, 0, 1.72, 'sit at the table'); }
-  { const S = fr(8.6, 52.6, 0); S.cyl(OAK, 0, 0, 1.5, 1.6, 0.5, 0.5, 14); for (let i = 0; i < 3; i++) { const a = i / 3 * TAU + 0.5; tube(S, OAKD, [[Math.cos(a) * 0.28, Math.sin(a) * 0.28, 1.5], [Math.cos(a) * 0.45, Math.sin(a) * 0.45, 0]], 0.05, 5); } S.block(-0.5, 0.5, -0.5, 0.5, 0, 1.6);
+  { const S=fr(3.6,56.85,1);
+    f.model('st_stool_6',S,0,0,0,0,{turn:0.23,scale:1.04});
+    S.block(-0.57,0.57,-0.5,0.5,0,1.65); f.seat(S,0,0,1.64,'sit at the table');
+  }
+  { const S=fr(8.6,52.6);
+    f.model('st_stool_6',S,0,0,0,0,{turn:-0.38});
+    S.block(-0.57,0.57,-0.5,0.5,0,1.58);
     K.cushion(S, 0, 0, 1.68, 0.8, 0.7, 'linen#d8c8a8', { tilt: Math.PI / 2, thick: 0.14, n: 5 }); tube(S, 'c#d8c8a8/0.9', [[0.35, 0.1, 1.62], [0.5, 0.15, 1.1], [0.48, 0.1, 0.8]], 0.03, 4); }      // the apron, its strings hanging
-  { const Bk = fr(0.6, 61.0, 0); Bk.cyl('c#a8784a/0.9', 0, 0, 0, 0.45, 0.42, 0.5, 14); Bk.cyl('c#a8784a/0.9', 0, 0, 0.45, 0.5, 0.52, 0.52, 14); tube(Bk, 'c#a8784a/0.9', [[-0.45, 0, 0.5], [0, 0, 1.3], [0.45, 0, 0.5]], 0.03, 4);
-    for (let i = 0; i < 9; i++) ball(Bk, i % 3 ? 'c#e8dcc4/0.6' : 'c#c9a07a/0.6', Math.cos(i * 2.4) * 0.25 * (i % 2 ? 1 : 0.5), Math.sin(i * 2.4) * 0.25 * (i % 2 ? 1 : 0.5), 0.42 + (i % 3) * 0.04, 0.09, 6, 1.25); Bk.block(-0.5, 0.5, -0.5, 0.5, 0, 1.3); }
+  { const Bk = fr(0.6, 61.0, 0), basket = 'wicker#c1a681';
+    ves(Bk, basket, 0, 0, 0, [[0, 0], [0.38, 0], [0.39, 0.045], [0.47, 0.21], [0.55, 0.35], [0.55, 0.38], [0.51, 0.385], [0.5, 0.35], [0.43, 0.205], [0.355, 0.06], [0, 0.06]], 24);
+    const rim = Array.from({ length: 33 }, (_, i) => [0.532 * Math.cos(i * TAU / 32), 0.532 * Math.sin(i * TAU / 32), 0.378]);
+    tube(Bk, basket, rim, 0.025, 7);
+    const handle = Array.from({ length: 15 }, (_, i) => {
+      const t = i * Math.PI / 14;
+      return [0.52 * Math.cos(t), -0.11, 0.34 + 0.56 * Math.sin(t)];
+    });
+    tube(Bk, basket, handle, 0.029, 8);
+    const egg = K.geom.lathe([[0, -0.13], [0.058, -0.115], [0.093, -0.063], [0.099, 0.01], [0.075, 0.083], [0.04, 0.121], [0, 0.136]], { seg: 14 });
+    const eggs = [[-0.25, -0.10, 0.57, 1.08], [-0.07, -0.19, -0.48, -0.57], [0.16, -0.18, 0.42, 0.84], [0.28, -0.02, 0.64, -0.86], [0.15, 0.17, -0.43, 1.08], [-0.06, 0.19, 0.46, 0.7], [-0.25, 0.14, 0.36, -0.54], [0.02, 0.02, 0.51, 0.44]];
+    for (const [i, [x, y, a, tilt]] of eggs.entries()) {
+      const g = K.geom.xf(egg.clone(), { ry: tilt, rz: a });
+      g.computeBoundingBox();
+      K.put(Bk, ['c#e6c6a4/0.6', 'c#f0e6cb/0.55', 'c#c89368/0.63'][i % 3], g, { at: [x, y, 0.062 - g.boundingBox.min.z] });
+    }
+    Bk.block(-0.54, 0.54, -0.54, 0.54, 0, 0.94);
+  }
   { const Hp = fr(3.6, 60.2, 0), zp = 8.2;                    // a pole along the cave under the vault, just south of the Comté rack's front
     hcyl(Hp, OAKD, 'x', 0, 0, zp, 10.5, 0.05, 0.05, 6); for (const x of [-5.2, 5.2]) tube(Hp, C.IRON, [[x, 0, zp], [x, 0, zp + 1.5]], 0.012, 3);
     const HERB = ['c#6a7a4a/0.9', 'c#8a9a6a/0.9', 'c#5a6a3a/0.9', 'c#9a8aa8/0.9'];
     for (let i = 0; i < 7; i++) P.herbBunch(Hp, -4.6 + i * 0.6, 0, zp - 0.04, HERB[i % 4], 0.8 + (i % 3) * 0.15);
     // a cured ham, hung by its hoof on a string: a rounded leg in golden-brown skin, its cut face pale rose
     tube(Hp, 'c#c9b48a/0.9', [[1.3, 0, zp], [1.3, 0, zp - 0.45]], 0.01, 3); Hp.cyl('c#5a3a22/0.6', 1.3, 0, zp - 0.62, zp - 0.45, 0.05, 0.045, 8);
-    P.put(Hp, 'c#b07a44/0.55', P.latheG([[0, 0], [0.2, 0.06], [0.34, 0.3], [0.36, 0.6], [0.3, 0.95], [0.18, 1.2], [0.08, 1.38], [0.05, 1.5], [0, 1.52]], 14), { at: [1.3, 0, zp - 2.15] });
-    Hp.cyl('c#e0a090/0.55', 1.3, 0, zp - 2.16, zp - 2.14, 0.19, 0.19, 12);
-    // a row of saucissons, evenly spaced: straight, rounded at the ends, a dusty white-pink coat, tied with string, a paper tag
-    for (let i = 0; i < 5; i++) { const x = 2.4 + i * 0.32, L = 0.95 - (i % 2) * 0.12; tube(Hp, 'c#c9b48a/0.9', [[x, 0, zp], [x, 0, zp - 0.18]], 0.008, 3);
-      P.put(Hp, 'c#e8d6cc/0.9', new THREE.CapsuleGeometry(0.07, L, 4, 10).rotateX(Math.PI / 2).translate(x, 0, zp - 0.25 - L / 2 - 0.07));
-      Hp.box('c#efe6d2/0.85', x - 0.05, x + 0.05, 0.07, 0.075, zp - 0.55, zp - 0.45); }
+    const ham=K.geom.loft([
+      {a:0.18,b:0.17,z:0}, {a:0.33,b:0.25,z:0.16,x:-0.04}, {a:0.39,b:0.28,z:0.47,x:-0.08},
+      {a:0.33,b:0.26,z:0.78,x:-0.10}, {a:0.24,b:0.19,z:1.05,x:-0.05},
+      {a:0.12,b:0.10,z:1.30}, {a:0.062,b:0.061,z:1.53}],{seg:24,mod:(a,j)=>1+0.03*Math.sin(a*3+j)});
+    K.put(Hp,'salami#bb8a67',ham,{at:[1.3,0,zp-2.15]});
+    Hp.cyl('c#d5b19b/0.64',1.3,0,zp-2.16,zp-2.145,0.18,0.18,24);
+    Hp.cyl('salami#9f5f57',1.29,0,zp-2.164,zp-2.16,0.144,0.144,20);
+    // Salt bloom on the casings, puckered ends and a continuous butcher's tie.
+    for (let i=0;i<5;i++) {
+      const x=2.3+i*0.42, length=0.85+0.28*Math.cos(i*1.65), y=0.09*Math.sin(i*2);
+      const tip=zp-0.19-(i%3)*0.075, r=0.085+0.016*(i%3);
+      tube(Hp,'linen#b99b75',[[x-0.05,0,zp+0.04],[x+0.04,0.03,zp],[x,y,tip]],0.012,5);
+      const rings=[[0,0],[0.036,0.025],[r*0.78,0.08],[r,0.19],[r*1.03,0.55],[r*0.84,0.87],[0.043,0.97],[0.022,1],[0,1]];
+      const g=K.geom.lathe(rings.map(([rad,t])=>[rad,t*length]),{seg:16,mod:(a,j)=>1+0.045*Math.sin(a*5+j)});
+      const pos=g.attributes.position;
+      for (let j=0;j<pos.count;j++) { const t=pos.getZ(j)/length;pos.setX(j,pos.getX(j)+0.085*Math.sin((1-t)*2.3+i)*(1-t)); }
+      g.computeVertexNormals(); K.put(Hp,i%2?'salami#c79d8e':'salami#dbc0a7',g,{at:[x,y,tip-length]});
+      const cord=[];
+      for (let k=0;k<=44;k++) {
+        const t=0.15+0.67*k/44, a=k/44*Math.PI*7+i;
+        cord.push([x+0.085*Math.sin((1-t)*2.3+i)*(1-t)+r*Math.cos(a),y+r*Math.sin(a),tip-length+t*length]);
+      }
+      tube(Hp,'linen#b5a88e',cord,0.007,4);
+    }
   }
   // candles in little stone niches either side of the door, and on the bench's ledge
   { const Ed = fr(12, 57.0, 1); for (const x of [-2.8, 2.8]) {      // little rounded stone corbels either side of the door, each with an iron drip pan and a candle burning

@@ -3,6 +3,7 @@
 // horizontal, wool, linen and sheepskin, amber light from hidden coves and paper shades.
 // Every builder works in a kit frame (x along the piece, y out toward its front, z up) and goes in through K.put or
 // the frame's own methods, so it is drawn with the room it stands in.
+import { burningLogs, storedLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { merge } from '../kit/geom.js';
 export { merge };
@@ -210,10 +211,8 @@ export function fireBreast(K, f, o = {}) {
   const ha = a + (o.hearth ?? 1.8), HD = D + 1.0;
   f.bev(o.hearthMat ?? M.SLATE, -ha, ha, 0.02, HD, z0 - 0.3, z0 - 0.06, 0.015);
   f.box(S, -ha + 0.05, -ha + 0.35, 0.05, HD - 0.1, 0, z0 - 0.3); f.box(S, -a, a, 0.05, HD - 0.4, 0, z0 - 0.3);
-  const logs = [];
-  const nl = Math.max(1, Math.floor((ha - a - 0.1) / 0.27));
-  for (let r = 0; r < 3; r++) for (let i = 0; i < nl - (r % 2); i++) logs.push(new THREE.CylinderGeometry(0.13, 0.13, HD - 0.5, 8).rotateX(Math.PI / 2).translate(a + 0.16 + (r % 2) * 0.13 + i * 0.27, HD / 2, 0.14 + r * 0.24));
-  K.put(f, 'bark', merge(logs));
+  const columns = Math.max(1, Math.floor((ha-a-.15)/.27));
+  storedLogs(K, f, (ha+a)/2, HD/2, 0, HD-.5, .13, columns, 3);
   f.block(-ha, ha, 0, HD, 0, z0);
   f.block(-a, a, 0, D, 0, H);
   return { x: 0, y: (D + 0.15) / 2, z: z0 - 0.3 + 0.06 };
@@ -226,10 +225,7 @@ export function lightFire(f, X, Y, h, alongX, alongY, makeFlames, mergeGeometrie
     const hearth = new THREE_.Group(); hearth.position.set(o.x, o.y, o.z); hearth.rotation.y = Math.atan2(-dx[1], dx[0]); hearth.scale.setScalar(scale);
     const uT = { value: 0 };
     hearth.add(makeFlames(THREE_, mergeGeometries, uT, [[0, 0, 0, 1.7, 1.5, 0], [0, 0.2, 0.14, 1.4, 1.25, 3.7], [0, -0.18, -0.12, 1.25, 1.1, 8.1]], 0.1));
-    const logMat = new THREE_.MeshStandardMaterial({ color: 0x241710, roughness: 1, emissive: 0x9a2c08, emissiveIntensity: 0.1 });
-    for (const [ddx, dz, up, len, rot, rad] of [[0.05, 0.14, 0.13, 1.6, 0.08, 0.14], [-0.08, -0.14, 0.12, 1.5, -0.1, 0.13], [0.02, 0.0, 0.34, 1.35, 0.05, 0.11]]) {
-      const l = new THREE_.Mesh(new THREE_.CylinderGeometry(rad, rad * 0.9, len, 9).rotateZ(Math.PI / 2), logMat); l.rotation.y = rot; l.position.set(ddx, up, dz); hearth.add(l);
-    }
+    hearth.add(burningLogs(ctx.materials.bark, 1.65, .70));
     const embers = new THREE_.Mesh(new THREE_.PlaneGeometry(1.6, 0.8).rotateX(-Math.PI / 2), new THREE_.ShaderMaterial({
       uniforms: { uT }, transparent: true, depthWrite: false, blending: THREE_.AdditiveBlending, fog: false,
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -244,7 +240,7 @@ void main() {
     embers.position.set(0, 0.03, 0); hearth.add(embers);
     hearth.traverse(n => { n.userData.cat = 'fire'; });
     ctx.scene.add(hearth); ctx.track(hearth, ctx.zoneAt(o.x, o.y + 0.5, o.z, 0.4));
-    ctx.animated.push(t => { uT.value = t; logMat.emissiveIntensity = 0.1 + 0.04 * Math.sin(t * 6.3) + 0.025 * Math.sin(t * 14.1); });
+    ctx.animated.push(t => { uT.value = t; });
   });
 }
 
@@ -543,32 +539,56 @@ export function drumStove(K, f, ceil, o = {}) {
   vessel(K, f, M.BLACK, 0, 0, h1 + 0.3, [[0.26, 0], [0.26, ceil - h1 - 0.35], [0.3, ceil - h1 - 0.33], [0.3, ceil - h1 - 0.31]], 14);
   // the door stands open: a dark firebox in the drum (soot inside, a glowing bed of embers), the iron leaf swung aside on
   // its hinge; the fire itself (logs and live flames) is laid by lightFire in the caller
-  vessel(K, f, M.SOOT, 0, 0, 0.08, [[r * 0.92, h0 + 0.2], [r * 0.92, h0 + 1.75]], 14, { th0: Math.PI / 2 - 0.62, th1: Math.PI / 2 + 0.62, flip: true });
+  vessel(K, f, M.SOOT, 0, 0, 0.08, [[r * 0.92, h0 + 0.2], [r * 0.92, h0 + 1.75]], 14, { th0: Math.PI / 2 + 0.62, th1: Math.PI / 2 - 0.62 + 2 * Math.PI, flip: true });
   vessel(K, f, M.SOOT, 0, 0, 0.08, [[0, h0 + 0.2], [r * 0.93, h0 + 0.2]], 14);
   vessel(K, f, M.EMBER, 0, 0, 0.08, [[0, h0 + 0.22], [r * 0.7, h0 + 0.22]], 12, { th0: Math.PI / 2 - 0.9, th1: Math.PI / 2 + 0.9 });
-  const leaf = K.geom.lathe([[r + 0.03, h0 + 0.18], [r + 0.03, h0 + 1.78]], { seg: 6, th0: 0, th1: 1.1 });
-  leaf.rotateZ(Math.PI / 2 + 0.62 + 0.15); K.put(f, M.BLACK, leaf);
-  K.put(f, M.BRASS, K.geom.sweep([[r * 0.95, r * 0.95 * 0.2, h0 + 1.0], [r * 1.08, r * 0.3, h0 + 1.0]], 0.02, { seg: 4 }));
+  const hinge = [r * Math.sin(0.62), r * Math.cos(0.62), 0.08 + h0 + 0.2];
+  const span = 2 * hinge[0], height = 1.55;
+  const onDoor = (mat, g) => K.put(f, mat, g, { rz: -0.95, at: hinge });
+  for (const x of [-span, -0.06]) onDoor(M.BLACK, K.geom.bev(x, x + 0.06, -0.04, 0.04, 0, height, 0.012));
+  for (const z of [0, height - 0.07]) onDoor(M.BLACK, K.geom.bev(-span + 0.06, -0.06, -0.04, 0.04, z, z + 0.07, 0.012));
+  onDoor('glass', K.geom.bev(-span + 0.05, -0.05, -0.012, 0.012, 0.06, height - 0.06, 0.005));
+  onDoor(M.BRASS, K.geom.sweep([[-span + 0.03, 0.03, 0.64], [-span + 0.03, 0.13, 0.64], [-span + 0.03, 0.13, 0.98], [-span + 0.03, 0.03, 0.98]], 0.03));
+  for (const z of [0.12, 1.13]) f.cyl(M.BLACK, hinge[0], hinge[1], hinge[2] + z, hinge[2] + z + 0.24, 0.065, 0.065, 8);
+  f.cyl(M.BLACK, 0, 0, ceil - 0.12, ceil + 0.03, 0.38, 0.38, 16);
   f.block(-r, r, -r, r, 0, ceil);
   // a basket of logs beside it
   vessel(K, f, M.CANE, 1.45, 0.6, 0.08, [[0, 0], [0.38, 0], [0.42, 0.6], [0.39, 0.6], [0.35, 0.06], [0, 0.06]], 14);
-  for (let i = 0; i < 4; i++) roll(K, f, 'bark', 1.45 + (i % 2 - 0.5) * 0.16, 0.6 + (i - 1.5) * 0.12, 0.62 + (i % 2) * 0.08, 0.09, 0.85, { rz: 0.4 + i * 0.5, seg: 7 });
+  storedLogs(K,f,1.45,.6,.15,.86,.13,3,3);
   f.block(1.05, 1.85, 0.2, 1.0, 0, 1.5);
   return { x: 0, y: r * 0.3, z: h0 + 0.42 };
 }
 // A low lounge chair after Finn Juhl and Grete Jalk: a teak frame, a floating seat and back in wool, open arms.
 // f: a frame; the chair's seat at its origin, facing +y. Sittable.
 export function loungeChair(K, f, x, y, fab, o = {}) {
-  const s = f.sub(x, y, 0, o.dq ?? 0), wood = o.wood ?? M.TEAK, a = 1.25, sz = 1.25;
+  const base = f.sub(x, y, 0, o.dq ?? 0), wood = o.wood ?? M.TEAK, a = 1.25, sz = 1.25;
+  const turn = o.turn ?? 0, c = Math.cos(turn), n = Math.sin(turn);
+  const map = (lx, ly) => base.map(lx * c - ly * n, lx * n + ly * c);
+  const origin = map(0, 0), front = map(0, 1);
+  const s = turn ? { ...base, map, dir: [front[0] - origin[0], front[1] - origin[1]] } : base;
   for (const sx of [-1, 1]) {
-    leg(K, s, wood, sx * (a - 0.1), 0.95, 1.85, 0.07, sx * 0.08, 0.15);
-    leg(K, s, wood, sx * (a - 0.1), -0.95, 1.2, 0.07, sx * 0.08, -0.2);
+    leg(K, s, wood, sx * (a - 0.1), 0.95, 1.9, 0.07, sx * 0.08, 0.15);
+    leg(K, s, wood, sx * (a - 0.1), -0.9, 1.65, 0.07, sx * 0.08, -0.2);
     K.put(s, wood, K.geom.sweep([[sx * (a - 0.1), 1.05, 1.9], [sx * (a - 0.05), 0.2, 2.0], [sx * (a - 0.1), -0.9, 1.65]], t => 0.07 - 0.02 * t, { seg: 6 }));
     K.put(s, wood, K.geom.sweep([[sx * (a - 0.1), 0.9, sz - 0.2], [sx * (a - 0.1), -0.95, sz - 0.25]], 0.05, { seg: 5 }));
   }
-  pad(K, s, fab, -a + 0.2, a - 0.2, -0.85, 1.0, sz - 0.25, sz + 0.17);
-  { const g = K.geom.pillow(2 * a - 0.5, 1.6, 0.36, { n: 9, pinch: 0.04, lump: 0.012, dent: 0.02 }); g.rotateX(Math.PI / 2); g.translate(0, 0.02, 0.8); K.put(s, fab, g, { rx: 0.32, at: [0, -0.9, sz] }); }
-  s.block(-a, a, -1.1, 1.1, 0, 1.6);
+  // Two raked uprights carry the back cushion into the rear frame.
+  for (const side of [-1, 1]) {
+    const postX = side * (a - 0.34);
+    K.put(s, wood, K.geom.sweep([[postX, -0.94, 1.12], [postX, -1.52, 2.65]], 0.055, { seg: 6, caps: true }));
+  }
+  s.bev(wood, -a + 0.1, a - 0.1, -1.01, -0.88, 1.04, 1.18, 0.02);
+  s.bev(wood, -a + 0.1, a - 0.1, 0.83, 0.96, 1.04, 1.18, 0.02);
+  s.bev(wood, -a + 0.32, a - 0.32, -1.57, -1.47, 2.57, 2.67, 0.025);
+  s.cushion(fab, -a + 0.18, a - 0.18, -0.96, 1.04, sz - 0.11, sz + 0.2, 0.105,
+    { crown: 0.055, bulge: 0.025, welt: 0.011, sag: [[0, -0.1, 0.045, 0.65]] });
+  const back = K.geom.softBox(-a + 0.21, a - 0.21, -0.78, 0.78, -0.16, 0.16, 0.115,
+    { crown: 0.04, bulge: 0.022, welt: 0.012 });
+  K.put(s, fab, back, { rx: -Math.PI / 2 + 0.32, at: [0, -1.075, sz + 0.84] });
+  if (o.pillow) K.cushion(s, 0.15, -0.84, sz + 0.21, 1.17, 1.0, o.pillow, { tilt: 0.38, turn: -0.07, thick: 0.34 });
+  const halfDepth = 1.34, midDepth = -0.21;
+  const hx = a * Math.abs(c) + halfDepth * Math.abs(n), hy = a * Math.abs(n) + halfDepth * Math.abs(c);
+  base.block(-midDepth * n - hx, -midDepth * n + hx, midDepth * c - hy, midDepth * c + hy, 0, 1.6);
   if (o.sit !== false) K.seat(s, 0, 0.05, sz + 0.1, o.label ?? 'sit');
 }
 // A soaking tub of hinoki, sunk to its waist in a slate surround, a wooden lid rolled back at one end, a bucket and a
@@ -605,13 +625,18 @@ export function washstand(K, f, o = {}) {
 export function bureau(K, f, o = {}) {
   const w = o.w ?? 3.4, a = w / 2, d = 1.5, wood = o.wood ?? M.TEAK, z0 = 1.2, zf = 2.45, z1 = 4.2;
   for (const sx of [-1, 1]) for (const y of [0.15, d - 0.15]) leg(K, f, wood, sx * (a - 0.15), y, z0, 0.06, sx * 0.05, y > 0.5 ? 0.06 : 0);
-  f.bev(wood, -a, a, 0.04, d, z0, z1, 0.02);
-  f.box(M.WALD, -a + 0.1, a - 0.1, d - 0.1, d - 0.02, z0 + 0.1, zf - 0.15);
-  for (let i = 0; i < 2; i++) { const zz = z0 + 0.12 + i * 0.5; f.bev(M.TEAKD, -a + 0.1, a - 0.1, d + 0.02, d + 0.07, zz, zz + 0.44, 0.01, { grain: 'x' }); f.box(M.BRASS, -0.2, 0.2, d + 0.05, d + 0.08, zz + 0.3, zz + 0.34); }
+  for (const x of [-a, a - 0.12]) f.bev(wood, x, x + 0.12, 0.06, d, z0, z1 - 0.1, 0.016, { grain: 'z' });
+  f.bev(wood, -a + 0.11, a - 0.11, 0.065, d - 0.065, z0, z0 + 0.12, 0.012);
+  f.bev(wood, -a + 0.11, a - 0.11, 0.068, d - 0.055, zf - 0.12, zf + 0.012, 0.012);
+  f.bev(wood, -a - 0.025, a + 0.025, 0.05, d + 0.03, z1 - 0.115, z1, 0.019, { grain: 'x' });
+  f.box(M.WALD, -a + 0.105, a - 0.105, 0.067, 0.149, z0 + 0.11, z1 - 0.11);
+  for (let i = 0; i < 2; i++) { const zz = z0 + 0.13 + i * 0.5; f.bev(M.TEAKD, -a + 0.115, a - 0.115, d - 0.08, d + 0.053, zz, zz + 0.44, 0.01, { grain: 'x' }); f.box(M.BRASS, -0.2, 0.2, d + 0.05, d + 0.08, zz + 0.3, zz + 0.34); }
   // the upper part, open: a recess with pigeonholes, the flap let down onto two lopers
-  f.box(M.WALD, -a + 0.1, a - 0.1, 0.04, d - 0.5, zf + 0.005, z1 - 0.1);
-  for (let i = 0; i <= 6; i++) f.box(wood, -a + 0.15 + i * (w - 0.3) / 6 - 0.02, -a + 0.15 + i * (w - 0.3) / 6 + 0.02, 0.07, 0.9, zf + 0.63, z1 - 0.12);
-  f.box(wood, -a + 0.11, a - 0.11, 0.07, 0.92, zf + 0.58, zf + 0.62);
+  for (let i = 1; i < 6; i++) {
+    const x = -a + 0.15 + i * (w - 0.3) / 6;
+    f.bev(wood, x - 0.022, x + 0.022, 0.145, 0.92, zf + 0.616, z1 - 0.113, 0.006);
+  }
+  f.bev(wood, -a + 0.113, a - 0.113, 0.144, 0.94, zf + 0.56, zf + 0.622, 0.01, { grain: 'x' });
   K.put(f, wood, K.geom.bev(-a + 0.05, a - 0.05, d - 0.05, d + 1.05, zf - 0.06, zf, 0.01, { grain: 'x' }));
   f.box(M.LEATHER, -a + 0.3, a - 0.3, d + 0.05, d + 0.95, zf + 0.012, zf + 0.03);
   const papers = [];

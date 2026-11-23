@@ -3,6 +3,7 @@
 // steam off a cup, koi, bees, the swing, sitting down.
 
 import * as THREE from 'three';
+import { burningLogs } from './kit/firewood.js';
 import { makeFlames, makeCandleFlame, NOISE } from './flame.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -169,7 +170,7 @@ function prepareModel(src, outdoor) {
 }
 
 // ---------------------------------------------------------------------------------------
-export function bringToLife({ scene, outdoors = scene, vis = null, quality = {}, renderer, camera, items, garden, colliders, materials, doors = [], onChange }) {
+export function bringToLife({ doorBodies = [], scene, outdoors = scene, vis = null, quality = {}, renderer, camera, items, garden, colliders, materials, doors = [], onChange }) {
   const { models, extras, books, candles, seats, lamps, steam } = items;
   const Q_ = new URLSearchParams(location.search);
   // ?ahead=0: as it was (rooms' pictures made ready only when first seen, clutter drawn less far when frames run slow)
@@ -621,11 +622,11 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
   // Called every frame after the visibility pass
   const shows = z => (Array.isArray(z) ? z.some(vis.shows) : vis.shows(z));
   function cullModels(all = false) {
-    for (const c of cull) c.o.visible = all || (c.near && (!vis || (vis.shows(c.zone) && vis.inView(c.zone, c.box))));
+    for (const c of cull) c.o.visible = all || ((c.near || vis?.occupied(c.zone)) && (!vis || (vis.shows(c.zone) && vis.inView(c.zone, c.box))));
     const p = camera.position;
     for (const t of tracked) {
       let on = all || shows(t.zone);
-      if (on && !all && typeof t.zone === 'string' && t.zone.endsWith(':small')) { t.box ??= new THREE.Box3().setFromObject(t.o); on = t.box.distanceToPoint(p) < SMALL_NEAR(); }
+      if (on && !all && typeof t.zone === 'string' && t.zone.endsWith(':small')) { t.box ??= new THREE.Box3().setFromObject(t.o); on = vis.occupied(t.zone) || t.box.distanceToPoint(p) < SMALL_NEAR(); }
       t.o.visible = on && (!t.test || t.test());
     }
     sheetsShown(all);
@@ -699,8 +700,8 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
   // in one of a few instanced meshes that all the doors share (fittings, below), moved with their doors each frame.
   // So a door is one draw call, and all the glass and brass of every door together five more.
   const fittings = { knob: [], box: [], pin: [], glass: [], frost: [] };
-  let bodyList = [], bodyClock = -1, attended = null;
-  const bodies = () => { const n = performance.now(); if (n - bodyClock > 700) { bodyClock = n; bodyList = colliders.filter(c => c.staff && !c.leaf && !c.off); } return bodyList; };      // the robots' bodies, which a leaf waits for
+  let bodyList = [], bodyClock = -1, staffCount = -1, attended = null;
+  const bodies = () => { const n = performance.now(); if (n - bodyClock > 700 || staffCount !== doorBodies.length) { bodyClock = n; staffCount = doorBodies.length; bodyList = colliders.filter(c => c.staff && !c.leaf && !c.off).concat(doorBodies); } return bodyList; };      // the robots' bodies, which a leaf waits for
   for (const d of [...doors, ...(items.hinged ?? [])]) {
     const g = new THREE.Group(); g.position.set(d.x, 0, d.z); g.rotation.y = d.closed; g.userData.cat = 'doors'; scene.add(g);
     if (vis) {                                         // a door belongs to the rooms (or garden) on both its sides
@@ -730,8 +731,8 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
       for (const q of leaf.fittings) fittings[q.kind].push({ g, at: q.m, color: q.color });
     }
     if (d.fixed) continue;
-    // Inside the house the doors stand open; the doors to outdoors are shut until someone opens them.
-    d.isOpen = !d.exterior; d.stop.off = d.isOpen; if (d.isOpen) g.rotation.y = d.open;
+    // Interior doors default to open. Individual rooms can specify their arrival state.
+    d.isOpen = d.initialOpen ?? !d.exterior; d.stop.off = d.isOpen; if (d.isOpen) g.rotation.y = d.open;
     // The two leaves of a pair share one doorway (the same `stop`): one prompt for the pair, and E moves both together.
     // (Each leaf used to answer for itself at the same point, so E opened one leaf at a time.)
     const mates = doors.filter(q => q.stop === d.stop && !q.fixed);
@@ -755,6 +756,7 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
     colliders.push(box);
     // how near the leaf, standing at angle a, comes to a point of the floor
     const reach = (a, px, pz) => { const ux = Math.cos(a), uz = -Math.sin(a), k = Math.max(0, Math.min(w, (px - d.x) * ux + (pz - d.z) * uz)); return Math.hypot(px - d.x - ux * k, pz - d.z - uz * k); };
+    d.clearanceAt = (x, z) => reach(g.rotation.y, x, z) - th;
     const here = () => camera && camera.position.y > h0 + 1.5 && camera.position.y < h1 + 4 && Math.hypot(camera.position.x - d.x, camera.position.z - d.z) < w + 3;      // is the visitor on this floor, and near?
     const bodyAt = a => bodies().some(q => q.y1 > h0 + 0.3 && q.y0 < h1 && reach(a, (q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2) < Math.max(q.x1 - q.x0, q.z1 - q.z0) / 2 + 0.15);      // a robot in the way
     const inBox = (q, px, pz, r) => Math.hypot(px - Math.max(q.x0, Math.min(px, q.x1)), pz - Math.max(q.z0, Math.min(pz, q.z1))) < r;
@@ -777,7 +779,7 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
         g.rotation.y = cur + step;
       }
       const f = (g.rotation.y - d.closed) / span;                     // 0 shut, 1 open
-      d.shut = f < 0.04; d.ajar = f > 0.5;
+      d.openFraction = f; d.shut = f < 0.04; d.ajar = f > 0.5;
       if (f < 0.97) box.off = true;
       else if (box.off && !(here() && inBox(box, camera.position.x, camera.position.z, 0.8)) && !bodies().some(q => q.y1 > h0 + 0.3 && q.y0 < h1 && q.x1 > box.x0 && q.x0 < box.x1 && q.z1 > box.z0 && q.z0 < box.z1)) box.off = false;
       if (mates[0] === d) d.stop.off = mates.every(q => (q.isOpen ? q.ajar ?? true : !(q.shut ?? true)));      // (through when the leaves are half open; shut when they have shut)
@@ -832,10 +834,8 @@ export function bringToLife({ scene, outdoors = scene, vis = null, quality = {},
     const flames = makeFlames(THREE, mergeGeometries, uT, [[-Math.PI / 2, 0.0, 0, 2.3, 2.1, 0], [-Math.PI / 2, 0.22, -0.2, 2.0, 1.75, 3.7], [-Math.PI / 2, -0.2, 0.25, 1.7, 1.5, 8.1]]);
     hearth.add(flames);
     // Three split logs across the opening on a bed of embers that breathes
-    const logMat = new THREE.MeshStandardMaterial({ color: 0x241710, roughness: 1, emissive: 0x9a2c08, emissiveIntensity: 0.1 });
-    for (const [dx, dy, len, rot, rad] of [[0.3, 0.2, 2.2, 0.08, 0.19], [-0.25, 0.19, 2.0, -0.1, 0.17], [0.05, 0.5, 1.8, 0.05, 0.16]]) {
-      const l = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 0.9, len, 9).rotateX(Math.PI / 2), logMat); l.rotation.y = rot; l.position.set(dx, dy, 0); l.receiveShadow = true; hearth.add(l);
-    }
+    const fuel = burningLogs(materials.bark, 2.25, 1.15);
+    fuel.rotation.y = Math.PI / 2; hearth.add(fuel);
     const embers = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
       uniforms: { uT }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
       vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -849,7 +849,7 @@ void main() {
     }));
     embers.position.set(0.05, 0.07, 0); hearth.add(embers);
     hearth.traverse(n => { n.userData.cat = 'fire'; });
-    animated.push(t => { uT.value = t; logMat.emissiveIntensity = 0.1 + 0.04 * Math.sin(t * 6.3) + 0.025 * Math.sin(t * 14.1); });
+    animated.push(t => { uT.value = t; });
   }
 
   // ---- Steam off a hot cup ----------------------------------------------------------------------

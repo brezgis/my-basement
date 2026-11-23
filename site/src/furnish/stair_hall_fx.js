@@ -31,8 +31,9 @@ export function wash(ctx, f, items, at) {
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
     vertexShader: 'attribute vec3 aQ; varying vec3 vQ; void main() { vQ = aQ; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform float uK; varying vec3 vQ;
-void main() { float v = vQ.y, ends = smoothstep(0.0, 0.015, vQ.x) * smoothstep(0.0, 0.015, 1.0 - vQ.x);
-  float fall = 0.12 * exp(-v * 40.0) + pow(1.0 - v, 2.2);
+void main() { float v = vQ.y, edge = 0.035 + 0.09 * v;
+  float ends = smoothstep(0.0, edge, vQ.x) * smoothstep(0.0, edge, 1.0 - vQ.x);
+  float fall = pow(1.0 - v, 2.8) / (1.0 + 4.0 * v * v);
   gl_FragColor = vec4(vec3(1.0, 0.58, 0.24) * fall * ends * vQ.z * uK, 1.0); }`,
   }));
   m.name = 'stair_hall concealed light'; m.renderOrder = 1; m.frustumCulled = false;

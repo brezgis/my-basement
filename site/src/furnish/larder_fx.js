@@ -6,6 +6,56 @@ import { NOISE } from '../flame.js';
 
 const addTracked = (ctx, mesh, at, size = 1) => { mesh.frustumCulled = false; ctx.scene.add(mesh); ctx.track?.(mesh, ctx.zoneAt(at.x, at.y, at.z, size)); return mesh; };
 
+// Every cord and its globe rotate together about the ferrule fixed to the canopy.
+export function hangingGlobes(ctx, world, top, globes, metal, bulb) {
+  const group = new THREE.Group();
+  group.name = 'Listening Room suspended globes';
+  const centre = world(0, 0, top);
+  group.position.set(centre.x, centre.y, centre.z);
+  const shapes = [
+    [new THREE.CylinderGeometry(1, 1, 1, 6), metal, 0.015],
+    [new THREE.CylinderGeometry(1, 1, 1, 12), metal, 0.09],
+    [new THREE.SphereGeometry(1, 18, 12), 'glass'],
+    [new THREE.CylinderGeometry(1, 1, 1, 6), bulb, 0.026],
+  ];
+  const meshes = shapes.map(([geometry, material]) => {
+    const mesh = new THREE.InstancedMesh(geometry, ctx.materials.make(material), globes.length);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    mesh.frustumCulled = false;
+    mesh.receiveShadow = true;
+    group.add(mesh);
+    return mesh;
+  });
+  const pivot = new THREE.Object3D(), part = new THREE.Object3D(), matrix = new THREE.Matrix4();
+  const points = globes.map(([x, y, bottom, r]) => {
+    const point = world(x, y, top);
+    const anchor = new THREE.Vector3(point.x - centre.x, point.y - centre.y, point.z - centre.z);
+    return { anchor, drop: top - bottom - 1.9 * r, r };
+  });
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  function move(t) {
+    for (let i = 0; i < points.length; i++) {
+      const { anchor, drop, r } = points[i];
+      pivot.position.copy(anchor);
+      pivot.rotation.set(0.009 * Math.sin(t * 0.68 + i * 1.6), 0, 0.011 * Math.sin(t * 0.52 + i * 2.1));
+      if (reducedMotion.matches) pivot.rotation.set(0, 0, 0);
+      pivot.updateMatrix();
+      const parts = [[-drop / 2, shapes[0][2], drop + 0.05], [-drop + 0.015, shapes[1][2], 0.14], [-drop - r * 0.92, r, r * 0.98], [-drop - r * 0.83, shapes[3][2], r * 1.03]];
+      for (let j = 0; j < meshes.length; j++) {
+        const [y, radius, length] = parts[j];
+        part.position.set(0, y, 0);
+        part.scale.set(radius, length, radius);
+        part.updateMatrix();
+        meshes[j].setMatrixAt(i, matrix.multiplyMatrices(pivot.matrix, part.matrix));
+      }
+    }
+    for (const mesh of meshes) mesh.instanceMatrix.needsUpdate = true;
+  }
+  move(0);
+  addTracked(ctx, group, world(0, 0, top - 3), 3);
+  ctx.animated.push(t => { if (group.visible) move(t); });
+}
+
 // ---- candle flames --------------------------------------------------------------------------------------------------
 // list: [{ X, Y, h, s }] (the wick's tip; s a size). The flame card and its colours are flame.js's makeCandleFlame,
 // with the wick's place given per instance instead of by a mesh's matrix, so a whole room of them is one draw.

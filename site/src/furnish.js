@@ -74,9 +74,15 @@ export function* furnishSteps(B, site, b, lists) {
   // ---- f ----------------------------------------------------------------------------------------------------
   const xz = p => { const w = b.world(p[0], p[1], 0); return [w.x, w.z]; };
   const f = {
+    // The component stays visible as a unit through an opening.
+    inZone(zone, build) {
+      const previous = B.zone;
+      B.zone = zone;
+      try { return build(); } finally { B.zone = previous; }
+    },
     site, G: b.G, B: b.B, get kit() { return b.kit; }, draw: boards,
     // raw geometry, as b's (plan boxes X0, X1, Y0, Y1, h0, h1)
-    box: b.box, cyl: b.cyl, mesh: b.mesh, block: b.block, prism: b.prism,
+    box: b.box, cyl: b.cyl, mesh: b.mesh, block: b.block, surface: b.surface, prism: b.prism,
     // frames: fr(X, Y, h, q) (q: 0 faces +Y, 1 faces -X, 2 faces -Y, 3 faces +X)
     fr: b.fr,
     // rooms: f.rooms['Room 102'], f.room('Room 102') (throws if there is none) -> { name, X0, X1, Y0, Y1, floor, ceil, w, d, cx, cy, boxes }
@@ -207,6 +213,8 @@ function start(ctx) {
   if (ctx.items.books?.length) import('./books.js').then(m => inTurn('books', () => m.setupBooks(ctx))).catch(e => console.warn('books', e));      // every book on a shelf can be taken down
   import('./hold.js').then(m => inTurn('hold', () => m.setupHold(ctx))).catch(e => console.warn('hold', e));
   if (Q.get('faculty') !== '0' && (placed.faculty.length || placed.researchers.length || Q.has('lineup') || Q.has('crowd'))) import('./faculty.js').then(m => inTurn('faculty', () => m.hireFaculty(ctx, placed.faculty, placed.researchers))).catch(e => console.warn('faculty', e));
+  // Hire the bathhouse staff after furnishings have registered their footprints.
+  if (Q.get('staff') !== '0') import('./staff.js').then(m => inTurn('staff', () => m.hireStaff(ctx, plans, Q.get('staff') || '1'))).catch(e => console.warn('staff', e));
   if (placed.chess[0]) import('./chess.js').then(m => inTurn('chess', () => m.setupChess(ctx, placed.chess[0]))).catch(e => console.warn('chess', e));
   if (rec) import('./record.js').then(m => inTurn('record', () => m.setupRecord(ctx, rec))).catch(e => console.warn('record', e));
 }

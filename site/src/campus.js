@@ -25,9 +25,21 @@ export const MEADOW = 30;                                       // the meadow's 
 export const ROCK = { X0: -640, X1: 760, Y0: 16, Y1: 136 };      // (wide: from the first view the cliff runs out of sight to both sides)
 export const OCULUS = { X: 60, Y: 99.5, r: 3 };                  // the chapel's light shaft, where it comes up in the meadow
 export const COURT = { X: 60, Y: 28, r: 24 };
+// The patio and pool share this eight-panel stretch of the 48-sided terrace.
+const poolBrink = Array.from({length:9}, (_,i) => {
+  const angle=(32+i)*Math.PI/24, radius=COURT.r-0.45;
+  return [COURT.X+radius*Math.cos(angle), COURT.Y+radius*Math.sin(angle)];
+});
+export const EDGE_POOL = {
+  brink:poolBrink, coping:poolBrink.map(([x,y],i)=>[x,y+7.7*Math.sin(i*Math.PI/8)]),
+  bed:-2.26, water:0.76,
+};
 export const DOORS = { X: -57.2, Y: 28 };
-// The house's address, for the way back up through the cellar doors ('' until both are published: the doors then say so).
-export const HOUSE_ADDRESS = 'https://house.brezgis.com/';
+// Each preview has its own port on the same Tailscale machine.
+export function houseAddress() {
+  const local = location.port === '5193' && /^(localhost|\[::1\]|[\d.]+|.+\.ts\.net)$/.test(location.hostname);
+  return local ? location.protocol + '//' + location.hostname + ':8791/' : 'https://house.brezgis.com/site/';
+}
 export const SITES = [
   { id: 'spanya', name: 'Anna’s Basement', origin: [0, 0], facing: 'south', W: 120, D: 125, ground: 0, door: [60, 0], note: 'after Villa Vals' },
 ];
@@ -63,7 +75,19 @@ export const rimDist = (x, z) => outlineAt(Math.atan2(z - ISLAND.z, x - ISLAND.x
 const sm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); };
 export function groundAt(x, z) {
   const X = z, Y = x;                                           // (the site faces south: world x is the plan's Y, z its X)
-  if (Y < ROCK.Y0 + 1) return 0;
+  if (Y < ROCK.Y0 + 1) {
+    const {brink,coping,bed}=EDGE_POOL;
+    if (Y<13 && X>=brink[0][0] && X<=brink.at(-1)[0]) {
+      for (let i=1;i<brink.length;i++) {
+        if (X>brink[i][0]) continue;
+        const t=(X-brink[i-1][0])/(brink[i][0]-brink[i-1][0]);
+        const yAt=pts=>pts[i-1][1]+t*(pts[i][1]-pts[i-1][1]);
+        if (Y>=yAt(brink) && Y<=yAt(coping)) return bed - 1;
+        break;
+      }
+    }
+    return Math.hypot(X-COURT.X,Y-COURT.Y) < COURT.r-0.45 ? 0.34 : 0;
+  }
   const d = Math.hypot(X - COURT.X, Y - COURT.Y);
   return -8 * sm((d - COURT.r + 1) / 5) * sm((Y - ROCK.Y0 - 1) / 4);
 }

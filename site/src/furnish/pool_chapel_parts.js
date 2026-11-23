@@ -61,9 +61,10 @@ export function pot(K, f, x, y, r, h, mat = MAT.CLAY, style = 'urn') {
     ? [[0, 0], [r * 0.55, 0], [r * 0.6, h * 0.06], [r * 0.5, h * 0.1], [r * 0.82, h * 0.35], [r, h * 0.7], [r * 0.95, h * 0.88], [r * 1.06, h * 0.92], [r * 1.06, h], [r * 0.96, h], [r * 0.94, h * 0.93], [0, h * 0.93]]
     : style === 'bowl' ? [[0, 0], [r * 0.5, 0], [r * 0.85, h * 0.35], [r, h], [r * 0.93, h], [r * 0.9, h * 0.9], [0, h * 0.9]]
       : [[0, 0], [r * 0.78, 0], [r * 0.92, h * 0.85], [r * 1.02, h * 0.87], [r * 1.02, h], [r * 0.95, h], [r * 0.92, h * 0.92], [0, h * 0.92]];
-  vessel(K, f, mat, x, y, 0, P, r > 0.6 ? 20 : 14);
-  K.put(f, MAT.SOIL, K.geom.lathe([[0, h * 0.9], [r * 0.9, h * 0.9], [0, h * 0.905]], { seg: 12 }), { at: [x, y, 0] });
-  return h * 0.9;
+  const [innerRadius, soilHeight] = P.at(-2);
+  vessel(K,f,mat,x,y,0,P.slice(0,-1),r>0.6?24:18);
+  f.cyl(MAT.SOIL,x,y,soilHeight-0.025,soilHeight+0.005,innerRadius,innerRadius,24);
+  return soilHeight;
 }
 // A kentia palm: arching fronds of narrow leaflets from a few canes, after Frond's palm()
 export function palm(K, L, f, x, y, z, s = 1, seed = 1) {
@@ -89,6 +90,7 @@ export function fern(K, L, f, x, y, z, s = 1, seed = 2) {
   for (let i = 0; i < 22; i++) {
     const az = i * 2.4 + rnd() * 0.4, ll = (1.3 + rnd() * 0.9) * s, up = 0.7 + rnd() * 0.9, c = Math.cos(az), sn = Math.sin(az), col = LEAF[i % 3];
     const pt = t => [x + c * ll * t * 0.95, y + sn * ll * t * 0.95, z + ll * (up * t - (up + 0.55) * t * t)];
+    K.put(f, col, K.geom.sweep([0,0.16,0.3,0.44,0.58,0.72,0.86,1].map(pt), 0.014*s, {seg: 4}));
     const m = 8;
     for (let j = 1; j <= m; j++) { const t = 0.08 + 0.9 * j / m, p = pt(t), q = 0.26 * s * Math.sin(Math.PI * Math.min(1, 0.15 + t)); for (const sd of [-1, 1]) L.leaf(f, col, p, az + sd * 1.25, -0.2, q, 0.045 * s, { shape: 'oval', fold: 0.2, droop: 0.3 }); }
   }
@@ -165,7 +167,7 @@ export function robes(K, f, x0, x1, o = {}) {
   for (let i = 0; i < n; i++) {
     const x = x0 + (x1 - x0) * (i + 0.5) / n;
     K.put(f, MAT.OAK, K.geom.lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0.055, 0.36], [0, 0.37]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.12, zr] });
-    if (i !== o.empty) K.coatOnPeg(f, x, 0.22, zr - 0.05, cols[i % cols.length], 'coat', { squash: 1.3 });
+    if (i !== o.empty) K.coatOnPeg(f, x, 0.22, zr - 0.05, cols[i % cols.length], 'robe');
   }
   // the bench
   const d = 1.25, h = 1.5;
@@ -289,52 +291,4 @@ export function lectern(K, f, x, y, draw, o = {}) {
   // the printed page: a sign standing on the desk's slope (leaned back pi/2 - t from upright), just over the pages
   const ny = Math.sin(t), nz = Math.cos(t), lift = 0.14;
   K.sign(f, x, y + ny * lift, cy + nz * lift, 2.02, 1.3, draw, { cw: 792, ch: 510, rough: 0.9, tilt: Math.PI / 2 - t });
-}
-
-// ---- a picture in glazed tile, for the bath hall's walls ---------------------------------------------------------
-// draw(g, W, H) paints the picture; it is then cut into tiles (n across), each tile's glaze a shade lighter or darker,
-// a little gloss across each, and grout lines between. kind 'garden': after Klimt's Tree of Life (the Stoclet frieze):
-// a gold ground, spiralling branches, a meadow of flowers below. kind 'sea': after Hilma af Klint's paintings for the
-// Temple: concentric circles and two spirals in blue, yellow, rose and green on a deep ground.
-export function tilePanel(kind, nx = 18) {
-  return (g, W, H) => {
-    let k = kind === 'garden' ? 11 : 23; const r = () => ((k = (k * 16807) % 2147483647) / 2147483647);
-    if (kind === 'garden') {
-      const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#d9a93c'); gr.addColorStop(0.6, '#c8902c'); gr.addColorStop(1, '#3f6a3a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
-      // the meadow: green ground and a crowd of flowers
-      g.fillStyle = '#35603a'; g.beginPath(); g.moveTo(0, H * 0.72); for (let x = 0; x <= W; x += W / 20) g.lineTo(x, H * 0.7 + Math.sin(x * 0.02) * H * 0.02); g.lineTo(W, H); g.lineTo(0, H); g.fill();
-      const cols = ['#e8607a', '#f2b23a', '#7aa7e0', '#f4e6c8', '#d84a2c', '#9b5fc0'];
-      for (let i = 0; i < 260; i++) { const x = r() * W, y = H * (0.73 + r() * 0.27), rr = W * (0.006 + r() * 0.012); g.fillStyle = cols[i % 6]; g.beginPath(); g.arc(x, y, rr, 0, Math.PI * 2); g.fill(); g.fillStyle = '#f7e9b0'; g.beginPath(); g.arc(x, y, rr * 0.35, 0, Math.PI * 2); g.fill(); }
-      // the tree: a trunk, and branches that roll up into spirals
-      g.strokeStyle = '#4a2e14'; g.lineCap = 'round';
-      g.lineWidth = W * 0.035; g.beginPath(); g.moveTo(W / 2, H * 0.78); g.lineTo(W / 2, H * 0.42); g.stroke();
-      const spiral = (x0, y0, dir, len, turns, wd) => { g.lineWidth = wd; g.beginPath(); g.moveTo(x0, y0); let x = x0, y = y0; const n = 120; for (let i = 1; i <= n; i++) { const t = i / n, a = dir * (Math.PI * 2 * turns * t * t) - Math.PI / 2 * dir, rr = len * (1 - t * 0.85); x = x0 + dir * len * t * 1.2 + Math.cos(a) * rr * t; y = y0 - len * 0.5 * t + Math.sin(a) * rr * t; g.lineTo(x, y); } g.stroke(); };
-      // the branches: each drawn dark, then gilded along its middle, many of them, rolling up into spirals
-      const br = []; for (let i = 0; i < 16; i++) br.push([H * (0.5 - Math.floor(i / 2) * 0.045 + r() * 0.02), i % 2 ? 1 : -1, W * (0.14 + r() * 0.16), 1.4 + r() * 1.2, W * (0.016 - i * 0.0005)]);
-      for (const [y, dir, len, tu, wd] of br) { g.strokeStyle = '#3a2410'; spiral(W / 2, y, dir, len, tu, wd); }
-      for (const [y, dir, len, tu, wd] of br) { g.strokeStyle = '#f1cf5a'; spiral(W / 2, y, dir, len, tu, wd * 0.4); }
-      g.strokeStyle = '#f1cf5a'; g.lineWidth = W * 0.008; g.beginPath(); g.moveTo(W / 2, H * 0.78); g.lineTo(W / 2, H * 0.44); g.stroke();
-      // eyes and leaves of the frieze: gold and green almonds, little squares
-      for (let i = 0; i < 90; i++) { const x = r() * W, y = r() * H * 0.62; g.save(); g.translate(x, y); g.rotate(r() * 3); g.fillStyle = i % 3 ? '#2f5a34' : '#f3e3a0'; g.beginPath(); g.ellipse(0, 0, W * 0.012, W * 0.005, 0, 0, Math.PI * 2); g.fill(); if (!(i % 3)) { g.fillStyle = '#4a2e14'; g.beginPath(); g.arc(0, 0, W * 0.003, 0, 7); g.fill(); } g.restore(); }
-      for (let i = 0; i < 40; i++) { g.fillStyle = ['#b23a2a', '#2a3f7a', '#f4e6c8'][i % 3]; const s2 = W * 0.012; g.fillRect(r() * W, r() * H * 0.6, s2, s2); }
-    } else {
-      g.fillStyle = '#1f3442'; g.fillRect(0, 0, W, H);
-      const cx = W / 2, cy = H * 0.48, R = Math.min(W, H) * 0.42, ring = ['#e9c24a', '#d9667a', '#7fb0d8', '#f1e6cf', '#5f9a6a', '#e9c24a', '#d9667a'];
-      ring.forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(cx, cy, R * (1 - i / ring.length), 0, Math.PI * 2); g.fill(); });
-      g.fillStyle = '#1f3442'; g.beginPath(); g.arc(cx, cy, R * 0.07, 0, Math.PI * 2); g.fill();
-      // the two spirals either side, white and gold, and a band of petals across the foot
-      for (const [sx, col] of [[W * 0.13, '#f4efe2'], [W * 0.87, '#e9c24a']]) { g.strokeStyle = col; g.lineWidth = W * 0.012; g.beginPath(); for (let i = 0; i <= 140; i++) { const t = i / 140, a = t * Math.PI * 7 * (sx < cx ? 1 : -1), rr = W * 0.11 * (1 - t); const x = sx + Math.cos(a) * rr, y = H * 0.28 + Math.sin(a) * rr; i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); }
-      for (let i = 0; i < 14; i++) { const x = (i + 0.5) / 14 * W, y = H * 0.9; g.fillStyle = i % 2 ? '#d9667a' : '#7fb0d8'; g.beginPath(); g.ellipse(x, y, W * 0.028, H * 0.06, 0, 0, Math.PI * 2); g.fill(); g.fillStyle = '#e9c24a'; g.beginPath(); g.arc(x, y, W * 0.008, 0, 7); g.fill(); }
-      g.strokeStyle = '#f4efe2'; g.lineWidth = W * 0.004; g.beginPath(); g.moveTo(0, H * 0.8); g.lineTo(W, H * 0.8); g.stroke();
-    }
-    // glaze each tile a little differently, a gloss across it, the grout between
-    const t = W / nx, ny = Math.round(H / t), th = H / ny;
-    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-      const v = r(); g.fillStyle = v < 0.5 ? `rgba(255,250,235,${0.03 + v * 0.06})` : `rgba(20,12,4,${(v - 0.5) * 0.12})`; g.fillRect(i * t, j * th, t, th);
-      const gl = g.createLinearGradient(i * t, j * th, i * t + t, j * th + th); gl.addColorStop(0, 'rgba(255,255,255,.10)'); gl.addColorStop(0.4, 'rgba(255,255,255,0)'); g.fillStyle = gl; g.fillRect(i * t, j * th, t, th);
-    }
-    g.strokeStyle = 'rgba(214,206,190,.95)'; g.lineWidth = Math.max(2, t * 0.06);
-    for (let i = 0; i <= nx; i++) { g.beginPath(); g.moveTo(i * t, 0); g.lineTo(i * t, H); g.stroke(); }
-    for (let j = 0; j <= ny; j++) { g.beginPath(); g.moveTo(0, j * th); g.lineTo(W, j * th); g.stroke(); }
-  };
 }

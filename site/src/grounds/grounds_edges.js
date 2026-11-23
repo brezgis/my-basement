@@ -13,16 +13,19 @@
 //
 // Plan coordinates as spanya.js; the world is x = Y, z = X.
 
+import { burningLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { mergeVertices, mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { lookout as LOOK, westWalk, eastWalk } from '../buildings/cliff-walks.js';
 import { PAINT } from './tools.js';
 import { rng } from './cards.js';
 import { makeFlames } from '../flame.js';
+import { fixedExteriorLight } from '../lighting.js';
 import { makePainter } from './grounds_cave_paint.js';
 import { beast, handPath } from './grounds_cave_forms.js';
 
 const TAU = Math.PI * 2, PAVE = 0.34, pw = (X, Y) => [Y, X];
-const WK = { Y0: 9.5, Y1: 16, XW: 13.7, XE: 108.2 }, LOOK = { X: 21.2, Y: 9.5, r: 6.5 }, CV = { X: 125.5, Y: 19.5, rx: 10, ry: 9, H: 12.5 }, FIRE = { X: 126.5, Y: 19.5 };
+const CV = { X: 125.5, Y: 19.5, rx: 10, ry: 9, H: 12.5 }, FIRE = { X: 126.5, Y: 19.5 };
 const lookTo = (dX, dY) => Math.atan2(-dY, -dX);
 
 // a rough stone (a dented, squashed ball), its foot sunk a little
@@ -37,12 +40,13 @@ export function layEdges(E) {
   const { K, B, Wd } = E, r = rng(5150);
 
   // ---- the walks ----------------------------------------------------------------------------------------------------
-  for (const X of [30, 92]) { const [x, z] = pw(WK.Y0 + 0.3, X); E.lantern(x, PAVE + 2.6, z, 0.75, 0); E.pools.push([x + 1.2, z, 3.2, 0.5]); }
-  { const [x, z] = pw(14.3, WK.XW + 1.4); const top = E.pot(x, z, 'jar', 2.3, 'c#a8654a/0.9'); for (let k = 0; k < 3; k++) Wd.add('miscanthus', x + (r() - 0.5) * 0.4, top, z + (r() - 0.5) * 0.4, 0.62, { tint: 0.9 }); }
-  for (const [X, up] of [[33, 4], [86, 3]]) { const [x, z] = pw(WK.Y1 + 0.1, X); for (let j = 0; j < up; j++) Wd.add('ivy', x, PAVE + j * 2.5, z + (r() - 0.5) * 0.6, 1, { w: 1.5 + r() * 0.5, h: 3.0, rot: -Math.PI / 2, tint: 0.75 + r() * 0.25 }); }
+  for (const [x,y,,rise] of [westWalk[4],eastWalk[6]]) {
+    const [lx,lz] = pw(x,y);
+    E.lantern(lx,PAVE+rise+2.75,lz,0.66,0.35);
+  }
 
-  // ---- the lookout ----------------------------------------------------------------------------------------------------
   {
+    const PAVE = 0.34 + westWalk.at(-1)[3];
     const [cx, cz] = pw(LOOK.X, LOOK.Y), STONEB = 'c#b8ab96/0.95', R0 = 5.0, R1 = 5.95, BH = 1.45;
     // a curved bench against the parapet, in two pieces, facing out over the drop (bearings measured as the plan's)
     const ring = (ra, rb, q0, q1, n = 18) => { const sh = new THREE.Shape(); for (let i = 0; i <= n; i++) { const q = q0 + (q1 - q0) * i / n; i ? sh.lineTo(ra * Math.sin(q), -ra * Math.cos(q)) : sh.moveTo(ra * Math.sin(q), -ra * Math.cos(q)); } for (let i = n; i >= 0; i--) { const q = q0 + (q1 - q0) * i / n; sh.lineTo(rb * Math.sin(q), -rb * Math.cos(q)); } return sh; };
@@ -65,21 +69,22 @@ export function layEdges(E) {
     K.collide(tx - 0.9, tx + 0.9, tz - 0.9, tz + 0.9, head, PAVE - 0.5);
     E.scope = { x: tx + 1.5, y: head + 0.3, z: tz, yaw: Math.PI / 2, pitch: -0.05, at: [tx, head, tz] };
     // a lantern on the parapet's top at the bench's end, and a pot of lavender by the way in
-    { const q = 270 * Math.PI / 180, [lx, lz] = pw(LOOK.X + 6.55 * Math.cos(q), LOOK.Y + 6.55 * Math.sin(q)); E.lantern(lx, PAVE + 2.62, lz, 0.75, 0); }
-    { const q = 196 * Math.PI / 180, [px, pz] = pw(LOOK.X + 3.6 * Math.cos(q) - 1.6, LOOK.Y + 3.6 * Math.sin(q) + 2.2); const top = E.pot(px, pz, 'pot', 1.4, 'c#b57a5a/0.9'); for (let k = 0; k < 3; k++) E.plant('lavender', px + (r() - 0.5) * 0.4, top, pz + (r() - 0.5) * 0.4, 0.75); }
-    E.pools.push([cx - 2, cz, 6.5, 0.45]);
+    { const q = 270 * Math.PI / 180, [lx, lz] = pw(LOOK.X + 6.55 * Math.cos(q), LOOK.Y + 6.55 * Math.sin(q));
+      E.lantern(lx, PAVE + 2.62, lz, 0.75, 0);
+      fixedExteriorLight(lx, PAVE + 3.06, lz, { power: 7, reach: 8 });
+    }
+    { const q = 196 * Math.PI / 180, [px, pz] = pw(LOOK.X + 3.6 * Math.cos(q) - 1.6, LOOK.Y + 3.6 * Math.sin(q) + 2.2); const top = E.pot(px, pz, 'pot', 1.4, 'c#b57a5a/0.9', PAVE); for (let k = 0; k < 3; k++) E.plant('lavender', px + (r() - 0.5) * 0.4, top, pz + (r() - 0.5) * 0.4, 0.75); }
     E.perches.push([cx - 6.55, PAVE + 2.62, cz + 2]);
   }
 
   // ---- the Old Cave ---------------------------------------------------------------------------------------------------
   {
+    const PAVE = 0.34 + eastWalk.at(-1)[3];
     const [fx, fz] = pw(FIRE.X, FIRE.Y), ROCKS = ['cliffrock', 'cliffrock', 'cliffrock'];
     // the hearth: a ring of stones, blackened inside, ash, logs, embers
     for (let i = 0; i < 11; i++) { const a = i / 11 * TAU + r() * 0.15; B.mesh(ROCKS[i % 3], stoneGeo(fx + Math.cos(a) * 1.55, PAVE + 0.12, fz + Math.sin(a) * 1.55, 0.42 + r() * 0.15, 0.3 + r() * 0.12, 0.36, 700 + i)); }
     B.mesh('soot', new THREE.CircleGeometry(1.4, 20).rotateX(-Math.PI / 2).translate(fx, PAVE + 0.03, fz));
     B.mesh('c#8a8278/1', new THREE.CircleGeometry(0.9, 16).rotateX(-Math.PI / 2).translate(fx, PAVE + 0.04, fz));
-    for (let k = 0; k < 5; k++) { const a = k / 5 * TAU + 0.3, g = new THREE.CylinderGeometry(0.11, 0.13, 1.6, 6); g.rotateZ(Math.PI / 2 - 0.35); g.rotateY(a); g.translate(fx + Math.cos(a) * 0.35, PAVE + 0.3, fz + Math.sin(a) * 0.35); B.mesh('c#3a2a1e/0.95', g); }
-    B.mesh('e#ffb866/2.2', new THREE.SphereGeometry(0.5, 10, 6).scale(1, 0.25, 1).translate(fx, PAVE + 0.12, fz));
     K.collide(fx - 1.9, fx + 1.9, fz - 1.9, fz + 1.9, PAVE + 0.8, PAVE - 0.5);
     E.cave = { fire: [fx, PAVE + 0.2, fz], centre: pw(CV.X, CV.Y), H: CV.H };
     // four stones to sit on round it, each with a sheepskin
@@ -109,8 +114,12 @@ export function caveSetup(ctx, E, root) {
   // the flames: the hearth's, and a small one on each stone lamp
   if (E.cave) {
     const [fx, fy, fz] = E.cave.fire, sheets = [];
+    const wood = burningLogs(ctx.materials.bark, 1.85, 1.38);
+    wood.position.set(fx, fy-.14, fz); root.add(wood);
     for (let k = 0; k < 4; k++) sheets.push([k * Math.PI / 4, fx, fz, 1.3, 2.0 + (k % 2) * 0.4, k * 7.1]);
-    for (const [x, y, z] of E.caveLamps ?? []) for (let k = 0; k < 2; k++) sheets.push([k * Math.PI / 2, x, z, 0.16, 0.32, 11 + k]);
+    for (const [x, y, z] of E.caveLamps ?? []) {
+      root.add(makeFlames(THREE, mergeGeometries, uT, [[0,x,z,.16,.32,11],[Math.PI/2,x,z,.16,.32,12]],y));
+    }
     const fl = makeFlames(THREE, mergeGeometries, uT, sheets, fy); fl.name = 'cave flames'; fl.renderOrder = 6; root.add(fl);
     frieze(ctx, E, root);
   }
@@ -127,9 +136,10 @@ export function caveSetup(ctx, E, root) {
 // The frieze: the animals of a painted cave, round the chamber's wall between 2.4 and 7.6 ft, painted on one long canvas
 // and laid on a band that follows the rock a hair inside it (found by casting rays at the built cave from its middle).
 function frieze(ctx, E, root) {
-  const [ccx, ccz] = E.cave.centre, y0 = PAVE + 2.4, y1 = PAVE + 7.6, NA = 72, rows = [y0, (y0 + y1) / 2, y1];
-  const box = new THREE.Box3(new THREE.Vector3(ccx - 14, 0, ccz - 16), new THREE.Vector3(ccx + 14, 15, ccz + 14)), targets = [];
-  root.traverse(m => { if (!m.isMesh || m.isInstancedMesh || !m.geometry?.attributes?.position) return; if (!m.geometry.boundingBox) m.geometry.computeBoundingBox(); const b = m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld); if (b.intersectsBox(box) && !/cave flames|frieze/.test(m.name)) targets.push(m); });
+  const [ccx, ccz] = E.cave.centre, y0 = E.cave.fire[1] + 2.2, y1 = E.cave.fire[1] + 7.4, NA = 72, rows = [y0, (y0 + y1) / 2, y1];
+  // Fit the paint to the chamber lining. The furniture and the island shell can
+  // also intersect the room's bounds, but neither carries the painted animals.
+  const targets = root.children.filter(m => m.isMesh && m.name === 'cliffrock' && m.userData.zone === 'shell:spanya');
   const ray = new THREE.Raycaster(); ray.far = 16;
   // the way in is toward -z (the plan's -X); the band leaves a gap there
   const gap = a => Math.abs(Math.atan2(Math.sin(a - Math.PI), Math.cos(a - Math.PI))) < 0.95;      // (the passage's own walls are left bare)

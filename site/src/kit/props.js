@@ -59,7 +59,17 @@ export function makeProps(K) {
       return { petals: twoSided(merge(petals)), heart: lathe([[0, -0.01], [0.03, 0], [0.026, 0.018], [0, 0.026]], { seg: 8 }) };
     }
     if (kind === 'tulip') {
-      return { petals: lathe([[0, -0.02], [0.04, -0.01], [0.06, 0.04], [0.058, 0.1], [0.045, 0.14], [0.042, 0.135], [0.05, 0.1], [0.05, 0.04], [0, 0.0]], { seg: 12, mod: (t, j) => 1 - (j >= 3 && j <= 5 ? 0.12 * Math.abs(Math.sin(t * 1.5)) : 0), lift: (t, j) => (j >= 4 && j <= 5 ? 0.02 * Math.cos(t * 3) : 0) }) };
+      const petals = [];
+      for (let i = 0; i < 6; i++) {
+        const a = i * TAU / 6 + (r() - 0.5) * 0.12, h = 0.17 + r() * 0.029;
+        petals.push(xf(sheet((u, v) => {
+          const t = u * 2 - 1;
+          const w = 0.058 * Math.sin(Math.PI * (0.07 + 0.9 * v)) ** 0.7;
+          const cup = 0.062 * Math.sin(Math.PI * v * 0.76);
+          return [cup - Math.abs(t) ** 1.7 * w * 0.34, t * w, v * h - t * t * v * 0.027];
+        }, 5, 7), { rz: a }));
+      }
+      return { petals: twoSided(merge(petals)) };
     }
     if (kind === 'sprig') {
       const buds = []; for (let i = 0; i < 5; i++) { const a = r() * TAU, d = r() * 0.05; buds.push(xf(lathe([[0, 0], [0.018, 0.01], [0.02, 0.025], [0, 0.04]], { seg: 6 }), { at: [Math.cos(a) * d, Math.sin(a) * d, r() * 0.04] })); }
@@ -75,9 +85,10 @@ export function makeProps(K) {
   }
   // Small flowers in a glass jar of water. colors: the flower colours (plain or textured names).
   function posy(f, x, y, z, colors = ['c#e7c64a/0.8', 'c#e58f7a/0.8', 'c#f2ead8/0.8'], o = {}) {
-    const rr = R(f, x, y, z), stems = [], leaves = [], heads = {};
-    put(f, o.jar ?? GLASS, lathe([[0, 0], [0.11, 0], [0.12, 0.01], [0.15, 0.2], [0.14, 0.38], [0.11, 0.43], [0.12, 0.45], [0.11, 0.452], [0.1, 0.43], [0.13, 0.37], [0.14, 0.2], [0.11, 0.02], [0, 0.015]], { seg: 18 }), { at: [x, y, z] });
-    put(f, 'c#a7b8a6/0.05', lathe([[0, 0.015], [0.11, 0.02], [0.135, 0.2], [0.13, 0.3], [0, 0.3]], { seg: 14 }), { at: [x, y, z] });
+    const rr = R(f, x, y, z), stems = [], leaves = [], heads = {}, scale = o.scale ?? 1;
+    const place = { s: scale, at: [x, y, z] };
+    put(f, o.jar ?? GLASS, lathe([[0, 0], [0.11, 0], [0.12, 0.01], [0.15, 0.2], [0.14, 0.38], [0.11, 0.43], [0.12, 0.45], [0.11, 0.452], [0.1, 0.43], [0.13, 0.37], [0.14, 0.2], [0.11, 0.02], [0, 0.015]], { seg: 18 }), place);
+    if (!o.jar) put(f, 'c#a7b8a6/0.05', lathe([[0, 0.015], [0.11, 0.02], [0.135, 0.2], [0.13, 0.3], [0, 0.3]], { seg: 14 }), place);
     const kinds = o.kinds ?? ['ranunculus', 'daisy', 'tulip', 'sprig'];
     for (let i = 0; i < 9; i++) {
       const a = K.rnd() * 6.28, r = K.rnd() * 0.22, hh = 0.75 + K.rnd() * 0.35, col = K.pick(colors);
@@ -85,15 +96,17 @@ export function makeProps(K) {
       const path = [[hx * 0.05, hy * 0.05, 0.03], [hx * 0.18, hy * 0.18, 0.35], [hx * 0.55, hy * 0.55, (0.45 + hh) / 2 + 0.05], [hx, hy, hh]];
       stems.push(sweep(path, 0.011, { seg: 4 }));
       const b = bloom(kind, rr), tilt = Math.atan2(r, hh - 0.4) * 1.3;
-      const T = { rx: 0, ry: tilt, rz: a, at: [x + hx, y + hy, z + hh] };
       const key = kind === 'sprig' ? 'c#f2ead8/0.8' : col;
       (heads[key] = heads[key] ?? []).push(xf(b.petals, { ry: tilt, rz: a }).translate(hx, hy, hh));
       if (b.heart) (heads['c#c9922e/0.7'] = heads['c#c9922e/0.7'] ?? []).push(xf(b.heart, { ry: tilt, rz: a }).translate(hx, hy, hh));
-      if (rr() < 0.6) { const la = a + (rr() - 0.5), lz = 0.55 + rr() * 0.2; leaves.push(xf(leafGeo(0.16, 0.05, rr), { ry: -0.9, rz: la, at: [hx * 0.4, hy * 0.4, lz] })); }
+      if (kind === 'tulip') {
+        const la = a + (i % 2 ? 0.65 : -0.65);
+        leaves.push(xf(leafGeo(0.28 + rr() * 0.15, 0.039, rr, 0.21), { ry: -1.0, rz: la, at: [hx * 0.35, hy * 0.35, 0.48 + rr() * 0.18] }));
+      } else if (rr() < 0.6) { const la = a + (rr() - 0.5), lz = 0.55 + rr() * 0.2; leaves.push(xf(leafGeo(0.16, 0.05, rr), { ry: -0.9, rz: la, at: [hx * 0.4, hy * 0.4, lz] })); }
     }
-    put(f, 'c#4f6b3c/0.8', merge(stems), { at: [x, y, z] });
-    if (leaves.length) put(f, 'c#56743f/0.7', merge(leaves), { at: [x, y, z] });
-    for (const [c, list] of Object.entries(heads)) put(f, c, merge(list), { at: [x, y, z] });
+    put(f, 'c#4f6b3c/0.8', merge(stems), place);
+    if (leaves.length) put(f, 'c#56743f/0.7', merge(leaves), place);
+    for (const [c, list] of Object.entries(heads)) put(f, c, merge(list), place);
   }
   // A leaf L long, W wide, growing along +x from the origin, cupped and drooping.
   function leafGeo(L, W, r = Math.random, droop = 0.3) {
@@ -106,8 +119,8 @@ export function makeProps(K) {
   function pottedPlant(f, x, y, z = 0, kind = 'leafy', o = {}) {
     const r = R(f, x, y, z), s = o.size ?? 1, pr = 0.42 * s * (o.potScale ?? 1), ph = 0.7 * s * (o.potScale ?? 1);
     put(f, o.pot ?? CLAY, lathe([[0, 0], [pr * 0.7, 0], [pr * 0.75, 0.02], [pr * 0.95, ph * 0.85], [pr * 1.05, ph * 0.86], [pr * 1.05, ph], [pr * 0.98, ph], [pr * 0.9, ph * 0.88], [0, ph * 0.86]], { seg: 20 }), { at: [x, y, z] });
-    put(f, 'soilbed', lathe([[0, ph * 0.86], [pr * 0.9, ph * 0.86], [0, ph * 0.9]], { seg: 14 }), { at: [x, y, z] });
-    const leaves = [], stems = [], top = z + ph * 0.88;
+    put(f, 'soilbed', lathe([[pr * 0.92, ph * 0.902], [pr * 0.6, ph * 0.91], [0, ph * 0.911]], { seg: 20 }), { at: [x, y, z] });
+    const leaves = [], stems = [], top = z + ph * 0.905;
     if (kind === 'snake') {
       for (let i = 0; i < 9; i++) { const a = r() * TAU, d = r() * pr * 0.5, H = (1.4 + r() * 0.9) * s; leaves.push(xf(twoSided(sheet((u, v) => { const w = 0.07 * s * Math.sin(Math.PI * (0.15 + 0.85 * (1 - v))) ** 0.5 * (u * 2 - 1); return [w, 0.02 * Math.sin(v * 3 + i) + Math.abs(w) * 0.4, v * H]; }, 1, 5)), { rx: (r() - 0.5) * 0.25, rz: a, at: [Math.cos(a) * d, Math.sin(a) * d, 0] })); }
     } else if (kind === 'trailing') {

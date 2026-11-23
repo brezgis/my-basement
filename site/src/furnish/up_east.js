@@ -41,7 +41,7 @@ import { makeFlames, NOISE } from '../flame.js';
 import {
   pad,
   M, vessel, bedside, sheepskin, geDaybed, juhlChaise, spokeback, footBlanket, fireBreast, lightFire, teaTrolley, lowBench, loungeChair,
-  flameCandle, candleLantern, stoneDrum, oakTable, fernBed, leafKit, bostonFern, fiddleFig, bouquet, lowStool, bigMirror, drumStove, ofuro, washstand, bureau, writingChair, drawPaper, screen3, bolster,
+  flameCandle, candleLantern, stoneDrum, oakTable, fernBed, leafKit, bostonFern, fiddleFig, lowStool, bigMirror, drumStove, ofuro, washstand, bureau, writingChair, drawPaper, screen3, bolster,
 } from './up_east_parts.js';
 
 export default function (f) {
@@ -95,17 +95,17 @@ export default function (f) {
     { const t = f.fr(0, 0, F, 0), h = stoneDrum(K, t, 72.0, 57.0, 0.62, 1.6, STONE); candleLantern(K, t, 71.85, 57.15, h); bedside(K, t, 72.0, 56.7, h, { subject: 'travel', n: 1 }); }
     sheepskin(K, f.fr(53.6, 54.2, F, 0), 0, 0, 0.0, 1.7, 2.6, { ph: 0.3 });
     // the south-east corner, under the high window: a tree in a big clay jar
-    { const c = f.fr(74.6, 52.2, F, 0); vessel(K, c, 'c#a8704e/0.85', 0, 0, 0, [[0, 0], [0.6, 0], [0.95, 0.6], [1.0, 1.2], [0.8, 1.8], [0.55, 2.0], [0.6, 2.1], [0.5, 2.12], [0, 2.0]], 20);
-      { const L = leafKit(K); fiddleFig(K, L, c, 0, 0, 1.95, 1.0, 7); L.flush(); } c.block(-1.0, 1.0, -1.0, 1.0, 0, 3); }
+    { const c = f.fr(74.6, 52.2, F, 0); vessel(K, c, 'c#a8704e/0.85', 0, 0, 0, [[0, 0], [0.6, 0], [0.95, 0.6], [1.0, 1.2], [0.8, 1.8], [0.55, 2.0], [0.6, 2.1], [0.5, 2.12], [0.48, 2.0], [0, 1.98]], 20);
+      vessel(K, c, 'soilbed', 0, 0, 0, [[0.487, 2.03], [0.25, 2.039], [0, 2.04]], 20);
+      { const L = leafKit(K); fiddleFig(K, L, c, 0, 0, 2.035, 1.0, 7); L.flush(); } c.block(-1.0, 1.0, -1.0, 1.0, 0, 3); }
 
     // ---- the fire: a stone breast on the east wall facing down the room, a stone hearth, logs under its end -------------
     { const b = east(68.3), at = fireBreast(K, b, { w: 5.4, d: 1.6, tall: CEIL - F - 0.03, hearth: 0.9, ox: 1.4, stone: 'limestone', hearthMat: STONE });
       const [X, Y] = b.map(at.x, at.y);
       lightFire(f, X, Y, F + at.z, 0, 1, makeFlames, mergeGeometries, NOISE);
       for (const [x, tall] of [[-2.2, 0.55], [-1.85, 0.35], [2.15, 0.45]]) flameCandle(K, b, x, 2.05, 1.31, tall, 0.13); }
-    loungeChair(K, f.fr(70.4, 65.7, F, 3), 0, 0, M.GREEN, { label: 'sit by the fire', wood: M.TEAK });
-    loungeChair(K, f.fr(70.4, 69.4, F, 3), 0, 0, M.OAT, { label: 'sit by the fire', wood: M.TEAK });
-    K.cushion(f.fr(70.4, 65.7, F, 3).sub(0, -0.55, 0, 0), 0, 0, 1.35, 1.2, 1.0, M.CREAM, { tilt: 0.7 });
+    loungeChair(K, f.fr(70.4, 65.7, F, 3), 0, 0, M.GREEN, { label: 'sit by the fire', wood: M.TEAK, turn: 0.34, pillow: M.CREAM });
+    loungeChair(K, f.fr(70.4, 69.4, F, 3), 0, 0, M.OAT, { label: 'sit by the fire', wood: M.TEAK, turn: -0.23 });
     { const t = f.fr(0, 0, F, 0), h = stoneDrum(K, t, 68.6, 67.55, 0.45, 1.45, STONE);
       vessel(K, t, M.CHINA, 68.7, 67.65, h, [[0, 0], [0.08, 0], [0.12, 0.05], [0.14, 0.2], [0.13, 0.2], [0, 0.03]], 12); K.bookStack(t, 68.45, 67.35, h, 2, { subject: 'poetry' }); }
     sheepskin(K, f.fr(72.7, 67.6, F, 0), 0, 0, 0.0, 2.2, 3.2, { ph: 0.5, rz: 1.5708 });
@@ -186,21 +186,14 @@ export default function (f) {
     // ---- the writing bureau on the north wall west of the stove, its chair, the house's paper, flowers -----------------
     {
       const b = fr(83.4, 63.98, 2), zf = bureau(K, b, { w: 3.2, wood: OAK });
-      writingChair(K, b, 0, 3.05, { dq: 2, wood: OAK });
-      f.sign(b, -0.25, zf + 0.015, 0.75, 1.0, drawPaper(D), { y: 2.0, flat: true, res: 300 });
-      K.put(b, 'c#1c1a19/0.3', K.geom.sweep([[0.55, 1.85, zf + 0.03], [0.62, 2.45, zf + 0.03]], 0.016, { seg: 6 }));
-      candleLantern(K, b, -1.0, 0.75, 4.2, { size: 0.42, h: 0.85 });
-      { const L = leafKit(K); bouquet(K, L, b, 0.95, 0.8, 4.2, { s: 0.85, seed: 3 }); L.flush(); }
-      // on the flap: a small stack of books, envelopes, a brass candlestick; a photograph in a little oak frame on top;
-      // a plain mirror over it all
-      K.bookStack(b, 1.15, 2.05, zf, 3, { subject: 'poetry' });
-      flameCandle(K, b, -1.25, 2.0, zf, 0.45, 0.07);
-      vessel(K, b, M.BRASS, -1.25, 2.0, zf, [[0, 0], [0.13, 0], [0.13, 0.02], [0.05, 0.05], [0.035, 0.12], [0, 0.12]], 12);
-      { const pf = b.sub(0.1, 0.55, 4.2, 0); pf.bev(OAK, -0.32, 0.32, -0.05, 0.03, 0, 0.82, 0.01); K.put(pf, OAK, K.geom.bev(-0.06, 0.06, -0.02, 0.02, 0, 0.6, 0.01), { rx: -0.35, at: [0, -0.05, 0] });
-        f.sign(pf, 0, 0.41, 0.48, 0.66, (g, W, Hh) => { g.fillStyle = '#efe6d2'; g.fillRect(0, 0, W, Hh); const gr = g.createLinearGradient(0, 0, 0, Hh); gr.addColorStop(0, '#c9b896'); gr.addColorStop(0.55, '#a08a64'); gr.addColorStop(1, '#5a4a36');
-          g.fillStyle = gr; g.fillRect(W * 0.08, Hh * 0.06, W * 0.84, Hh * 0.78); g.fillStyle = '#3e3326'; g.beginPath(); g.moveTo(W * 0.08, Hh * 0.6); g.quadraticCurveTo(W * 0.4, Hh * 0.45, W * 0.92, Hh * 0.58); g.lineTo(W * 0.92, Hh * 0.84); g.lineTo(W * 0.08, Hh * 0.84); g.fill();
-          g.fillStyle = '#2a2219'; g.fillRect(W * 0.55, Hh * 0.3, W * 0.03, Hh * 0.32); g.beginPath(); g.arc(W * 0.565, Hh * 0.28, W * 0.12, 0, 6.3); g.fill(); }, { y: 0.035, res: 400 }); }
-      bigMirror(K, b, 0, 5.0, 2.2, 2.4, { wood: OAK });
+      writingChair(K, b, -0.12, 3.21, { dq: 2, wood: OAK });
+      const paper = b.sub(-0.28, 2.05);
+      paper.bev('c#e3dac7/0.9', -0.38, 0.38, -0.48, 0.48, zf + 0.032, zf + 0.05, 0.006);
+      f.sign(paper, 0, zf + 0.052, 0.74, 0.96, drawPaper(D), { y: 0, flat: true, res: 300 });
+      K.put(b, 'c#30201b/0.4', K.geom.sweep([[0.47, 1.82, zf + 0.045], [0.55, 2.34, zf + 0.045]], 0.018, { seg: 7, caps: true }));
+      K.bookStack(b, 1.06, 1.98, zf + 0.034, 2, { subject: 'poetry' });
+      candleLantern(K, b, -1.01, 0.64, 4.2, { size: 0.42, h: 0.85 });
+      K.posy(b, 0.96, 0.77, 4.2, ['c#e8b18d/0.65', 'c#dec887/0.65', 'c#bc665b/0.6'], { kinds: ['tulip', 'ranunculus'], jar: 'c#bcaa90/0.45', scale: 1.13 });
     }
     // ---- Redon's flowers over the stove chair, the first thing seen from the door ---------------------------
     f.framed(fr(93.3, 63.98, 2), 0, 5.2, 1.9, 2.78, 'aic_redon_flowers', { frame: OAK, mat: 0.2, title: 'Still Life with Flowers', kicker: 'Odilon Redon, about 1905',
@@ -214,14 +207,14 @@ export default function (f) {
       K.cushion(fr(82.6, 47.0, 2).sub(0, -0.55, 0, 0), 0, 0, 1.35, 1.2, 1.0, M.OAT, { tilt: 0.7 });
       const t = fr(0, 0), h = stoneDrum(K, t, 85.3, 46.2, 0.5, 1.5, STONE); candleLantern(K, t, 85.2, 46.3, h, { size: 0.4, h: 0.8 }); K.bookStack(t, 85.45, 46.0, h, 1, { subject: 'poetry' });
       sheepskin(K, fr(82.6, 45.3), 0, 0, 0, 2.0, 2.6, { ph: 2.0 });
-      const j = fr(88.6, 42.4); vessel(K, j, 'c#a8704e/0.85', 0, 0, 0, [[0, 0], [0.45, 0], [0.7, 0.45], [0.72, 0.9], [0.55, 1.3], [0.45, 1.4], [0.5, 1.45], [0, 1.4]], 18);
+      const j = fr(88.6, 42.4); vessel(K, j, 'c#a8704e/0.85', 0, 0, 0, [[0, 0], [0.45, 0], [0.7, 0.45], [0.72, 0.9], [0.55, 1.3], [0.45, 1.4], [0.5, 1.45], [0.44, 1.45], [0.42, 1.33], [0, 1.32]], 18);
+      vessel(K, j, 'soilbed', 0, 0, 0, [[0.43, 1.375], [0.25, 1.38], [0, 1.387]], 18);
       { const L = leafKit(K); bostonFern(K, L, j, 0, 0, 1.38, 1.05, 21); L.flush(); } j.block(-0.75, 0.75, -0.75, 0.75, 0, 2);
     }
     // ---- the middle: a small sitting group on a kilim: two soft chairs facing across a low stone table, a tall lantern ----
     f.rug(81.4, 90.2, 48.9, 57.1, FS, 'kilim');
     loungeChair(K, fr(83.6, 53.0, 3), 0, 0, M.CREAM, { label: 'sit down', wood: M.TEAK });
-    loungeChair(K, fr(88.2, 53.0, 1), 0, 0, M.RUST, { label: 'sit down', wood: M.TEAK });
-    K.cushion(fr(88.2, 53.0, 1).sub(0, -0.55, 0, 0), 0, 0, 1.35, 1.2, 1.0, M.OCHRE, { tilt: 0.7 });
+    loungeChair(K, fr(88.2, 53.0, 1), 0, 0, M.RUST, { label: 'sit down', wood: M.TEAK, pillow: M.OCHRE });
     { const t = fr(0, 0), h = stoneDrum(K, t, 85.9, 53.0, 0.7, 1.3, STONE);
       vessel(K, t, M.IRON, 85.7, 53.15, h, [[0, 0], [0.2, 0], [0.27, 0.1], [0.28, 0.2], [0.22, 0.3], [0.1, 0.33], [0, 0.36]], 14);
       for (const [x, y] of [[86.2, 52.8], [86.15, 53.35]]) vessel(K, t, M.CHINA, x, y, h, [[0, 0], [0.07, 0], [0.11, 0.05], [0.12, 0.17], [0.11, 0.17], [0, 0.03]], 12);
@@ -248,7 +241,7 @@ export default function (f) {
       bigMirror(K, w, 0.1, 4.15, 1.6, 2.1, { wood: OAK });
       for (const [x, lit] of [[-1.35, true], [1.35, false]]) { K.sconce(w, x, 5.4, { kind: 'lantern', glass: 'e#ffd49a/1.2' }); K.lampAt(w, x, 0.45, 5.6, lit ? 0.7 : 0.4); const l = K.lamps[K.lamps.length - 1]; if (!lit) l.kind = 'glow'; l.halo = 0.55; } }
     // the WC on the west wall, its side to the door
-    K.toilet(fr(90.27, 42.6, 3), 0, { seat: OAK });
+    K.toilet(fr(90.31, 42.61, 3), 0, { seat: 'porcelain' });
     // over it, an oak shelf: bottles, a jar candle, a trailing pothos (it likes the steam)
     { const s = fr(90.27, 42.6, 3); s.bev(OAK, -1.4, 1.4, 0.02, 0.75, 5.6, 5.7, 0.015, { grain: 'x' });
       for (const [x, h, c] of [[-1.0, 0.55, 'c#c4922e/0.1'], [-0.7, 0.42, 'c#7fa3a6/0.08'], [-0.42, 0.62, 'c#e8e0cf/0.2']]) { vessel(K, s, M.GLASS, x, 0.4, 5.7, [[0, 0], [0.1, 0], [0.11, h * 0.7], [0.05, h * 0.85], [0.04, h], [0, h]], 12); vessel(K, s, c, x, 0.4, 5.71, [[0, 0], [0.09, 0], [0.1, h * 0.5], [0, h * 0.5]], 10); vessel(K, s, M.BRASS, x, 0.4, 5.7 + h, [[0, 0], [0.045, 0], [0.045, 0.06], [0, 0.07]], 8); }
@@ -256,10 +249,10 @@ export default function (f) {
       K.pottedPlant(s, 0.85, 0.4, 5.7, 'trailing', { size: 0.9, pot: 'c#a8704e/0.85', block: false }); }
     // the north wall east of the door: oak pegs with two robes; the south wall west of the tub: a towel rail, a stool
     { const n = fr(97.6, 47.93, 2); n.bev(OAK, -2.2, 0.6, 0.02, 0.12, 5.6, 6.0, 0.015, { grain: 'x' });
-      for (const [x, c] of [[-1.6, 'wool#ebe5d8'], [-0.1, 'wool#9a4a2a']]) { K.put(n, OAK, K.geom.lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0, 0.34]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.12, 5.8] }); K.coatOnPeg(n, x, 0.22, 5.75, c, 'coat', { squash: 1.3 }); } }
-    { const s = fr(93.3, 40.62, 0); K.towelRail(s, 0, 3.4, 2.0, { towels: ['wool#ebe5d8', 'wool#c9b48e'] });
-      lowStool(K, s, 0, 1.0, { dq: 2, h: 1.45, label: 'sit on the stool' });
+      for (const [x, c] of [[-1.6, 'wool#ebe5d8'], [-0.1, 'wool#9a4a2a']]) { K.put(n, OAK, K.geom.lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0, 0.34]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.12, 5.8] }); K.coatOnPeg(n, x, 0.22, 5.75, c, 'robe'); } }
+    { const s = fr(93.3, 40.62, 0); K.towelRail(s, 0.48, 3.75, 2.0, { towels: ['wool#ebe5d8', 'wool#c9b48e'], drop: 1.38 });
+      lowStool(K, s, -0.34, 1.04, { dq: 2, h: 1.45, label: 'sit on the stool' });
       f.framed(s, 0, 5.35, 1.5, 1.24, 'van_gogh_grapes_lemons', { frame: OAK, mat: 0.14, title: 'Grapes, Lemons, Pears, and Apples', kicker: 'Vincent van Gogh, 1887', text: 'Fruit on a yellow cloth, painted in Paris in short strokes of pure colour.', foot: 'Art Institute of Chicago. Public domain (CC0).' });
-      K.foldedStack(s, 0, 1.0, 1.46, 3, ['wool#ebe5d8', 'wool#d9cdb5', 'wool#9a4a2a'], { w: 1.0, d: 0.8, t: 0.14 }); }
+      K.foldedStack(s, -0.34, 1.04, 1.46, 3, ['wool#ebe5d8', 'wool#d9cdb5', 'wool#9a4a2a'], { w: 1.0, d: 0.8, t: 0.14 }); }
   }
 }

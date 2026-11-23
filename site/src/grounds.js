@@ -3,7 +3,7 @@
 //
 //   grounds/grounds_court.js    The Courtyard: a Japanese garden of dark wet stone and bright moss (notes/STYLE.md,
 //                               research/refs 1, 5, 6, 7): boulders, black pebble beds, moss cushions, a rocky stream,
-//                               the old cloud-pruned pine, a red maple, bamboo, the timber hot tub, two loungers
+//                               the old cloud-pruned pine, a red maple, bamboo, the timber hot tub and timber stair
 //   grounds/grounds_meadow.js   The Meadow: long grass with ox-eye daisies and yarrow, mown paths (Great Dixter), the
 //                               rail round the cut (Villa Vals), the cliff rail and its bench, the cellar doors, the ring
 //   grounds/grounds_flora.js    the plants the lab's atlas has not got, painted; the pine's and the maple's limbs
@@ -14,23 +14,22 @@
 //   - setup(ctx), into the outdoors group: the ground, the paint, the plants, the pebbles and pebble beds, the moss, the stones' uplights, the net
 //     round the cut, the stove's fire and the tub's steam; the animals (creatures/swarms.js) once all that is there
 //
-// Lights: three lamps the engine lights in the courtyard (the granite lantern, the paper lantern by the loungers,
+// Lights: three lamps the engine lights in the courtyard (the granite lantern, the paper lantern by the garden-side path,
 // the lantern by the tub) and one on the meadow (the lantern at the cellar doors); every other light here glows and
 // casts nothing. The glows are all 'e#ffe2b4', which lighting.js turns down by day.
 //
-// Robots (no staff here; for whoever does the staff): a gardener robot would work the courtyard's north-west quarter
-// with a rake and a trug (plan X 56, Y 47, facing south-east, among the sea kale: the shingle wants raking, the
-// poppies deadheading), and in the meadow at the mown path's turn (plan X -8, Y 43.5); a pool attendant would stand
-// at the brink by the loungers (plan X 71.5, Y 25.5, facing west toward the tub and the loungers), serving from the
-// side table between the loungers (plan X 65.8, Y 25.9) and tending the tub's stove (plan X 50.1, Y 22.2).
+// The pool attendant's outdoor posts on the coping and beside the tub stairs are in staff/cast.js.
+// The two lounge chairs and their drinks table are furnished by furnish/pool_chapel.js.
 
+import { makeFlames } from './flame.js';
+import { burningLogs } from './kit/firewood.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeKit, PAINT } from './grounds/tools.js';
 import { TREES, MEADOW, COURT } from './campus.js';
 import { Wild, WILD, FLOWERING } from './grounds/grounds_flora.js';
 import { wind } from './grounds/cards.js';
-import { layCourt, KERB, FALL } from './grounds/grounds_court.js';
+import { layCourt, FALL } from './grounds/grounds_court.js';
 import { layMeadow } from './grounds/grounds_meadow.js';
 import { layEdges, caveSetup } from './grounds/grounds_edges.js';
 
@@ -38,7 +37,7 @@ const PAVE = 0.34;
 // The meadow on top of the rock (grounds/grounds_meadow.js): its planting, rails, bench, trees and the cellar doors' things.
 // false leaves all of it out (Spanya may have no top of its own: the parent decides).
 export const MEADOW_ON = false;
-const FALLS_ON = false;      // the edge pool's ripples and the water falling from its rim (spanya.js no longer has the pool)
+const FALLS_ON = false;
 // the height of the ground at world (x, z): the courtyard's paving inside the cut, the meadow everywhere else
 const level = (x, z) => (Math.hypot(z - COURT.X, x - COURT.Y) < COURT.r + 1.5 ? PAVE : MEADOW);
 
@@ -52,16 +51,30 @@ function lay(B, items) {
   const E = {
     K, G, F, Wd, B, items, WILD, level,
     FLOWERS: new Set([...FLOWERING, 'lavender', 'catmint', 'wildflowers', 'cosmos', 'coneflower', 'rose', 'hydrangea', 'iris', 'spires']),
-    flowers: { court: [], meadow: [] }, fireflies: [], pebbles: [], interact: [], glowAt: [], net: [], trees: [], lanterns: [], mounds: [], uplit: [], beds: [], pools: [], washes: [], sway: { iron: [], bulb: [], glass: [], candle: [], halo: [] },
-    // a part that swings in the wind: amp ft at its lowest, ph its phase (one lantern, one string: one phase)
-    swayPart(kind, geo, amp, ph) { const g = geo.index ? geo.toNonIndexed() : geo, n = g.attributes.position.count; g.setAttribute('aSway', new THREE.Float32BufferAttribute(new Float32Array(n).fill(amp), 1)); g.setAttribute('aPh', new THREE.Float32BufferAttribute(new Float32Array(n).fill(ph), 1)); if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2)); if (!g.attributes.normal) g.computeVertexNormals(); E.sway[kind].push(g); }, clumps: [], stream: null, maple: null, basin: null, perches: [],
+    flowers: { court: [], meadow: [] }, fireflies: [], pebbles: [], interact: [], glowAt: [], net: [], trees: [], lanterns: [], mounds: [], beds: [], sway: { iron: [], bulb: [], glass: [], candle: [], halo: [] },
+    // A cord can give each vertex its own amplitude to keep its fixed end in place.
+    swayPart(kind, geo, amp, ph) {
+      const g = geo.index ? geo.toNonIndexed() : geo, p = g.attributes.position, n = p.count;
+      const sway = new Float32Array(n);
+      if (typeof amp === 'function') {
+        for (let i = 0; i < n; i++) sway[i] = amp(p.getX(i), p.getY(i), p.getZ(i));
+      } else sway.fill(amp);
+      g.setAttribute('aSway', new THREE.Float32BufferAttribute(sway, 1));
+      g.setAttribute('aPh', new THREE.Float32BufferAttribute(new Float32Array(n).fill(ph), 1));
+      if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(n * 2), 2));
+      if (!g.attributes.normal) g.computeVertexNormals();
+      E.sway[kind].push(g);
+    },
+    clumps: [], stream: null, maple: null, basin: null, perches: [],
     // a lantern: an iron frame, glass, a candle's glow; standing with its foot at y, or hung from a hook at `hang`
     lantern(x, y, z, s = 0.7, power = 0.6, hang = null) {
       const IRON = PAINT.iron, w = s * 0.5, h = s * 0.95;
       K.box(IRON, x - w, x + w, y, y + 0.05 * s, z - w, z + w);
       for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) K.box(IRON, x + dx * w - 0.03, x + dx * w + 0.03, y, y + h, z + dz * w - 0.03, z + dz * w + 0.03);
       B.mesh('glass', new THREE.BoxGeometry(w * 1.9, h * 0.92, w * 1.9).translate(x, y + h * 0.5, z));
-      B.mesh('e#ffe2b4/1.8', new THREE.CylinderGeometry(w * 0.32, w * 0.36, h * 0.42, 8).translate(x, y + h * 0.3, z));
+      const wick = y + h * 0.47;
+      K.cyl('c#eadbbe/0.65', x, y + h * 0.05, wick, z, w * 0.36, w * 0.32, 10);
+      B.mesh('e#ffc170/1.85', new THREE.SphereGeometry(0.065 * s, 8, 6).scale(1, 1.9, 1).translate(x, wick + 0.1 * s, z));
       K.put(IRON, new THREE.ConeGeometry(w * 1.45, s * 0.42, 4).rotateY(Math.PI / 4).translate(x, y + h + s * 0.2, z));
       K.put(IRON, new THREE.TorusGeometry(s * 0.12, 0.025, 5, 10).translate(x, y + h + s * 0.5, z));
       if (hang != null) K.tube(IRON, [x, y + h + s * 0.58, z], [x, hang, z], 0.02, 4);
@@ -75,7 +88,14 @@ function lay(B, items) {
       B.mesh('e#ffe2b4/1.8', new THREE.SphereGeometry(0.05, 6, 5).scale(1, 1.7, 1).translate(x, y + 0.19, z));
     },
   };
-  layCourt(E);
+  // The courtyard sits inside the building footprint, but its furniture is outdoors.
+  const previousZone = B.zone;
+  try {
+    B.zone = 'o:courtyard';
+    layCourt(E);
+  } finally {
+    B.zone = previousZone;
+  }
   layEdges(E);
   if (MEADOW_ON) layMeadow(E);
   for (const t of E.trees) TREES.push({ kind: t.kind, x: t.Y, z: t.X, y: t.y ?? MEADOW, height: t.height, seed: t.seed });      // (trees.js grows them: main.js builds TREES after the grounds are laid)
@@ -90,12 +110,11 @@ function lay(B, items) {
     pebbles(scene, E.pebbles);
     pebbleBeds(scene, E.beds);
     moss(scene, E.mounds);
-    uplights(ctx, E.uplit);
     leafFall(ctx, E);
-    warmLight(ctx, E);
     swinging(ctx, E);
     try { caveSetup(ctx, E, Object.getPrototypeOf(ctx).scene ?? ctx.scene); } catch (e) { console.warn('grounds: cave', e); }
-    if (FALLS_ON) { water(ctx, E); falls(ctx); }      // (the edge pool and its falling water are gone from the shell: kept, switched off)
+    water(ctx, E);
+    if (FALLS_ON) falls(ctx);
     for (const n of E.net) net(scene, n);
     fire(ctx, E);
     for (const it of E.interact) { let k = 0; ctx.interact.push({ x: it.x, y: it.y, z: it.z, reach: it.reach, label: () => it.label, act: () => { ctx.flash(it.say[k++ % it.say.length]); } }); }
@@ -127,9 +146,9 @@ function swinging(ctx, E) {
     iron: patch(new THREE.MeshStandardMaterial({ color: 0x1d1b19, roughness: 0.55, metalness: 0.5 }), 'iron'),
     bulb: patch(new THREE.MeshStandardMaterial({ color: 0xfff0d8, emissive: 0xffb45a, emissiveIntensity: 2, roughness: 0.2, transparent: true, opacity: 0.92 }), 'bulb'),
     glass: patch(new THREE.MeshStandardMaterial({ color: 0xd8d2c2, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }), 'glass'),
-    candle: patch(new THREE.MeshStandardMaterial({ color: 0xfff2dc, emissive: 0xffb050, emissiveIntensity: 2.2, roughness: 0.6 }), 'candle'),
+    candle: patch(new THREE.MeshStandardMaterial({ color: 0xeed9b7, emissive: 0x8e562d, emissiveIntensity: 0.28, roughness: 0.6 }), 'candle'),
   };
-  for (const k of ['iron', 'bulb', 'glass', 'candle']) if (E.sway[k].length) { const m = new THREE.Mesh(mergeGeometries(E.sway[k].map(g => { for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'aSway', 'aPh'].includes(a)) g.deleteAttribute(a); return g; })), mats[k]); m.name = 'hanging ' + k; m.frustumCulled = false; if (k === 'iron') m.castShadow = true; ctx.scene.add(m); }
+  for (const k of ['iron', 'bulb', 'glass', 'candle']) if (E.sway[k].length) { const m = new THREE.Mesh(mergeGeometries(E.sway[k].map(g => { for (const a of Object.keys(g.attributes)) if (!['position', 'normal', 'uv', 'aSway', 'aPh'].includes(a)) g.deleteAttribute(a); return g; })), mats[k]); m.name = 'hanging ' + k; if (k === 'iron') m.castShadow = true; ctx.scene.add(m); ctx.track?.(m, 'o:courtyard'); }
   // a soft halo round each bulb and candle (points, additive)
   let halo = null;
   if (E.sway.halo.length) {
@@ -141,26 +160,9 @@ function swinging(ctx, E) {
   p.x += aSway * sw * (0.75 * sin(uWind * 0.62 + aPh) + 0.25 * sin(uWind * 1.37 + aPh * 2.1)); p.z += aSway * sw * 0.6 * cos(uWind * 0.48 + aPh * 1.3);
   vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_PointSize = min(uPx * aSize / max(0.5, -mv.z), 96.0); gl_Position = projectionMatrix * mv; }`,
       fragmentShader: 'uniform sampler2D map; uniform float uOn; void main(){ vec4 t = texture2D(map, gl_PointCoord); gl_FragColor = vec4(t.rgb * t.a * uOn, 1.0); }' });
-    const pts = new THREE.Points(g, halo); pts.frustumCulled = false; pts.name = 'bulb halos'; pts.renderOrder = 5; ctx.scene.add(pts);
+    const pts = new THREE.Points(g, halo); pts.name = 'bulb halos'; pts.renderOrder = 5; ctx.scene.add(pts); ctx.track?.(pts, 'o:courtyard');
   }
-  ctx.animated.push(() => { const L = ctx.day.light ?? 1, on = 1 - THREE.MathUtils.smoothstep(L, 0.35, 0.95); mats.bulb.emissiveIntensity = 0.7 + 2.4 * on; mats.candle.emissiveIntensity = 0.6 + 2.2 * on; if (halo) { halo.uniforms.uOn.value = 0.12 + 0.88 * on; halo.uniforms.uPx.value = ctx.renderer.domElement.height * 0.5; } });
-}
-
-// Light that glows and does not cast: pools of warm light on the paving (under the pine's bowl, the pots, the loungers,
-// the lanterns, along the parapet's foot) and washes up the rock from the fittings at the foot of the wall. Additive
-// soft shapes, strongest at night, golden at dusk, a trace by day. (Two draws.)
-function warmLight(ctx, E) {
-  const disc = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), grd = g.createRadialGradient(32, 32, 0, 32, 32, 32); grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.45, 'rgba(255,255,255,0.45)'); grd.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = grd; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
-  const fan = (() => { const c = document.createElement('canvas'); c.width = 64; c.height = 128; const g = c.getContext('2d'); for (let y = 0; y < 128; y++) { const v = y / 127, a = Math.pow(1 - v, 1.5) * Math.min(1, v * 12); for (let x = 0; x < 64; x++) { const u = Math.abs(x / 63 - 0.5) * 2 / (0.35 + 0.65 * v), w = Math.max(0, 1 - u * u); g.fillStyle = `rgba(255,255,255,${(a * w).toFixed(3)})`; g.fillRect(x, 127 - y, 1, 1); } } return new THREE.CanvasTexture(c); })();      // (brightest just above the fitting, spreading and fading as it climbs)
-  const mats = [], add = (parts, map, name) => {
-    if (!parts.length) return;
-    const mat = new THREE.MeshBasicMaterial({ map, color: 0xffb468, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8, side: THREE.DoubleSide });
-    const m = new THREE.Mesh(mergeGeometries(parts), mat); m.name = name; m.renderOrder = 3; ctx.scene.add(m); mats.push([mat, m]);
-  };
-  add(E.pools.map(([x, z, rad, k = 1, y = PAVE + 0.02]) => { const g = new THREE.PlaneGeometry(rad * 2, rad * 2).rotateX(-Math.PI / 2).translate(x, y, z), n = g.attributes.position.count, col = new Float32Array(n * 3).fill(k); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g; }), disc, 'light pools');
-  add(E.washes.map(([x, z, yaw, w, h, k = 1]) => { const g = new THREE.PlaneGeometry(w, h).translate(0, h / 2, 0).rotateY(yaw).translate(x, PAVE, z), n = g.attributes.position.count, col = new Float32Array(n * 3).fill(k); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g; }), fan, 'rock washes');
-  for (const [mat] of mats) mat.vertexColors = true;
-  ctx.animated.push(() => { const L = ctx.day.light ?? 1, on = 1 - THREE.MathUtils.smoothstep(L, 0.35, 0.95); Wild.night.value = on * 0.55; for (const [mat, m] of mats) { mat.color.setRGB(1.0, 0.52, 0.2).multiplyScalar(0.03 + (m.name === 'rock washes' ? 0.3 : 0.12) * on); m.visible = true; } });      // (amber, and low enough that overlapping pools never burn to white)
+  ctx.animated.push(() => { const L = ctx.day.light ?? 1, on = 1 - THREE.MathUtils.smoothstep(L, 0.35, 0.95); Wild.night.value = on * 0.55; mats.bulb.emissiveIntensity = 0.7 + 2.4 * on; if (halo) { halo.uniforms.uOn.value = 0.12 + 0.88 * on; halo.uniforms.uPx.value = ctx.renderer.domElement.height * 0.5; } });
 }
 
 // A tile painted on a canvas, seamless (each mark drawn again where it crosses an edge), as a repeating texture.
@@ -198,24 +200,18 @@ function moss(scene, list) {
   mesh.receiveShadow = mesh.castShadow = true; mesh.name = 'moss'; scene.add(mesh);
 }
 // The stream's water: dark and clear, its surface broken by small ripples that move downstream and catch the light
-// (a painted ripple normal map, slid along). And over the edge pool (spanya.js's flat water) a thin skin of the same
-// ripples, so that it glints too. One material for both.
+// A moving ripple normal map on the existing surface also catches light along the glass edge.
 function water(ctx, E) {
   const r = rnd(19), c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
   g.fillStyle = 'rgb(128,128,255)'; g.fillRect(0, 0, 128, 128);
   for (let i = 0; i < 90; i++) { const x = r() * 128, y = r() * 128, w = 6 + r() * 14, h = 2 + r() * 3; for (const dx of [-128, 0, 128]) for (const dy of [-128, 0, 128]) { const grd = g.createLinearGradient(0, y + dy - h, 0, y + dy + h); grd.addColorStop(0, 'rgb(128,90,255)'); grd.addColorStop(1, 'rgb(128,166,255)'); g.fillStyle = grd; g.beginPath(); g.ellipse(x + dx, y + dy, w, h, 0, 0, 7); g.fill(); } }
   const nm = new THREE.CanvasTexture(c); nm.wrapS = nm.wrapT = THREE.RepeatWrapping; nm.repeat.set(0.6, 0.6);
-  const mat = new THREE.MeshStandardMaterial({ color: 0x1b2a2a, roughness: 0.08, metalness: 0.2, normalMap: nm, normalScale: new THREE.Vector2(0.5, 0.5), transparent: true, opacity: 0.86, envMapIntensity: 1.4 });
-  if (E.stream) { const m = new THREE.Mesh(E.stream.geo, mat); m.name = 'stream'; m.receiveShadow = true; ctx.scene.add(m); }
-  // the edge pool's crescent (as spanya.js lays its water: between the wall's inner face and the kerb), a hair above it
-  const ri = COURT.r - 0.75 - 0.05, KD = COURT.Y - KERB.Y, KY = KERB.Y, KR = KERB.r, a = (ri * ri - KR * KR + KD * KD) / (2 * KD), hx = Math.sqrt(ri * ri - a * a), th = Math.atan2(KD - a, hx), ph = Math.atan2(-a, hx), pts = [];
-  for (let i = 0; i <= 24; i++) { const q = 2 * Math.PI + ph + (Math.PI - ph - (2 * Math.PI + ph)) * i / 24; pts.push([COURT.X + ri * Math.cos(q), COURT.Y + ri * Math.sin(q)]); }
-  for (let i = 0; i <= 16; i++) { const q = Math.PI - th - (Math.PI - 2 * th) * i / 16; pts.push([COURT.X + (KR - 0.5) * Math.cos(q), KY + (KR - 0.5) * Math.sin(q)]); }
-  const sh = new THREE.ShapeGeometry(new THREE.Shape(pts.map(([X, Y]) => new THREE.Vector2(Y, X)))), p = sh.attributes.position, pos = [], uv = [];
-  for (let i = 0; i < p.count; i++) { pos.push(p.getX(i), PAVE + 0.77, p.getY(i)); uv.push(p.getX(i), p.getY(i)); }
-  const gq = new THREE.BufferGeometry(); gq.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); gq.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); const idx = Array.from(sh.index.array); gq.setIndex(idx); gq.computeVertexNormals();
-  if (gq.attributes.normal.getY(0) < 0) { for (let i = 0; i < idx.length; i += 3) [idx[i + 1], idx[i + 2]] = [idx[i + 2], idx[i + 1]]; gq.setIndex(idx); gq.computeVertexNormals(); }
-  const skin = new THREE.Mesh(gq, mat.clone()); skin.material.opacity = 0.35; skin.material.normalMap = nm; skin.name = 'edge pool ripples'; ctx.scene.add(skin);
+  const mat=ctx.materials.pool_surface;
+  mat.normalMap=nm; mat.normalScale.set(0.49,0.49); mat.needsUpdate=true;
+  if (E.stream) {
+    const stream=new THREE.Mesh(E.stream.geo,mat);
+    stream.name='stream'; stream.receiveShadow=true; ctx.scene.add(stream);
+  }
   ctx.animated.push(t => { nm.offset.set(t * 0.03, t * 0.05); });
 }
 // The water falling from the edge pool's rim down the cliff: a thin, broken, translucent sheet hung just outside the rim
@@ -270,26 +266,6 @@ function leafFall(ctx, E) {
     mesh.instanceMatrix.needsUpdate = true;
   });
 }
-// The boulders lit from below: a skin over each, a hair outside it, that adds a warm wash strongest near the fitting and
-// low on the stone, faded out by day. Lights nothing else and casts nothing (one draw for all of them).
-function uplights(ctx, list) {
-  if (!list.length) return;
-  const parts = list.map(({ geo, fx, fy, fz, h, k: gain = 1 }) => {
-    const g = geo.clone(), p = g.attributes.position, n = g.attributes.normal, col = new Float32Array(p.count * 3);
-    let cx = 0, cz = 0; for (let i = 0; i < p.count; i++) { cx += p.getX(i); cz += p.getZ(i); } cx /= p.count; cz /= p.count;
-    for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, cx + (x - cx) * 1.012, y + 0.01, cz + (z - cz) * 1.012);
-      const dx = fx - x, dy = fy - y, dz = fz - z, d = Math.hypot(dx, dy, dz) || 1, facing = Math.abs((n.getX(i) * dx + n.getY(i) * dy + n.getZ(i) * dz) / d), up = Math.max(0, 1 - (y - fy) / (h * 1.4));
-      const k = (gain > 1 ? 0.38 : 1) * gain * (0.06 + 0.94 * facing) * Math.pow(up, gain > 1 ? 1.2 : 2.5) * Math.min(1, 1.6 * gain / d);
-      col[i * 3] = 0.9 * k; col[i * 3 + 1] = 0.48 * k; col[i * 3 + 2] = 0.17 * k;
-    }
-    g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.deleteAttribute('uv'); return g;
-  });
-  const mat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2 });
-  const mesh = new THREE.Mesh(mergeGeometries(parts), mat); mesh.name = 'stone uplights'; ctx.scene.add(mesh);
-  ctx.animated.push(() => { const on = 1 - THREE.MathUtils.smoothstep(ctx.day.light ?? 1, 0.42, 0.97); mat.color.setScalar(on * 0.42); mesh.visible = on > 0.01; });
-}
-
 // The wire net between the leaning posts round the cut (Villa Vals): one strip, a painted diamond mesh cut out of it.
 function net(scene, { bots, tops }) {
   const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
@@ -312,12 +288,19 @@ function net(scene, { bots, tops }) {
 function fire(ctx, E) {
   const { scene, animated, day } = ctx;
   if (E.stove) {
-    const s = E.stove, mat = new THREE.MeshStandardMaterial({ color: 0x1a0d06, emissive: 0xff7a2a, emissiveIntensity: 1.2, roughness: 0.9 });
-    const door = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.42).rotateY(Math.PI / 2), mat); door.position.set(s.x + 0.06, s.y, s.z); door.name = 'stove fire'; scene.add(door);
+    const s = E.stove, time = { value: 0 }, hearth = new THREE.Group();
+    hearth.name = 'hot tub stove fire';
+    hearth.rotation.y = Math.PI / 2;
+    hearth.position.set(s.x, s.y, s.z);
+    hearth.add(burningLogs(ctx.materials.bark, 0.62, 0.37));
+    const flames = makeFlames(THREE, mergeGeometries, time, [[0, 0.02, 0, 0.50, 0.59, 1], [0.21, 0.09, -0.08, 0.27, 0.39, 4]], 0.055);
+    hearth.add(flames); scene.add(hearth);
     let fed = 0;
-    animated.push(t => { const on = 1 - THREE.MathUtils.smoothstep(day.light ?? 1, 0.3, 0.95); mat.emissiveIntensity = (0.5 + 1.6 * on + fed * 2) * (0.75 + 0.18 * Math.sin(t * 7.3) + 0.12 * Math.sin(t * 13.1 + 1) + 0.08 * Math.sin(t * 23.7)); fed = Math.max(0, fed - 0.004); });
-    const say = ['You feed the stove a log.'];
-    let k = 0; ctx.interact.push({ x: s.x - 0.6, y: s.y + 0.4, z: s.z, reach: 5.5, label: () => 'feed the stove', act: () => { fed = 1; ctx.flash(say[k++ % say.length]); } });
+    animated.push((t, dt = 0.016) => { time.value = t; flames.scale.y = 1 + 0.22 * fed; fed = Math.max(0, fed - 0.24 * dt); });
+    ctx.interact.push({
+      x: s.x + 0.31, y: s.y + 0.35, z: s.z, reach: 5.5, label: () => 'feed the stove',
+      act: () => { fed = 1; ctx.flash('You feed the stove a log.'); },
+    });
   }
   if (E.tub) {
     const N = 140, tb = E.tub, pos = new Float32Array(N * 3), life = new Float32Array(N), seed = [], r = () => Math.random();

@@ -189,9 +189,10 @@ export class Wild {
 export function limb(pts, r0, r1, radial = 8, o = {}) {
   const curve = new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p)), false, 'centripetal'), L = curve.getLength(), n = Math.max(2, Math.ceil(L / (o.step ?? 1.4)));
   const frames = curve.computeFrenetFrames(n, false), pos = [], uv = [], idx = [];
+  const wraps = Math.max(1, Math.round(r0 * 2.2));
   for (let i = 0; i <= n; i++) {
     const t = i / n, p = curve.getPointAt(t), N = frames.normals[i], B = frames.binormals[i], rad = (r0 + (r1 - r0) * Math.pow(t, o.pow ?? 0.8)) * (1 + (o.flare ?? 0) * Math.max(0, 1 - t * 8));
-    for (let j = 0; j <= radial; j++) { const a = (j / radial) * Math.PI * 2, wob = 1 + (o.gnarl ?? 0.06) * Math.sin(a * 3 + i * 1.7) * Math.sin(i * 0.9 + j); pos.push(p.x + (N.x * Math.cos(a) + B.x * Math.sin(a)) * rad * wob, p.y + (N.y * Math.cos(a) + B.y * Math.sin(a)) * rad * wob, p.z + (N.z * Math.cos(a) + B.z * Math.sin(a)) * rad * wob); uv.push((j / radial) * Math.max(1, Math.round(rad * 4)), t * L / 4); }
+    for (let j = 0; j <= radial; j++) { const a = (j / radial) * Math.PI * 2, wob = 1 + (o.gnarl ?? 0.06) * Math.sin(a * 3 + i * 1.7) * Math.sin(i * 0.9 + j); pos.push(p.x + (N.x * Math.cos(a) + B.x * Math.sin(a)) * rad * wob, p.y + (N.y * Math.cos(a) + B.y * Math.sin(a)) * rad * wob, p.z + (N.z * Math.cos(a) + B.z * Math.sin(a)) * rad * wob); uv.push((j / radial) * wraps, t * L / 5); }
   }
   for (let i = 0; i < n; i++) for (let j = 0; j < radial; j++) { const a = i * (radial + 1) + j, b = a + radial + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();

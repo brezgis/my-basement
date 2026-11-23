@@ -134,10 +134,11 @@ if (house.furnishRest) {
     each: step => { if (step === 'built') zoned.push(...builder.finalize(scene, materials)); },
   });
 }
-const life = bringToLife({ scene, outdoors, vis, quality: QUALITY, renderer, camera, items, garden: null, materials, doors: house.doors, colliders: builder.colliders, onChange: () => { sun.shadow.needsUpdate = true; } });
+const doorBodies = [];
+const life = bringToLife({ doorBodies, scene, outdoors, vis, quality: QUALITY, renderer, camera, items, garden: null, materials, doors: house.doors, colliders: builder.colliders, onChange: () => { sun.shadow.needsUpdate = true; } });
 
 // What the parts that move and answer back are given (b.later in a building; the grounds).
-const ctx = { THREE, scene, camera, renderer, materials, house, items, flash: t => flash(t), zoom: on => { camera.fov = on ? 13 : WALK_FOV; camera.updateProjectionMatrix(); walker.lookScale = on ? 0.22 : 1; ctx.zoomed = !!on; }, colliders: builder.colliders, interact: life.interact, animated: life.animated, loadModel: life.loadModel, track: life.track, zoneAt: life.zoneAt, sound, day, get walker() { return walker; }, get mode() { return mode; }, get aimed() { return aimed; }, get flashlight() { return torch.intensity > 0; } };
+const ctx = { THREE, doorBodies, scene, camera, renderer, materials, house, items, flash: t => flash(t), zoom: on => { camera.fov = on ? 13 : WALK_FOV; camera.updateProjectionMatrix(); walker.lookScale = on ? 0.22 : 1; ctx.zoomed = !!on; }, colliders: builder.colliders, interact: life.interact, animated: life.animated, loadModel: life.loadModel, track: life.track, zoneAt: life.zoneAt, sound, day, get walker() { return walker; }, get mode() { return mode; }, get aimed() { return aimed; }, get flashlight() { return torch.intensity > 0; } };
 pictureInfo({ extras: items.extras ?? [], interact: life.interact, say: t => window.houseUI?.toast?.(t, 6000) });      // E on a hung picture: its title, artist and year (engine/picinfo.js)
 mark('life');
 groundsLife(ctx);                                                             // the breeze in the trees
@@ -278,7 +279,7 @@ const cullOff = Q.get('cull') === '0';
 function cullScene(all = cullOff) {
   vis.update(camera);
   const eye = camera.position, SMALL_NEAR = smallNear();
-  for (const m of zoned) { const z = m.userData.zone, b = m.userData.box; m.visible = all || (vis.shows(z) && (!m.userData.small || b.distanceToPoint(eye) < SMALL_NEAR) && vis.inView(z, b)); }
+  for (const m of zoned) { const z = m.userData.zone, b = m.userData.box; m.visible = all || (vis.shows(z) && (!m.userData.small || vis.occupied(z) || b.distanceToPoint(eye) < SMALL_NEAR) && vis.inView(z, b)); }
   outdoors.visible = all || vis.state.out;
   sky.setOutdoors?.(all || vis.state.out);
   life.cull(all);

@@ -40,6 +40,7 @@
 //     (X 29.2, Y 22.4, facing south). Serves from the podium's north ledge (X 28.0, Y 35.5, h 14.0).
 //   The Bath: none needed; if one draws the bath, it stands at X 19.0, Y 22.3, facing south.
 //   The Gallery: none (it is a way through). If a librarian is wanted: X 16.5, Y 47.0, facing west (the books).
+import { burningLogs, storedLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeFlames } from '../flame.js';
@@ -86,13 +87,13 @@ export default function (f) {
     const W = o.wood ?? M.WAL, WD = o.back ?? M.WALD;
     const SH = []; for (let z = 0.35; z + 1.0 < top - 0.15; z += 1.1) SH.unshift(z);
     const bw = (xa - xb) / nb;
-    fr.box(WD, xb, xa, 0.09, 0.12, 0.02, top);
+    fr.box(WD, xb + 0.04, xa - 0.04, 0.035, 0.085, 0.02, top - 0.01);
     fr.box(M.BLACK, xb + 0.05, xa - 0.05, 0.13, d - 0.1, 0, 0.27);
     for (let i = 0; i <= nb; i++) { const x = xa - i * bw; fr.bev(W, x - 0.05, x + 0.05, 0.075, d, 0, top, 0.01, { grain: 'z' }); }
     for (let i = 0; i < nb; i++) { const x1 = xa - i * bw, x0 = x1 - bw;
+      fr.bev(W, x0 + 0.046, x1 - 0.046, d - 0.035, d + 0.043, top - 0.2, top - 0.011, 0.008, { grain: 'x' });
       for (const z of SH) { fr.bev(W, x0 + 0.045, x1 - 0.045, 0.13, d - 0.02, z - 0.07, z, 0.01, { grain: 'x' }); if (!skip(i, z)) K.shelf(fr, x0 + 0.08, x1 - 0.08, 0.14, z, Math.min(1.02, top - z - 0.25), { front: d - 0.1, run }); } }
     fr.bev(W, xb - 0.05, xa + 0.05, 0.075, d + 0.06, top, top + 0.1, 0.015, { grain: 'x' });
-    fr.box(W, xb - 0.05, xa + 0.05, d - 0.02, d + 0.06, top - 0.2, top);
     if (o.cove !== false) P.strip(fr, xb + 0.05, xa - 0.05, d - 0.14, d - 0.08, top - 0.18, top - 0.15);
     fr.block(xb, xa, 0, d + 0.06, 0, top);
     return { bw, SH };
@@ -157,9 +158,9 @@ export default function (f) {
       text: 'Three ink drawings by Klee, who said a line was a dot that went for a walk, hung close with half a dozen squiggles: single lines put down without knowing where they were going, after the game Winnicott played with his patients, in which one person draws a squiggle and the other turns it into something. None of these has been turned into anything yet.', foot: 'Klee: The Metropolitan Museum of Art, Berggruen Klee Collection (public domain). The squiggles: drawn here.' });
 
     // ---- the wall the chair and the couch face: books from floor to near the ceiling, one bay lit for a few antiquities
-    { const E = f.fr(42.75, 49.3, F, 1);                                 // x = Y - 49.3: +x north, the reader's left
-      const { bw } = wallCase(E, 3.5, -3.5, 1.0, 3, 'consulting', 7.4, (i, z) => i === 1 && z > 4.5);
-      const xc = 3.5 - 1.5 * bw;
+    { const E = f.fr(42.68, 48.95, F, 1);                                 // x = Y - 49.3: +x north, the reader's left
+      const { bw } = wallCase(E, 3.35, -3.35, 1.0, 3, 'consulting', 7.4, (i, z) => i === 1 && z > 4.5);
+      const xc = 3.35 - 1.5 * bw;
       P.strip(E, xc - bw / 2 + 0.1, xc + bw / 2 - 0.1, 0.75, 0.8, 7.17, 7.2);
       f.model('x_athena_hope', E, xc - 0.35, 0.5, 4.75, 0, { scale: 0.6, turn: 0.2 });
       for (const [dx, c] of [[0.3, 'c#3f8a86/0.35'], [0.55, 'c#4a9a90/0.35']]) P.ushabti(E, xc + dx, 0.5, 4.75, 1.5, c);
@@ -169,7 +170,7 @@ export default function (f) {
         foot: 'SMK KAS275 (public domain); Three D Scans (no copyright restrictions).' }); }
     // ---- the south wall: a low case of books, a lantern, a bowl and a branch on it; a plant in the corner by the door
     { const S = f.fr(32.4, 40.75, F, 0), d = 1.2, h = 2.6;                // x = X - 32.4: +x east, the reader's left
-      S.box(M.WALD, -3.2, 3.2, 0.09, 0.12, 0.02, h); S.box(M.BLACK, -3.15, 3.15, 0.13, d - 0.1, 0, 0.22);
+      S.box(M.WALD, -3.16, 3.16, 0.035, 0.085, 0.02, h - 0.01); S.box(M.BLACK, -3.15, 3.15, 0.13, d - 0.1, 0, 0.22);
       for (const x of [-3.2, 0, 3.2]) S.bev(M.WAL, x - 0.05, x + 0.05, 0.075, d, 0.22, h, 0.01, { grain: 'z' });
       for (const [x1, x0] of [[3.2, 0], [0, -3.2]]) for (const z of [1.45, 0.3]) { S.bev(M.WAL, x0 + 0.045, x1 - 0.045, 0.13, d - 0.02, z - 0.07, z, 0.01, { grain: 'x' }); K.shelf(S, x0 + 0.08, x1 - 0.08, 0.14, z, 1.05, { front: d - 0.1, run: 'consulting' }); }
       S.bev(M.WALP, -3.3, 3.3, 0.075, d + 0.06, h, h + 0.09, 0.012, { grain: 'x' }); S.block(-3.3, 3.3, 0, d + 0.06, 0, h + 0.09);
@@ -204,36 +205,37 @@ export default function (f) {
       for (const x of [-1.2, 0.5]) K.seat(Bn, x, 0.9, 1.5, 'sit on the bench'); }
     // a nook by the consulting room's door: one comfortable oak-and-linen chair, a small table with a candle lantern, a plant
     P.loungeChair(f.fr(24.95, 51.0, F, 1), { fabric: 'linen#cfc2a6', wood: OAKD, label: 'sit for a while' });
-    K.throwBlanket(f.fr(24.95, 51.0, F, 1), -1.25, -0.95, 0.5, 2.4, 1.8, 'wool#8a4a2e', { over: 'arm' });
+    K.throwBlanket(f.fr(24.95, 51.0, F, 1), -1.22, -0.99, 0.73, 2.0, 1.79, M.RUST, { over: 'arm', drop: { l: 0.64, r: 0.39 }, rho: 0.06, folds: 0.024 });
     { const t = f.fr(24.35, 49.15, F, 0); P.ves(t, OAK, 0, 0, 0, [[0, 0], [0.3, 0], [0.28, 0.05], [0.06, 0.1], [0.05, 1.7], [0.36, 1.72], [0.36, 1.8], [0, 1.8]], 16); t.block(-0.36, 0.36, -0.36, 0.36, 0, 1.8);
       lantern(t, 0.05, -0.05, 1.8); K.bookStack(t, 0, 0.12, 1.8, 2, { subject: 'poetry' }); }
     fernPot(24.2, 52.85, { model: 'fern_clump_a', scale: 0.95, pot: 'c#9a6a48/0.6' });
     // a candle lantern hanging over the landing (its light), and undyed wool runners along the strip and the bridge
-    K.ceilingLight(f.fr(19.4, 47.6, F, 0), 0, 0, H, { kind: 'lantern', lit: true, drop: 2.2 });
+    const bronze = 'c#58432d/0.55/0.78', amberGlass = 'e#dc9a56/0.48';
+    K.ceilingLight(f.fr(19.4, 47.6, F, 0), 0, 0, H, { kind: 'lantern', lit: true, drop: 2.1, size: 1.55, metal: bronze, glass: amberGlass, power: 0.72 });
     f.rug(14.2, 19.8, 54.0, 67.8, F, 'runner'); f.rug(21.2, 42.0, 60.6, 63.4, F, 'runner');      // warm striped wool runners
     f.rug(15.0, 22.0, 44.5, 52.0, F, 'kilim');
 
     // ---- the strip's long stone wall, dressed from the top down (Anna: "something at the top that can go down"): a tall
     // kilim on an oak pole, falling seven feet; two lanterns on oak brackets high either side of it
     hanging(f.fr(13.5, 61.4, F, 3), 3.4, 7.85, 7.0, kilimTall(41), 41);
-    for (const Y of [56.9, 65.9]) { const w = f.fr(13.5, Y, F, 3);
-      w.bev(OAKD, -0.08, 0.08, 0.02, 0.75, 7.55, 7.65, 0.01); P.tube(w, M.IRON, [[0, 0.04, 7.1], [0, 0.5, 7.55]], 0.015, 4);
-      lantern(w, 0, 0.55, 6.85); }
+    for (const Y of [56.9, 65.9]) {
+      K.sconce(f.fr(13.5, Y, F, 3), 0, 6.75, { kind: 'lantern', lit: true, size: 1.65, metal: bronze, glass: amberGlass, power: 0.48 });
+    }
     // ---- trailing pothos in oak troughs hung over the outside of the strip's rail, their strands falling into the room
     // below (they stop more than eight feet above its floor)
     for (const [Y0, Y1] of [[54.6, 58.9], [64.8, 67.9]]) {
       const zt = 2.5;
-      G.bev(OAK, 20.78, 21.32, Y0, Y1, zt, zt + 0.42, 0.015, { grain: 'y' });
-      G.box('c#3b2a1f/0.95', 20.83, 21.27, Y0 + 0.05, Y1 - 0.05, zt + 0.42, zt + 0.43);
-      for (const Y of [Y0 + 0.4, Y1 - 0.4]) P.tube(G, M.IRON, [[20.95, Y, zt + 0.4], [20.75, Y, zt + 0.55], [20.6, Y, zt + 0.42]], 0.012, 4);
-      pothos(21.05, Y0 + 0.15, Y1 - 0.15, zt + 0.43, (Y0 * 7) | 0);
+      const x0 = 20.72, x1 = 21.38, wall = 0.055;
+      G.bev(OAK, x0, x1, Y0, Y1, zt, zt + 0.085, 0.015, { grain: 'y' });
+      for (const X of [x0, x1 - wall]) G.bev(OAK, X, X + wall, Y0, Y1, zt + 0.07, zt + 0.42, 0.01, { grain: 'y' });
+      for (const Y of [Y0, Y1 - wall]) G.bev(OAK, x0 + wall - 0.008, x1 - wall + 0.008, Y, Y + wall, zt + 0.075, zt + 0.414, 0.01, { grain: 'x' });
+      G.box('soilbed', x0 + wall, x1 - wall, Y0 + wall, Y1 - wall, zt + 0.1, zt + 0.35);
+      for (const Y of [Y0 + 0.4, Y1 - 0.4]) P.tube(G, M.IRON, [[x0 + 0.05, Y, zt + 0.25], [x0 + 0.05, Y, zt + 0.58], [20.6, Y, zt + 0.58], [20.52, Y, zt + 0.44]], 0.018, 5);
+      pothos(21.1, Y0 + 0.16, Y1 - 0.16, zt + 0.35, (Y0 * 7) | 0);
     }
-    // ---- over the bench on the landing: a narrow indigo cloth on a pole, like a noren
+    // ---- Monet's wheatstacks over the bench on the landing
     f.framed(f.fr(16.85, 40.75, F, 0), 0, 5.3, 3.2, 1.89, 'monet_wheatstacks', { frame: 'oak_light#8f6c4c', border: 0.1, mat: 0, title: 'Stacks of Wheat (End of Summer)', kicker: 'Claude Monet, 1890–91',
       text: 'Two stacks in a field at Giverny in the late light, one of the series he painted over and over as the hours and the seasons changed.', foot: 'The Art Institute of Chicago. Public domain.' });
-    // on the landing's east wall, south of the consulting room's door: Hiroshige's plum garden
-    f.framed(f.fr(24.95, 42.6, F, 1), 0, 5.25, 2.1, 2.1, 'the_kiss', { frame: 'oak_light#8f6c4c', border: 0.08, mat: 0, title: 'The Kiss', kicker: 'Gustav Klimt, 1907–08',
-      text: 'Two lovers wrapped in one gold cloak at the edge of a flowering meadow: oil and gold leaf.', foot: 'Österreichische Galerie Belvedere, Vienna. Public domain (via Wikimedia Commons).' });
   }
   // a cloth hung from an oak pole on a wall frame: centred at x 0, its top at z top, w wide, h long, a few soft folds;
   // painted by draw(g, W, H) on its own canvas (f.later)
@@ -271,14 +273,26 @@ export default function (f) {
   function pothos(X, Y0, Y1, z, seed) {
     let s = seed * 9301 + 7; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
     const stems = [], leaves = [[], [], []], LC = ['c#4f7a3a/0.6', 'c#6a9442/0.6', 'c#3f6530/0.6'];
-    const leaf = (x, y, zz, a) => { const g = new THREE.SphereGeometry(0.085, 6, 4); g.scale(1, 0.3, 0.8); g.rotateY(r() - 0.5); g.rotateZ(a); g.translate(x, y, zz); return g; };
-    for (let Y = Y0; Y < Y1; Y += 0.32 + r() * 0.2) {
-      const len = 3 + r() * 3.2, out = 0.1 + r() * 0.25, pts = [];
-      for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([X + out * Math.min(1, t * 4) + 0.08 * Math.sin(t * 7 + Y), Y + 0.15 * Math.sin(t * 5 + Y * 3), z + 0.1 - (t < 0.12 ? -t * 0.8 : (t - 0.12) * len)]); }
-      stems.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(p => new THREE.Vector3(...p))), 12, 0.012, 3));
-      for (let k = 1; k < 16; k++) { const t = k / 16, i = Math.min(7, Math.floor(t * 8)), p = pts[i], q = pts[i + 1], f2 = t * 8 - i;
-        leaves[k % 3].push(leaf(p[0] + (q[0] - p[0]) * f2 + 0.06, p[1] + (q[1] - p[1]) * f2 + (k % 2 ? 0.07 : -0.07), p[2] + (q[2] - p[2]) * f2, (r() - 0.5) * 1.2)); }
-      for (let k = 0; k < 3; k++) leaves[k].push(leaf(X + (r() - 0.5) * 0.3, Y + (r() - 0.5) * 0.3, z + 0.1 + r() * 0.15, r()));
+    const surface = (u, v) => {
+      const t = u * 2 - 1;
+      const w = Math.sin(Math.PI * (0.1 + 0.9 * v)) ** 0.72;
+      return [0.33 * v, 0.125 * w * t, 0.035 * Math.sin(v * Math.PI) - 0.13 * v * v + 0.028 * Math.abs(t) * w];
+    };
+    const leafShape = K.geom.merge([K.geom.sheet(surface, 2, 4), K.geom.sheet(surface, 2, 4, { flip: true })]);
+    const leaf = (x, y, zz, a, scale) => leafShape.clone().scale(scale, scale, scale).rotateZ(a).translate(x, y, zz);
+    for (let Y = Y0; Y < Y1; Y += 0.32 + r() * 0.24) {
+      const len = 2.7 + r() * 3.4, drift = (r() - 0.5) * 0.5, p = r() * TAU;
+      const stem = t => {
+        const reach = Math.min(1, t / 0.2);
+        const fall = Math.max(0, t - 0.16) * len;
+        return [X + 0.36 * reach + 0.1 * t * Math.sin(p + 6 * t), Y + drift * t + 0.12 * t * Math.sin(p + 7 * t), z + 0.25 * Math.sin(Math.PI * reach / 1.6) - fall];
+      };
+      stems.push(K.geom.sweep(Array.from({ length: 19 }, (_, i) => stem(i / 18)), 0.013, { seg: 5 }));
+      for (let k = 1; k <= 16; k++) {
+        const p0 = stem(k / 17);
+        leaves[k % 3].push(leaf(...p0, (k % 2 ? 1 : -1) * (0.55 + r() * 1.12), 1.05 - k * 0.025 + r() * 0.44));
+      }
+      for (let k = 0; k < 3; k++) leaves[k].push(leaf(X - r() * 0.12, Y, z + 0.06 + r() * 0.13, r() * TAU, 0.9 + r() * 0.5));
     }
     const flat = g => { const n = g.index ? g.toNonIndexed() : g; n.clearGroups(); return n; };
     P.put(G, 'c#4a5a2e/0.8', P.mergeG(stems.map(flat)));
@@ -314,14 +328,15 @@ export default function (f) {
     // the duvet, turned down, and one wool blanket across the foot
     G.cushion('linen#e9e1cf', BX - 2.8, BX + 2.8, 32.6, 37.9, zm - 0.06, zm + 0.16, 0.08, { n: [6, 6, 1], crown: 0.04, sag: [[0.2, -0.3, 0.03, 0.5], [-0.3, 0.4, 0.02, 0.6]] });
     G.cushion('linen#ddd3bd', BX - 2.82, BX + 2.82, 37.6, 38.4, zm - 0.03, zm + 0.22, 0.08, { crown: 0.03 });
-    K.cloth(G, 'wool#a8762e', { cx: BX, cy: 34.0, z: zm + 0.27, a: 2.8, b: 1.15, l: 0.6, r: 0.6, bk: 0.55, fr: 0, folds: 0.05, fringe: true });      // one wool blanket across the foot, falling over its end and sides
+    K.cloth(G, 'wool#a8762e', { cx: BX, cy: 33.77, z: zm + 0.19, a: 2.84, b: 1.2, l: 0.6, r: 0.63, bk: 0.48, fr: 0, folds: 0.026, rho: 0.04, fringe: 0.085, fringeSides: ['l', 'r', 'b'],
+      pre: (x, y) => [x + 0.039 * Math.sin(2.6 * y), y + 0.043 * Math.sin(1.8 * x) + 0.019 * Math.sin(4.7 * x)] });      // one wool blanket across the foot, falling over its end and sides
     // the headboard: a low walnut panel against the wall
     G.bev(M.WAL, BX - 3.1, BX + 3.1, 39.55, 39.9, zp, zp + 2.6, 0.02, { grain: 'x' });
     G.bev(M.WAL, BX - 3.1, BX + 3.1, 39.5, 40.05, zp + 2.6, zp + 2.7, 0.015, { grain: 'x' });
     // four pillows: two square shams and two to sleep on
     { const Pf = f.fr(BX, 39.5, F + zm, 2);                              // x runs west, y south (toward the foot)
-      for (const x of [-1.35, 1.35]) K.cushion(Pf, x, 0.32, 0, 2.4, 2.0, M.CREAM, { tilt: 0.28, thick: 0.45 });
-      for (const x of [-1.3, 1.3]) K.cushion(Pf, x, 0.7, 0, 2.1, 1.4, 'linen#efe8d8', { tilt: 0.6, thick: 0.4 }); }
+      for (const x of [-1.35, 1.35]) K.cushion(Pf, x, 0.66, 0.04, 2.35, 1.35, M.CREAM, { tilt: 0.57, thick: 0.37 });
+      for (const x of [-1.3, 1.3]) K.cushion(Pf, x, 1.36, 0.035, 2.1, 1.07, 'linen#efe8d8', { tilt: 0.8, thick: 0.31 }); }
     K.seat(f.fr(BX - 2.9, 35.5, F, 1), 0, 0, zm - 0.05, 'sit on the bed');
     lie(BX, 38.6, zm + 0.78, BX - 1.0, 20.0, 0.1, 'lie down on the bed');
     G.block(BX - 2.75, BX + 2.75, 32.6, 39.5, zp, zm + 0.3);
@@ -341,8 +356,11 @@ export default function (f) {
       K.cloth(C, 'wool#3f4d38', { cx: 0.6, cy: 0.75, z: 1.57, a: 1.0, b: 0.78, l: 0, r: 0, fr: 0, bk: 0.85, folds: 0.05, fringe: true });      // a green wool throw over the chest's front
       K.foldedStack(C, -1.3, 0.75, 1.55, 2, ['wool#cbbd9c', 'wool#a8762e'], { w: 1.2, d: 0.9, t: 0.14 });
       K.seat(f.fr(BX - 0.4, 29.7, F, 2), 0, 0, 1.55, 'sit on the chest'); }
-    P.loungeChair(f.fr(27.4, 28.0, F, 2), { fabric: 'linen#d9cdb4', w: 2.3, d: 2.4, low: true, label: 'sit and look at the clouds' });
-    P.loungeChair(f.fr(33.7, 28.0, F, 2), { fabric: 'linen#d9cdb4', w: 2.3, d: 2.4, low: true, label: 'sit and look at the clouds' });
+    for (const [X, colour, turn] of [[27.4, M.GREEN, -0.11], [33.7, M.OCHRE, 0.14]]) {
+      const chair = f.fr(X, 28.0, F, 2);
+      P.loungeChair(chair, { fabric: 'linen#d9cdb4', w: 2.3, d: 2.4, low: true, label: 'sit and look at the clouds' });
+      K.cushion(chair, turn * 2.5, 0.83, 1.37, 1.11, 0.85, colour, { tilt: 0.49, turn, thick: 0.23 });
+    }
     { const t = P.ovalTable(G, 30.55, 24.55, 1.0, 1.0, 1.35);
       K.posy(G, 30.35, 24.35, t, ['c#f2ead8/0.8', 'c#e8a0a8/0.8', 'c#d9534f/0.8', 'c#e7c64a/0.8']);
       K.bookStack(G, 30.95, 24.8, t, 3, { subject: 'travel' }); K.cup(G, 30.0, 24.95, t, 'c#efe9dd'); }
@@ -371,6 +389,7 @@ export default function (f) {
       const g = new THREE.Group(); g.position.set(o.x, o.y, o.z); g.rotation.y = Math.atan2(-dx[1], dx[0]);
       const uT = { value: 0 };
       g.add(makeFlames(THREE, mergeGeometries, uT, [[0, 0, 0.02, 1.05, 0.95, 0], [0, 0.14, 0.12, 0.85, 0.8, 3.7], [0, -0.16, -0.1, 0.8, 0.75, 8.1]], 0.05));
+      g.add(burningLogs(ctx.materials.bark, 1.08, .65));
       g.traverse(n => { n.userData.cat = 'fire'; });
       ctx.scene.add(g); ctx.track(g, ctx.zoneAt(o.x, o.y + 0.4, o.z, 0.4));
       ctx.animated.push(t => { uT.value = t; });
@@ -378,10 +397,10 @@ export default function (f) {
     // a basket of logs beside it
     { const b = f.fr(17.75, 38.7, F, 0);
       P.put(b, 'wicker', P.latheG([[0, 0], [0.4, 0], [0.46, 0.5], [0.48, 0.55], [0.45, 0.55], [0.43, 0.51], [0.38, 0.06], [0, 0.06]], 16));
-      for (let i = 0; i < 5; i++) { const g = new THREE.CylinderGeometry(0.09, 0.09, 1.0, 7).rotateY(Math.PI / 2); g.rotateZ(i * 0.6); g.translate((i % 2 - 0.5) * 0.12, (i - 2) * 0.13, 0.48 + (i % 3) * 0.08); g.clearGroups(); P.put(b, 'bark', g); }
+      storedLogs(K, b, 0, 0, .08, .94, .14, 3, 3);
       b.block(-0.5, 0.5, -0.5, 0.5, 0, 1.5); }
     P.loungeChair(f.fr(15.9, 32.3, F, 0), { fabric: M.OCHRE, label: 'sit by the stove' });
-    K.throwBlanket(f.fr(15.9, 32.3, F, 0), -1.25, -0.95, 0.5, 2.4, 1.8, 'wool#3f4d38', { over: 'arm' });
+    K.throwBlanket(f.fr(15.9, 32.3, F, 0), -1.22, -0.99, 0.76, 2.05, 1.79, M.GREEN, { over: 'arm', drop: { l: 0.7, r: 0.38 }, rho: 0.06, folds: 0.024 });
     P.sheepskin(G, 14.6, 17.2, 35.05, 36.15, 0.03);
     f.rug(13.9, 23.8, 30.4, 36.2, F, 'kilim');
     K.wardrobe(f.fr(19.0, 27.55, F, 0), 5.0, 7.2, { wood: 'c#5a3e2c', d: 2.0, pull: 'wood' });
@@ -397,7 +416,7 @@ export default function (f) {
       t.block(-0.85, 0.85, -0.85, 0.85, 0, 3.6);
       f.label(t, -u[0] * 1.3, -u[1] * 1.3, 3.75 - u[2] * 1.3, { label: 'look through the telescope', reach: 4, note: 'The far rim of the courtyard, a gull standing on it, and a great deal of sky.' }); }
     fernPot(25.6, 39.2, { tall: true, model: 'fern_clump_c', scale: 0.85 });
-    // over the bed: Klimt's farm garden, all colour, centred on the headboard
+    // Van Gogh's bedroom, centred on the headboard
     f.framed(f.fr(BX, 40.25, F, 2), 0, 5.35, 3.0, 2.35, 'van_gogh_bedroom', { frame: 'walnut#5a3e2c', border: 0.12, mat: 0, title: 'The Bedroom', kicker: 'Vincent van Gogh, 1889',
       text: 'His room in the Yellow House at Arles: the blue walls, the red blanket, the two chairs, the shutters closed. He wrote that looking at it should rest the brain.', foot: 'The Art Institute of Chicago (1926.417). Public domain.' });
   }
@@ -429,13 +448,14 @@ export default function (f) {
       K.mirror(Wv, 0, 5.0, 1.9, 2.7, { kind: 'arch', frame: M.WAL, border: 0.08 });
       Wv.block(-1.45, 1.45, 0, 1.7, 0, 2.7); }
     // towels warming on two bronze rails, on the north wall
-    { const Tr = f.fr(18.4, 27.05, F, 2);
-      K.towelRail(Tr, 0, 4.0, 2.2, { towels: ['wool#ebe5d8', 'wool#a8762e'], mat: M.BRONZE }); K.towelRail(Tr, 0, 2.4, 2.2, { towels: ['wool#cbbd9c'], mat: M.BRONZE });
+    { const Tr = f.fr(18.05, 26.99, F, 2);
+      K.towelRail(Tr, 0, 4.25, 2.3, { towels: ['wool#ebe5d8', 'wool#a8762e'], drop: 1.43, mat: M.BRONZE });
+      K.towelRail(Tr, 0, 2.58, 2.3, { towels: ['wool#cbbd9c'], drop: 1.17, mat: M.BRONZE });
       Tr.block(-1.2, 1.2, 0, 0.5, 1.2, 4.2);
       f.label(Tr, 0, 0.4, 3.5, { label: 'feel the towels', reach: 5, note: 'Warm. The rail is heated.' }); }
     // the WC, the house's (kit/bath.js), on the north wall facing south (not the door), paper on a bronze holder, a shelf
-    { const W = f.fr(21.2, 27.05, F, 2);                                 // x = 21.2 - X; y south
-      K.toilet(W, 0, { seat: 'c#b08a60', metal: M.BRONZE });
+    { const W = f.fr(21.08, 26.99, F, 2);                                 // x = 21.2 - X; y south
+      K.toilet(W, 0, { seat: 'porcelain', metal: M.BRONZE });
       P.tube(W, M.BRONZE, [[-1.35, 0.02, 2.15], [-1.35, 0.3, 2.15]], 0.02, 6); P.hcyl(W, M.BRONZE, 'x', -1.35, 0.3, 2.15, 0.5, 0.012);
       P.hcyl(W, 'c#f4f1ea/0.9', 'x', -1.35, 0.3, 2.15, 0.38, 0.2); P.hcyl(W, 'c#d9d2c2/0.9', 'x', -1.35, 0.3, 2.15, 0.39, 0.05);
       W.bev(M.WAL, -0.95, 0.95, 0.02, 0.52, 4.1, 4.18, 0.012, { grain: 'x' });

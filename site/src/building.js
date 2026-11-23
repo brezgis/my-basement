@@ -184,6 +184,24 @@ export function makeSite(B, site, lists) {
 
   // ---- small things -------------------------------------------------------------------------
   const surface = (X0, X1, Y0, Y1, h) => { const w = wbox(X0, X1, Y0, Y1, h, h); lists.surfaces.push({ x0: w.x0, x1: w.x1, z0: w.z0, z1: w.z1, h: g0 + h }); };
+  // A convex landing or tread whose walking surface follows its visible edge.
+  function surfacePolygon(points, height) {
+    const corners = points.map(([x, y]) => P(x, y));
+    const xs = corners.map(p => p[0]), zs = corners.map(p => p[1]);
+    const edges = corners.map(([x, z], i) => {
+      const next = corners[(i + 1) % corners.length];
+      return [next[0] - x, next[1] - z, x, z];
+    });
+    function contains(x, z) {
+      let lo = 0, hi = 0;
+      for (const [dx, dz, ax, az] of edges) {
+        const side = dx * (z - az) - dz * (x - ax);
+        lo = Math.min(lo, side); hi = Math.max(hi, side);
+      }
+      return lo >= -1e-6 || hi <= 1e-6;
+    }
+    lists.surfaces.push({ x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs), h: g0 + height, contains });
+  }
   // a sloping surface (a flight): along plan axis ax, from height h0 at u0 to h1 at u1; lo..hi is its width
   const ramp = (ax, u0, u1, lo, hi, h0, h1) => {
     const w = ax === 'X' ? wbox(u0, u1, lo, hi, 0, 0) : wbox(lo, hi, u0, u1, 0, 0), wa = worldAxis(ax);
@@ -250,8 +268,12 @@ export function makeSite(B, site, lists) {
   }
   // The floor of a round end: boards cut to the curve (a fan of n flat pieces), the ceiling below, and strips to stand on.
   function floorArc({ X, Y, r, from, to, h, mat = 'floor', thick = 1, under = 'ceil', n = 16, surface: stand = true }) {
-    const a0 = from * Math.PI / 180, da = (to - from) * Math.PI / 180 / n, pts = [[X, Y]];
-    for (let i = 0; i <= n; i++) pts.push([X + r * Math.cos(a0 + i * da), Y + r * Math.sin(a0 + i * da)]);
+    const a0 = from * Math.PI / 180, da = (to - from) * Math.PI / 180 / n;
+    // A complete disk has a perimeter only. A centre vertex on its outline
+    // would extrude two coincident radial walls through the slab.
+    const full = Math.abs(Math.abs(to - from) - 360) < 1e-6;
+    const pts = full ? [] : [[X, Y]];
+    for (let i = 0; i < (full ? n : n + 1); i++) pts.push([X + r * Math.cos(a0 + i * da), Y + r * Math.sin(a0 + i * da)]);
     const slabOf = (m, hb, ht) => { const sh = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y))), g = new THREE.ExtrudeGeometry(sh, { depth: ht - hb, bevelEnabled: false }); g.rotateX(-Math.PI / 2); g.translate(0, hb, 0);
       // (texture coordinates as a box's, so that the boards run on unbroken where the round floor meets a straight one:
       // the extrusion's own were mirrored, and the joint showed as a line across the room)
@@ -481,7 +503,7 @@ export function makeSite(B, site, lists) {
 
     // skirting along the foot of every plastered face
     if (s.base !== false) for (const [sg, m] of [[-1, mn], [1, mp]]) {
-      if (!m || !/^plaster/.test(m)) continue;
+      if (!m || (!/^plaster/.test(m) && !(s.skirting && sg !== outSg))) continue;
       const f = sg * t / 2;
       // (it stops just inside the plinth blocks of a doorcase: run on to the opening, its end lay in the plane of the plinth's face in the reveal)
       const plinth = sg !== outSg ? opens.filter(o => o.kind !== 'win' && o.trim !== false && Math.abs(o.sill ?? 0) < 0.01) : [], P0 = new Set(plinth.map(o => o.at)), P1 = new Set(plinth.map(o => o.at + o.w));
@@ -554,8 +576,8 @@ export function makeSite(B, site, lists) {
       // trim: stone outside (a sill under a window; a lintel, or the ring of an arch), wood casing inside
       for (const [sg, m] of [[-1, mn], [1, mp]]) {
         if (!m || o.trim === false) continue;
-        const f = sg * t / 2;
-        if (sg === outSg || !INTERIOR.test(m)) {
+        const f = sg * t / 2 + (sg > 0 ? o.liningPos ?? 0 : 0);
+        if (!o.lined && (sg === outSg || !INTERIOR.test(m))) {
           const tm = o.trim ?? trim;
           if (o.kind === 'win' && hs > s.h0 + 0.3) W(u0 - 0.3, u1 + 0.3, hs - 0.38, hs + 0.02, f, f + sg * 0.3, tm);
           if (rise > 0) ring(tm, 0, 0.85, f, f + sg * 0.09); else if (s.h1 > hh + 0.9) W(u0 - 0.45, u1 + 0.45, hh - 0.02, hh + 0.95, f, f + sg * 0.09, tm);
@@ -574,7 +596,15 @@ export function makeSite(B, site, lists) {
         W(u0, u1, fl - TH.deep, fl + TH.up, -e, e, typeof o.threshold === 'string' ? o.threshold : stone ? (typeof o.trim === 'string' ? o.trim : trim) : wood, stone ? undefined : G);
         isX ? surface(u0, u1, c - e, c + e, fl + TH.up) : surface(c - e, c + e, u0, u1, fl + TH.up);
       }
-      if (o.kind === 'cased') return;
+      if (o.kind === 'cased') {
+        if (o.lined) {
+          const depth = t / 2 + 0.024;
+          W(u0, u0 + 0.09, hs, hh, -depth, depth, wood, G);
+          W(u1 - 0.09, u1, hs, hh, -depth, depth, wood, G);
+          W(u0 + 0.09, u1 - 0.09, hh - 0.09, hh, -depth, depth, wood, G);
+        }
+        return;
+      }
 
       if (o.kind === 'win') {
         blockU(u0, u1, fl, hh, 0.1);
@@ -609,7 +639,9 @@ export function makeSite(B, site, lists) {
       //             head of the frame outside
       const J = 0.12, lt = rise > 0 ? spring : hh, leaves = o.leaves ?? 1;
       const tr = rise > 0 || !o.transom ? 0 : o.transom === true ? 6.9 : o.transom, top = tr && hh - fl - tr > 0.8 ? fl + tr : lt;      // top: the top of the leaves' own opening
-      W(u0, u0 + J, fl, lt, -0.16, 0.16, wood, G); W(u1 - J, u1, fl, lt, -0.16, 0.16, wood, G); W(u0 + J, u1 - J, lt - 0.09, lt, -0.16, 0.16, wood, G);
+      const depth = o.lined ? t / 2 + 0.024 : 0.16;
+      const innerDepth = depth + (o.liningPos ?? 0);
+      W(u0, u0 + J, fl, lt, -depth, innerDepth, wood, G); W(u1 - J, u1, fl, lt, -depth, innerDepth, wood, G); W(u0 + J, u1 - J, lt - 0.09, lt, -depth, innerDepth, wood, G);
       const bars = (a, b, h0, h1, list) => { for (const q of list) W(a + (b - a) * q - 0.026, a + (b - a) * q + 0.026, h0, typeof h1 === 'function' ? h1(a + (b - a) * q) : h1, -0.04, 0.04, wood, G); };
       if (top < lt) {
         // the transom: a bar that stands proud of the frame, a light over it with a margin of small panes
@@ -638,7 +670,7 @@ export function makeSite(B, site, lists) {
         const [hx, hz] = isX ? P(hu, c) : P(c, hu);
         lists.doors.push({ x: hx, z: hz, closed: base + th, open: base + turn + th, w: lwid - (leaves === 2 ? 0.008 : 0.03),      // (the leaves of a pair meet: at 0.03 short each, daylight showed between them; the astragal on one of them covers what is left)
           y0: g0 + fl + (thr ? TH.up + 0.02 : 0.03), y1: g0 + top - 0.11, glassy: o.kind === 'gdoor', stop,
-          cx: (stop.x0 + stop.x1) / 2, cz: (stop.z0 + stop.z1) / 2, fixed: o.fixed ?? false, exterior, site: site.id, pair: leaves === 2 ? i : undefined, wood: o.leaf ?? s.wood,      // (wood: what the leaf is made of: the opening's `leaf`, else the wall's `wood`, else life.js's dark fir)
+          cx: (stop.x0 + stop.x1) / 2, cz: (stop.z0 + stop.z1) / 2, fixed: o.fixed ?? false, initialOpen: o.initialOpen, exterior, site: site.id, pair: leaves === 2 ? i : undefined, wood: o.leaf ?? s.wood,      // (wood: what the leaf is made of: the opening's `leaf`, else the wall's `wood`, else life.js's dark fir)
           style, fit: { kick: o.kick, push: o.push, metal: o.metal } });
       }
     }
@@ -650,10 +682,11 @@ export function makeSite(B, site, lists) {
   // margin }] puts a flat-headed window in facet i (heights above fl). Arched heads here are built by hand.
   function arcWall(s) {
     const { X, Y, r, h0, h1 } = s, t = s.t ?? 1.5, n = s.n ?? 12, fl = s.fl ?? h0, a0 = (s.from * Math.PI) / 180, da = ((s.to - s.from) * Math.PI) / 180 / n, flip = da < 0 ? -1 : 1;
-    const tn = Math.tan(Math.abs(da) / 2), len = 2 * (r + t / 2) * tn + 0.004, trim = s.trim ?? 'limestone_smooth', sashM = s.sash ?? 'sash';
+    const sinHalf = Math.sin(Math.abs(da) / 2), cosHalf = Math.cos(da / 2);
+    const len = 2 * (r + t / 2) * sinHalf, trim = s.trim ?? 'limestone_smooth', sashM = s.sash ?? 'sash';
     arcs.push({ X, Y, r, t, h0, h1, lo: Math.min(s.from, s.to) * Math.PI / 180, hi: Math.max(s.from, s.to) * Math.PI / 180 });
     for (let i = 0; i < n; i++) {
-      const phi = a0 + (i + 0.5) * da, cx = X + r * Math.cos(phi), cy = Y + r * Math.sin(phi), o = (s.opens ?? []).find(q => q.i === i);
+      const phi = a0 + (i + 0.5) * da, cx = X + r * cosHalf * Math.cos(phi), cy = Y + r * cosHalf * Math.sin(phi), o = (s.opens ?? []).find(q => q.i === i);
       // a box in the facet's own frame: u along it, w across (out is +), then turned and set in place
       const F = (mat, u0, u1, a, b, w0, w1) => {
         if (!mat || u1 - u0 < 0.004 || b - a < 0.004) return;
@@ -663,13 +696,31 @@ export function makeSite(B, site, lists) {
         // A piece that reaches a joint with the next facet is mitred there: its end turned to the line through the
         // centre, so that the two meet without overlapping. (Square ends, cut to the length of the outer face, overlapped
         // in a wedge at every joint, and the overlapping tops and soffits lay in one plane.)
-        for (let q = 0; q < p.count; q++) { const x = p.getX(q); if (Math.abs(Math.abs(x) - h) < 1e-5) p.setX(q, Math.sign(x) * ((r + p.getZ(q)) * tn + 0.002)); }
+        // Set each leaf's ends on its radius. Adjacent stretches can have
+        // different facet angles, but share the same radial edge.
+        for (let q = 0; q < p.count; q++) {
+          const x = p.getX(q), w = p.getZ(q);
+          if (Math.abs(Math.abs(x) - h) < 1e-5) p.setX(q, Math.sign(x) * (r + w) * sinHalf);
+          p.setZ(q, w * cosHalf);
+        }
         g.rotateY(phi + Math.PI / 2); g.translate(cx, 0, -cy); L.add(mat, g);
       };
       // (s.skin: the 'out' leaf only that thick, the rest of the wall the 'in' material: so that a window's reveal shows one
       // stone and a thin edge of lining, not two materials half and half with the frame as a third)
       const sk = s.skin ?? t / 2, leaf = (u0, u1, a, b) => { F(s.out, u0, u1, a, b, t / 2 - sk, t / 2); F(s.in ?? s.out, u0, u1, a, b, -t / 2, t / 2 - sk); };
       const h = len / 2;
+      if (s.dado || s.skirting) {
+        const band = (u0, u1, limit) => {
+          const end = Math.min(limit, fl + (s.dado ? 3.3 : 0.6));
+          F(s.dado?.[0] ?? s.trim, u0, u1, fl, end, t / 2, t / 2 + 0.06);
+          if (s.dado && end + 0.1 <= limit) F(s.dado[1], u0, u1, end, end + 0.12, t / 2, t / 2 + 0.10);
+        };
+        if (o) {
+          const margin = o.margin ?? 0.5;
+          band(-h, -h + margin, h1); band(h - margin, h, h1);
+          band(-h + margin, h - margin, fl + o.sill - 0.32);
+        } else band(-h, h, h1);
+      }
       if (!o) leaf(-h, h, h0, h1);
       else {
         const m = o.margin ?? 0.5, hs = fl + (o.sill ?? 0), hh = fl + o.head, e = 0.13;
@@ -787,7 +838,7 @@ export function makeSite(B, site, lists) {
   const b = {
     site, G, B: L,
     box: (...a) => L.pbox(...a), cyl: (...a) => L.pcyl(...a), mesh: (mat, g) => L.add(mat, g), block: (...a) => L.block(...a), prism: (...a) => L.prism(...a),
-    wall, arcWall, floor, floorArc, arcRects, room, roomArc, ceiling, finishes, stair, steps, rail, surface, ramp, interior, portal, lamp, fill, roof, world,
+    wall, arcWall, floor, floorArc, arcRects, room, roomArc, ceiling, finishes, stair, steps, rail, surface, surfacePolygon, ramp, interior, portal, lamp, fill, roof, world,
     get kit() { return getKit(); }, fr: (X, Y, h = 0, q = 0) => getKit().fr(X, Y, h, q),
     later: f => lists.later.push(f),
     finish, adopt,

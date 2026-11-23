@@ -60,13 +60,17 @@ export function openStage({ mark = () => {}, onEarlyEnter = null, early = true }
       if (!pictured) { pictured = true; counting = false; window.__pictureMs = Math.round(performance.now()); window.__firstPhotos = first.size; mark('picture'); }
       if (early && (photosIn || !left)) lift();
     };
-    draw(); await frame();
+    // Only early entry exposes the still picture. Keep yielding for image
+    // decoding and the loading UI while the normal welcome covers the canvas.
+    if (early) draw();
+    else counting = false;
+    await frame();
     let t0 = performance.now();
     for (const step of steps) {
       each?.(step);
-      if (performance.now() - t0 > 40) { draw(); await frame(); t0 = performance.now(); }
+      if (performance.now() - t0 > 40) { if (early) draw(); await frame(); t0 = performance.now(); }
     }
-    draw(); await frame();
+    if (early) { draw(); await frame(); }
     mark('furnished');
   }
 

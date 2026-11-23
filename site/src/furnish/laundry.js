@@ -30,8 +30,8 @@
 //   The Linen Closet X -23.5, Y 41.8, facing north (the shelves)            puts away and fetches: robes, towels, sheets
 //   Things to serve from: the folded stacks on the folding table (X -34.1, Y 38.45, h 23.03), the towel shelves on the
 //   laundry's east wall (X -27.2, Y 33.8 to 36.9), the closet's shelves (robes: X -23, Y 44.3, h 26.9).
-import { M, machine, dado, basket, hamper, jar, jug, shelving, pegRail, apron, stringBag, washboard, ironingBoard, foldingTable, sheilaMaid, radio, windowFrame, laylightFrame, broom, beater, dustpan, stepStool, stack } from './laundry_parts.js';
-import { hexFloor, wallpaper, windowView, laylight, machines, tap, clock } from './laundry_fx.js';
+import { M, machine, dado, basket, hamper, jar, jug, shelving, pegRail, apron, stringBag, washboard, ironingBoard, foldingTable, sheilaMaid, radio, windowFrame, laylightFrame, miteredTrim, broom, beater, dustpan, stepStool, stack } from './laundry_parts.js';
+import { hexFloor, paintedCeiling, wallpaper, windowView, laylight, machines, tap, clock } from './laundry_fx.js';
 import * as THREE from 'three';
 
 export default function (f) {
@@ -60,7 +60,6 @@ export default function (f) {
   for (const [k, z] of [[0, 3.26], [1, 3.49]]) f.box('c#d3cdc1/0.8', X0 + 0.03, X1, Y1 - 0.066, Y1 - 0.06, F + z - 0.008, F + z + 0.008);
   for (let r = 0; r < 3; r++) for (let x = X0 + 0.03 + (r % 2 ? 0.25 : 0.5); x < X1; x += 0.5) f.box('c#d3cdc1/0.8', x - 0.008, x + 0.008, Y1 - 0.066, Y1 - 0.06, F + [3.03, 3.268, 3.498][r], F + [3.252, 3.482, 3.72][r]);
   f.box(M.WHITE, X0 + 0.03, X1, Y1 - 0.1, Y1 - 0.002, F + 3.72, F + 3.8);
-  f.box(M.WHITE, X0 + 0.01, X1, Y1 - 0.13, Y1 - 0.002, F + 8.42, F + 8.58);
   const WX = -33.0, WZ0 = 4.1, WH = 3.3, WW = 2.4, BLIND = WZ0 + WH * 0.7;          // the window: its middle, sill, height, width, the blind's foot
   windowFrame(K, SK, 0, WZ0, WW, WH, BLIND);
   // oak shelves each side of the window
@@ -83,10 +82,15 @@ export default function (f) {
   // a rag rug at the sink
   f.rug(-35.0, -30.9, 40.75, 42.55, F + 0.035, 'mat');
 
-  // ==== a ceiling of white-painted boards under the shell's honey ones (fresh, and it throws the light about) =========
-  for (const [a0, a1, b0, b1] of [[X0, X1, Y0, Y1], [X1, C.X1, C.Y0, C.Y1]]) {
-    f.box('c#f4f0e6/0.8', a0, a1, b0, b1, F + H - 0.04, F + H - 0.008);
-    for (let y = b0 + 0.34; y < b1 - 0.1; y += 0.34) f.box('c#cfc8b8/0.8', a0, a1, y - 0.008, y + 0.008, F + H - 0.046, F + H - 0.04);
+  // Close-fitted painted boards and continuous crown around both rooms.
+  for (const room of [R, C]) {
+    const { X0: x0, X1: x1, Y0: y0, Y1: y1, ceil } = room;
+    const frame = f.fr(0, 0, ceil, 0);
+    miteredTrim(K, frame, M.WHITE, x0, x1, y0, y1, [
+      [0, -0.29], [0.045, -0.29], [0.061, -0.265], [0.061, -0.233], [0.084, -0.214],
+      [0.147, -0.178], [0.187, -0.127], [0.207, -0.096], [0.239, -0.083],
+      [0.239, -0.015], [0.206, 0.003],
+    ]);
   }
   // ==== the dado, round the three plain walls =========================================================================
   dado(Wf(37.4), -5.45, 5.4);                                          // west: Y 42.85 .. 32.0
@@ -110,7 +114,7 @@ export default function (f) {
   basket(K, I, 0.55, 0.0, tb.top, 1.6, 1.1, 0.55, M.LINEN, { heap: 0.14 });
   I.cushion(M.LINEN, 1.35, 2.0, -0.55, 0.5, tb.top, tb.top + 0.03, 0.01, { crown: 0.004 });      // a tea towel, pressed and folded
   for (const [x, fill] of [[-1.4, M.TOWEL], [0, M.LINEN2], [1.4, null]]) basket(K, I, x, 0, tb.shelf, 1.2, 1.45, 0.8, fill);
-  const LL = f.fr(TC[0], TC[1], F, 0), lay = laylightFrame(LL, 5.4, 3.4, H, 3, 2);
+  const LL = f.fr(TC[0], TC[1], F, 0), lay = laylightFrame(K, LL, 5.4, 3.4, H, 3, 2);
   f.lamp(TC[0], TC[1], F + 7.1, { power: 0.95, kind: 'lantern' });      // the one lamp the engine lights here: as if from the laylight
   const RK = f.fr(-37.0, 40.1, F, 1);                                  // x = Y - 40.1, y = -(X + 37)
   sheilaMaid(K, RK, 5.0, 6.9, H, Y0 - 40.1, 4.4);
@@ -229,6 +233,7 @@ export default function (f) {
   const mouth = mapPt(SK, 0, 1.05, 3.75), tapAt = mapPt(SK, 0, 0.5, 4.0);
   f.later(ctx => {
     const Wp = (X, Y, h) => f.world(X, Y, h);
+    for (const room of [R, C]) paintedCeiling(ctx, Wp, room);
     hexFloor(ctx, Wp, { X0: X0, X1: C.X1, Y0: Y0, Y1: Y1, h: F + 0.03, rooms: [[X0 + 0.01, X1, Y0 + 0.02, Y1 - 0.01, 'laundry'], [X1, C.X1 - 0.01, C.Y0 + 0.01, C.Y1 - 0.01, 'plain']], panel: { X: -33.7, Y: 36.0 } });
     wallpaper(ctx, Wp, { y: Y1 - 0.02, tw: 1.443, th: 1.458, url: 'assets/tex/laundry_willow_bough.jpg', room: R,
       rects: [[X0, WX - 1.53, F + 3.8, F + 8.42], [WX + 1.53, X1, F + 3.8, F + 8.42], [WX - 1.53, WX + 1.53, F + WZ0 + WH + 0.34, F + 8.42]] });

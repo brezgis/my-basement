@@ -131,6 +131,28 @@ export function hexFloor(ctx, W, o) {
   add(ctx, m, W((a[0] + b[1]) / 2, (a[2] + a[3]) / 2, o.h + 1), Math.max(b[1] - a[0], a[3] - a[2]) / 2);
 }
 
+// Paint the thin board seams on one soffit so there are no subpixel cracks between faces.
+export function paintedCeiling(ctx, W, { X0, X1, Y0, Y1, ceil }) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 8; canvas.height = 1024;
+  const g = canvas.getContext('2d'), count = Math.round((Y1 - Y0) / 0.51);
+  for (let i = 0; i < count; i++) {
+    const y0 = Math.round(i * canvas.height / count), y1 = Math.round((i + 1) * canvas.height / count);
+    g.fillStyle = i % 4 === 1 ? '#f4efe4' : '#f6f1e7';
+    g.fillRect(0, y0, canvas.width, y1 - y0);
+    if (i > 0) { g.fillStyle = '#e9e2d5'; g.fillRect(0, y0, canvas.width, 1); }
+  }
+  const map = new THREE.CanvasTexture(canvas);
+  map.colorSpace = THREE.SRGBColorSpace;
+  map.minFilter = THREE.LinearMipmapLinearFilter;
+  const h = ceil - 0.06, x = (X0 + X1) / 2, y = (Y0 + Y1) / 2;
+  const corners = [[X0, Y0, h], [X1, Y0, h], [X1, Y1, h], [X0, Y1, h]];
+  const geo = faceToward(quadGeo(W, corners, [[0, 0], [1, 0], [1, 1], [0, 1]]), W(x, y, h - 1));
+  const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map, color: new THREE.Color().setScalar(0.78), roughness: 0.91 }));
+  mesh.name = 'painted laundry ceiling'; mesh.receiveShadow = true;
+  add(ctx, mesh, W(x, y, h - 1));
+}
+
 // ---- the wallpaper --------------------------------------------------------------------------------------------------
 // rects: [[a0, a1, h0, h1]] along a wall that runs along X at plan Y = y (its face toward -Y, the room); the tile is
 // tw by th feet. Hung as paper is: the pattern runs on unbroken across every piece.

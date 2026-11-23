@@ -88,20 +88,21 @@ export function leaves(K) {
   return { leaf, flush };
 }
 // A fern: a fountain of arching fronds with leaflets down both sides
-export function fern(L, f, x, y, z, s = 1, seed = 2) {
+export function fern(K, L, f, x, y, z, s = 1, seed = 2) {
   let k = seed * 7919 + 13; const rnd = () => ((k = (k * 16807) % 2147483647) / 2147483647);
   for (let i = 0; i < 18; i++) {
     const az = i * 2.4 + rnd() * 0.4, ll = (1.2 + rnd() * 0.8) * s, up = 0.7 + rnd() * 0.9, c = Math.cos(az), sn = Math.sin(az), col = LEAF[i % 3];
     const pt = t => [x + c * ll * t * 0.95, y + sn * ll * t * 0.95, z + ll * (up * t - (up + 0.55) * t * t)];
+    K.put(f, col, K.geom.sweep([0,0.16,0.3,0.44,0.58,0.72,0.86,1].map(pt), 0.014*s, {seg: 4}));
     for (let j = 1; j <= 7; j++) { const t = 0.08 + 0.9 * j / 7, p = pt(t), q = 0.26 * s * Math.sin(Math.PI * Math.min(1, 0.15 + t)); for (const sd of [-1, 1]) L.leaf(f, col, p, az + sd * 1.25, -0.2, q, 0.045 * s); }
   }
 }
 // A big clay jar at (x, y) of a floor frame; returns the height of its soil
 export function jar(K, f, x, y, r, h, mat = MAT.CLAY) {
-  K.put(f, mat, lathe([[0, 0], [r * 0.55, 0], [r * 0.6, h * 0.06], [r * 0.82, h * 0.35], [r, h * 0.7], [r * 0.95, h * 0.88], [r * 1.06, h * 0.92], [r * 1.06, h], [r * 0.96, h], [r * 0.94, h * 0.93], [0, h * 0.93]], { seg: 20 }), { at: [x, y, 0] });
-  K.put(f, MAT.SOIL, lathe([[0, h * 0.9], [r * 0.9, h * 0.9], [0, h * 0.905]], { seg: 12 }), { at: [x, y, 0] });
+  K.put(f, mat, lathe([[0, 0], [r * 0.55, 0], [r * 0.6, h * 0.06], [r * 0.82, h * 0.35], [r, h * 0.7], [r * 0.95, h * 0.88], [r * 1.06, h * 0.92], [r * 1.06, h], [r * 0.96, h], [r * 0.94, h * 0.93], [0, h * 0.88]], { seg: 20 }), { at: [x, y, 0] });
+  K.put(f, MAT.SOIL, lathe([[r * 0.945, h * 0.927], [r * 0.63, h * 0.926], [0, h * 0.936]], { seg: 20 }), { at: [x, y, 0] });
   f.block(x - r, x + r, y - r, y + r, 0, Math.max(h, 1.5));
-  return h * 0.9;
+  return h * 0.931;
 }
 
 // ---- seats -----------------------------------------------------------------------------------------------------
@@ -113,6 +114,9 @@ export function easyChair(K, fr, o = {}) {
   for (const sx of [-1, 1]) frame.push(bev(sx * (a - 0.12) - 0.07, sx * (a - 0.12) + 0.07, -b + 0.05, b - 0.05, 1.95, 2.08, 0.02, { grain: 'y' }));      // the arms
   for (const sy of [-1, 1]) frame.push(bev(-a + 0.12, a - 0.12, sy * (b - 0.12) - 0.05, sy * (b - 0.12) + 0.05, 0.95, 1.07, 0.02, { grain: 'x' }));
   for (const sx of [-1, 1]) frame.push(bev(sx * (a - 0.12) - 0.05, sx * (a - 0.12) + 0.05, -b + 0.12, b - 0.12, 0.95, 1.07, 0.02, { grain: 'y' }));
+  for (const y of [-0.86, -0.43, 0, 0.43, 0.86]) {
+    frame.push(bev(-a + 0.12, a - 0.12, y - 0.12, y + 0.12, 1.035, 1.085, 0.012, { grain: 'x' }));
+  }
   frame.push(bev(-a + 0.12, a - 0.12, -b + 0.07, -b + 0.17, 2.45, 2.62, 0.02, { grain: 'x' }));
   K.put(fr, wood, merge(frame));
   let k = 4271; const rr = () => ((k = (k * 16807) % 2147483647) / 2147483647);

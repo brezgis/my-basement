@@ -99,6 +99,9 @@ export function makeLeaf(spec) {
     // three ledges and two braces on the back, the braces rising from the hinge side; strap hinges and a thumb latch.
     const n = Math.max(3, Math.round(w / 0.46)), bw = w / n, back = -sw;
     for (let i = 0; i < n; i++) { const e = i % 2 ? 0.014 : 0; P.box(i * bw, (i + 1) * bw, h0, h1, -z + e, z - e, 1, (i ? 'x' : '') + (i < n - 1 ? 'X' : '')); if (i) for (const s of [-1, 1]) P.quad([i * bw, h0, s * (z - 0.014)], [i * bw, h1, s * (z - 0.014)], [i * bw, h1, s * z], [i * bw, h0, s * z], [i % 2 ? 1 : -1, 0, 0], 1); }
+    // The tongues behind the board joints close the leaf to grazing light.
+    P.rect(0, w, h0, h1, 0, 1);
+    P.rect(0, w, h0, h1, 0, -1);
     const lt = 0.07, zb0 = back > 0 ? z : -z - lt, zb1 = back > 0 ? z + lt : -z, ly = [h0 + 0.5, (h0 + h1) / 2 - 0.1, h1 - 0.95], lh = 0.45;
     for (const y of ly) P.box(0.12, w - 0.12, y, y + lh, zb0, zb1, 0, back > 0 ? 'z' : 'Z');
     for (let k = 0; k < 2; k++) {                                    // a brace: a parallelogram with plumb ends, from over one ledge at the hinge side up to under the next at the latch side
@@ -160,14 +163,14 @@ export function makeLeaf(spec) {
     if (spec.pair === undefined) fittings.push({ kind: 'box', m: M(0.015, 0.55, Math.min(0.08, th - 0.05), w + 0.0075, lockY - 0.08, 0), color });
     if (spec.kick) for (const s of [-1, 1]) plate(st * 0.45, w - st * 0.45, h0 + 0.07, h0 + br - 0.08, s);
     if (spec.push) for (const s of [-1, 1]) plate(w - st / 2 - 0.085, w - st / 2 + 0.085, lockY + 0.42, lockY + 1.3, s);
-    // The astragal, on one leaf of a pair: a beaded strip along its free edge, on the side the leaves open toward,
-    // lapping over the other leaf's edge. It is what shuts out the light where the two meet (and it opens away from
-    // the other leaf, so the two never foul).
-    if (spec.pair === 1) { const a = [[w - 0.075, 0], [w - 0.05, 0.034], [w + 0.03, 0.034], [w + 0.05, 0.008], [w + 0.05, 0]];
-      for (let j = 0; j < a.length - 1; j++) P.quad([a[j][0], h0, sw * (z + a[j][1])], [a[j][0], h1, sw * (z + a[j][1])], [a[j + 1][0], h1, sw * (z + a[j + 1][1])], [a[j + 1][0], h0, sw * (z + a[j + 1][1])], j === 3 ? [1, 0, 0] : [0, 0, sw], 1);
-      P.quad([w - 0.05, h1, sw * z], [w + 0.03, h1, sw * z], [w + 0.03, h1, sw * (z + 0.034)], [w - 0.05, h1, sw * (z + 0.034)], [0, 1, 0], 1);
-      P.quad([w, h0, sw * z], [w + 0.05, h0, sw * z], [w + 0.05, h1, sw * z], [w, h1, sw * z], [0, 0, -sw], 1); }      // (its back, which is what is seen in the joint from the other side)
   }
+  // The astragal, on one leaf of a pair: a beaded strip along its free edge, on the side the leaves open toward,
+  // lapping over the other leaf's edge. It is what shuts out the light where the two meet (and it opens away from
+  // the other leaf, so the two never foul).
+  if (spec.pair === 1) { const a = [[w - 0.075, 0], [w - 0.05, 0.034], [w + 0.03, 0.034], [w + 0.05, 0.008], [w + 0.05, 0]];
+    for (let j = 0; j < a.length - 1; j++) P.quad([a[j][0], h0, sw * (z + a[j][1])], [a[j][0], h1, sw * (z + a[j][1])], [a[j + 1][0], h1, sw * (z + a[j + 1][1])], [a[j + 1][0], h0, sw * (z + a[j + 1][1])], j === 3 ? [1, 0, 0] : [0, 0, sw], 1);
+    P.quad([w - 0.05, h1, sw * z], [w + 0.03, h1, sw * z], [w + 0.03, h1, sw * (z + 0.034)], [w - 0.05, h1, sw * (z + 0.034)], [0, 1, 0], 1);
+    P.quad([w, h0, sw * z], [w + 0.05, h0, sw * z], [w + 0.05, h1, sw * z], [w, h1, sw * z], [0, 0, -sw], 1); }      // (its back, which is what is seen in the joint from the other side)
   // hinges: the knuckles of three butts (four on a tall or heavy leaf) on the pin's line
   const nh = h1 - h0 > 7.6 || th > 0.17 ? 4 : 3, pins = [];
   for (let i = 0; i < nh; i++) pins.push(h0 + 0.62 + (h1 - h0 - 1.24) * i / (nh - 1));

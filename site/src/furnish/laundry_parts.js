@@ -229,13 +229,34 @@ export function windowFrame(K, fr, x, z0, ow, oh, blindAt) {
 
 // ---- a laylight: an oak coffer hung under the boards, glazing bars across it (the glass is laundry_fx.js's) ------------
 // in a plan frame (q 0) at its middle: w by d, the ceiling at ceil; returns the panes [[x0, x1, y0, y1]] and the glass's height
-export function laylightFrame(fr, w, d, ceil, nx = 3, ny = 2) {
-  const dep = 0.42, b = 0.3, bar = 0.07, hw = w / 2, hd = d / 2, zg = ceil - 0.16;
-  for (const [x0, x1, y0, y1] of [[-hw, hw, -hd, -hd + b], [-hw, hw, hd - b, hd], [-hw, -hw + b, -hd + b, hd - b], [hw - b, hw, -hd + b, hd - b]]) fr.bev(M.OAK, x0, x1, y0, y1, ceil - dep, ceil - 0.01, 0.015);
-  for (const [x0, x1, y0, y1] of [[-hw - 0.06, hw + 0.06, -hd - 0.06, -hd + 0.02], [-hw - 0.06, hw + 0.06, hd - 0.02, hd + 0.06], [-hw - 0.06, -hw + 0.02, -hd, hd], [hw - 0.02, hw + 0.06, -hd, hd]]) fr.bev(M.OAK, x0, x1, y0, y1, ceil - dep - 0.06, ceil - dep + 0.04, 0.012);
+// Sweep an inset-and-height profile around a rectangular opening with shared mitre coordinates.
+export function miteredTrim(K, fr, mat, x0, x1, y0, y1, profile) {
+  const ring = d => [[x0 + d, y0 + d], [x1 - d, y0 + d], [x1 - d, y1 - d], [x0 + d, y1 - d]];
+  const rings = profile.map(([d, z]) => ring(d).map(([x, y]) => [x, y, z]));
+  const sides = Array.from({ length: 4 }, (_, i) => K.geom.grid(rings.map(r => [r[i], r[(i + 1) % 4]]), { flip: true }));
+  K.put(fr, mat, K.geom.merge(sides));
+}
+
+export function laylightFrame(K, fr, w, d, ceil, nx = 3, ny = 2) {
+  const dep = 0.42, b = 0.3, bar = 0.065, hw = w / 2, hd = d / 2, zg = ceil - 0.16;
+  miteredTrim(K, fr, M.OAK, -hw - 0.06, hw + 0.06, -hd - 0.06, hd + 0.06, [
+    [0.06, ceil - 0.016], [0.06, ceil - dep + 0.065],
+    [0.027, ceil - dep + 0.042], [0.006, ceil - dep + 0.015],
+    [0.006, ceil - dep - 0.039], [0.025, ceil - dep - 0.061],
+    [0.263, ceil - dep - 0.061], [0.32, ceil - dep - 0.028],
+    [0.36, ceil - dep + 0.035], [0.36, ceil - 0.02],
+  ]);
   const iw = w - 2 * b, id = d - 2 * b, panes = [];
-  for (let i = 1; i < nx; i++) { const x = -hw + b + iw * i / nx; fr.box(M.OAK, x - bar / 2, x + bar / 2, -hd + b, hd - b, zg - 0.1, zg - 0.005); }
-  for (let j = 1; j < ny; j++) { const y = -hd + b + id * j / ny; fr.box(M.OAK, -hw + b, hw - b, y - bar / 2, y + bar / 2, zg - 0.1, zg - 0.005); }
+  const xBars = Array.from({ length: nx - 1 }, (_, i) => -hw + b + iw * (i + 1) / nx);
+  for (const x of xBars) fr.bev(M.OAK, x - bar / 2, x + bar / 2, -hd + b - 0.008, hd - b + 0.008, zg - 0.102, zg + 0.005, 0.008, { grain: 'y' });
+  const columns = [-hw + b - 0.008, ...xBars, hw - b + 0.008];
+  for (let j = 1; j < ny; j++) {
+    const y = -hd + b + id * j / ny;
+    for (let i = 0; i < nx; i++) {
+      const x0 = columns[i] + (i > 0 ? bar / 2 - 0.004 : 0), x1 = columns[i + 1] - (i < nx - 1 ? bar / 2 - 0.004 : 0);
+      fr.bev(M.OAK, x0, x1, y - bar / 2, y + bar / 2, zg - 0.092, zg + 0.004, 0.008, { grain: 'x' });
+    }
+  }
   for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) panes.push([-hw + b + iw * i / nx, -hw + b + iw * (i + 1) / nx, -hd + b + id * j / ny, -hd + b + id * (j + 1) / ny]);
   return { panes, zg, inner: [-hw + b, hw - b, -hd + b, hd - b] };
 }

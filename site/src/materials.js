@@ -1,6 +1,7 @@
 // Photographic materials. Textures are CC0, from Poly Haven and ambientCG
 // (see assets/CREDITS.md). `size` is how many feet one texture tile covers.
 
+import { woodTexture } from './kit/firewood.js';
 import * as THREE from 'three';
 import { decodedImage } from './engine/load.js';
 import { indoorLit } from './lighting.js';
@@ -24,8 +25,16 @@ export function sharedTexture(file) {
   if (!e) {
     e = { clones: [], loaded: false, full: wantFull ? `assets/tex/${file}.jpg` : null };
     e.base = new THREE.Texture();
-    decodedImage(url, img => { e.base.image = img; e.base.needsUpdate = true; e.loaded = true; for (const c of e.clones) c.needsUpdate = true; },
-      () => { if (e.full) { const f = e.full; e.full = null; decodedImage(f, img => { e.base.image = img; e.loaded = true; e.base.needsUpdate = true; for (const c of e.clones) c.needsUpdate = true; }); } });      // (no half-size copy of this one: take the full one)
+    const applyImage = img => {
+      e.base.image = img;
+      e.loaded = true;
+      e.base.needsUpdate = true;
+      for (const clone of e.clones) clone.needsUpdate = true;
+    };
+    decodedImage(url, applyImage, () => {
+      e.full = null;
+      decodedImage(`assets/tex/${file}.jpg`, applyImage);
+    });
     shared.set(url, e);
   }
   // (a clone is born "needing an update"; until the photo has arrived that only made the renderer
@@ -38,14 +47,17 @@ export { dressed, markDressed } from './engine/load.js';
 // Fetch the full-size photos, one after another, and swap each in. (The textures are let go of first: a texture's
 // size cannot change once it is on the GPU.)
 export function sharpenTextures(gap = 220) {
-  const todo = [...shared.values()].filter(e => e.full);
+  // These are replacements for already loaded maps. Keep them out of the
+  // startup loading manager, whose completion also rebuilds the sun shadow.
+  const upgrades = new THREE.LoadingManager();
+  const todo = [...shared.values()].filter(e => e.full && e.loaded);
   const next = () => {
     const e = todo.shift(); if (!e) return;
     const url = e.full; e.full = null;
     decodedImage(url, img => {
       if (e.loaded) { for (const t of [e.base, ...e.clones]) t.dispose(); e.base.image = img; e.base.needsUpdate = true; for (const c of e.clones) c.needsUpdate = true; }
       setTimeout(next, gap);
-    }, () => setTimeout(next, gap));
+    }, () => setTimeout(next, gap), upgrades);
   };
   next();
 }
@@ -133,6 +145,7 @@ export function makeMaterials(renderer, quality = {}) {
   // and up after dark by lighting.js: e0 is the full strength, day the fraction left by day. The
   // fridge's light and the garden's own bulbs (which garden.js dims itself) are left alone.
   const glows = [];
+  const courtLampLevel = { value: 0.5 };
   const DAY_GLOW = { ffd9a0: 0.25, ffcf8a: 0.1, fff4e0: 0.12, ffe2b4: 0.06 };
   function glowing(mat, hex) {
     if (['fff1d0', 'ffd49a', 'ffb866'].includes(hex)) return;
@@ -223,11 +236,36 @@ export function makeMaterials(renderer, quality = {}) {
     timber: () => pbr('fir', 2.2, { color: new THREE.Color().setRGB(2.9, 5.2, 9.2, THREE.LinearSRGBColorSpace), roughness: 0.88, flat: true, env: 2.6 }),      // the fir photo is near black-red: lifted to a dark weathered brown // dark-stained outside
     grass: () => pbr('grass', 9, { color: 0xd9dc9c, flat: true, roughness: 1, bump: 0.6 }),
     sash: () => pbr('fir', 2.2, { color: 0xa48a70, roughness: 0.8, flat: true, env: 0.6 }),
+    split_grain: () => new THREE.MeshStandardMaterial({ map: woodTexture(), roughness: .93 }),
     bark: () => pbr('bark', 1, { color: 0x9a8f84, bump: 1.5 }),
     hedge: () => pbr('grass', 3, { color: 0x5d7a4a, bump: 2.5, flat: true, roughness: 1 }),
+    melon_flesh: () => {
+      const size=192, canvas=document.createElement('canvas'); canvas.width=canvas.height=size;
+      const ctx=canvas.getContext('2d'), image=ctx.createImageData(size,size);
+      let seed=53;
+      for (let y=0;y<size;y++) for (let x=0;x<size;x++) {
+        const u=2*(x+0.5)/size-1, v=2*(y+0.5)/size-1, r=Math.hypot(u,v);
+        const fade=THREE.MathUtils.smoothstep(r,0.76,1);
+        const vein=Math.sin(3*Math.atan2(v,u)+r*12+0.6*Math.sin(v*13));
+        seed=(seed*16807)%2147483647;
+        const grain=14*(seed/2147483647-0.5)+4*vein+2*Math.sin(u*29+v*20), i=(y*size+x)*4;
+        image.data.set([209+grain+22*fade,71+grain+57*fade,82+grain+41*fade,255],i);
+      }
+      ctx.putImageData(image,0,0);
+      const map=new THREE.CanvasTexture(canvas); map.colorSpace=THREE.SRGBColorSpace;
+      return new THREE.MeshStandardMaterial({map,roughness:0.58});
+    },
+    cheese_rind: () => speckle('#c3ad8e', 95, 0.92, {seed:37,patches:42}),
+    salami: () => speckle('#ba9a8f', 110, 0.44, {seed:81,patches:24}),
     soil: () => new THREE.MeshStandardMaterial({ color: 0x3b2a1f, roughness: 1 }),
     water: () => new THREE.MeshStandardMaterial({ color: 0x1f3b3a, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.82, envMapIntensity: 1.6 }),
-    shade: () => new THREE.MeshStandardMaterial({ color: 0xf6e3bd, emissive: 0xffc070, emissiveIntensity: 1.25, roughness: 0.9, side: THREE.DoubleSide }),
+    pool_surface: () => new THREE.MeshStandardMaterial({ color: 0x488780, roughness: 0.13, transparent: true, opacity: 0.36, depthWrite: false, side: THREE.DoubleSide }),
+    pool_glass: () => new THREE.MeshStandardMaterial({ color: 0x8cbfb7, roughness: 0.08, transparent: true, opacity: 0.34, depthWrite: false, side: THREE.DoubleSide }),
+    shade: () => {
+      const m = pbr('linen', 0.9, { color: 0xc5ae87, bump: 0.35, flat: true });
+      m.emissive.setHex(0xffb46a); m.emissiveMap = m.map; m.side = THREE.DoubleSide;
+      return m;
+    },
     stone: () => new THREE.MeshStandardMaterial({ color: 0x8f8a80, roughness: 0.95 }),
 
     // Inside
@@ -269,6 +307,38 @@ export function makeMaterials(renderer, quality = {}) {
     // flat into courses, warm; and over it, from where a point is in the world: wandering strata of paler and darker
     // stone, bands of brown earth between the beds, greyer weathered patches, and the same photograph again much larger
     // to break the repeat (it showed as a grid of identical tiles from the first view).
+    // Continuous rock across overhangs, the crown and the underside. Projection in
+    // world feet avoids a stretched strip at the wrap seam or a change of UV chart.
+    bedrock: () => {
+      const m = new THREE.MeshStandardMaterial({ map: tex('cliffrock_color', 1, true), color: 0xe5d5c1, roughness: 0.96, envMapIntensity: 0.3 });
+      m.onBeforeCompile = shader => {
+        shader.uniforms.courtLampLevel = courtLampLevel;
+        shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRockP, vRockN;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockP = position; vRockN = normal;');
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRockP, vRockN;\nuniform float courtLampLevel;\nfloat courtSpill(vec3 delta, vec3 n) { return max(0., dot(n, normalize(delta))) / (1. + dot(delta,delta)/540.); }')
+          .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+            vec3 rockNormal = normalize(vRockN);
+            float spill = .44 * courtSpill(vec3(28.,10.,60.) - vRockP, rockNormal)
+                        + .28 * courtSpill(vec3(27.,13.,40.) - vRockP, rockNormal)
+                        + .28 * courtSpill(vec3(27.,13.,80.) - vRockP, rockNormal);
+            float vault = smoothstep(18., 28., vRockP.y) * (1. - smoothstep(58., 76., vRockP.y));
+            reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(.75,.48,.29) * spill * vault * courtLampLevel;
+          `)
+          .replace('#include <map_fragment>', `
+            vec3 p = vRockP;
+            p.y += 1.4 * sin(p.x * 0.072 + p.z * 0.046) + 0.14 * p.z;
+            vec3 w = pow(abs(normalize(vRockN)), vec3(4.0));
+            w /= max(w.x + w.y + w.z, 0.0001);
+            vec3 stone = w.x * texture2D(map, p.zy / vec2(19., 14.)).rgb
+                       + w.y * texture2D(map, p.xz / 21.).rgb
+                       + w.z * texture2D(map, p.xy / vec2(19., 14.)).rgb;
+            float bed = smoothstep(-0.7, 0.7, sin(p.y * 0.22 + sin(p.z * 0.04)));
+            float weather = sin(dot(p, vec3(.069, .043, .051)) + sin(p.x * .09));
+            diffuseColor.rgb *= stone * mix(vec3(0.84, 0.77, 0.70), vec3(1.13, 1.09, 1.03), bed) * (1.0 + .12 * weather);
+          `);
+      };
+      return m;
+    },
     cliffrock: () => { const m = pbr('flagstone', [25, 8.3], { color: new THREE.Color().setRGB(1.05, 0.9, 0.72, THREE.LinearSRGBColorSpace), bump: 1.6, flat: true, roughness: 1, env: 0.4 });
       m.onBeforeCompile = sh => {
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vCliffP;').replace('#include <begin_vertex>', '#include <begin_vertex>\n  vCliffP = (modelMatrix * vec4(position, 1.0)).xyz;');
@@ -309,9 +379,10 @@ export function makeMaterials(renderer, quality = {}) {
   const all = { make }, ready = {};
   for (const name of Object.keys(defs)) Object.defineProperty(all, name, { enumerable: true, configurable: true, get() { return (ready[name] ??= defs[name]()); }, set(v) { ready[name] = v; } });
   // The lampshade fabric glows from the bulb after dark and is plain cream linen by day
-  all.shade.userData.e0 = 0.95; all.shade.userData.day = 0.03; glows.push(all.shade);          // full strength after dark (was 1.25 always: chalk white at night)
+  all.shade.userData.e0 = 0.42; all.shade.userData.day = 0.03; glows.push(all.shade);          // full strength after dark (was 1.25 always: chalk white at night)
   all.glow.userData.e0 = 0.45; all.glow.userData.day = 0.08; glows.push(all.glow);                // the porch lantern's amber glass (was 2.2: blown white)
   all.glows = glows;
+  all.courtLampLevel = courtLampLevel;
   // The Builder paints tints onto vertices: tint(name, hex) is the colour make('name#hex') would
   // have given the material (or the plain material's own colour), and vc(name) the one shared
   // vertex-coloured copy of the material that all of them are drawn with (vcOf; not 'vc',

@@ -26,12 +26,13 @@
 //              Serves from: the desk top (pickup X 20.7, Y 34.8, h 3.95), the robes.
 //   The Stair  none: nothing may stand in it.
 
+import { burningLogs, storedLogs } from '../kit/firewood.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeFlames, NOISE } from '../flame.js';
 import { bev, lathe, sweep, softBox, merge, pillow } from '../kit/geom.js';
 import { drawPlan, drawSection } from './stair_hall_drawings.js';
-import { MAT, pillar, handLantern, floorLantern, archNiche, leaves, fern, easyChair, jar, fiddleFig, bouquet } from './stair_hall_parts.js';
+import { MAT, pillar, handLantern, floorLantern, archNiche, leaves, fern, easyChair, jar, fiddleFig } from './stair_hall_parts.js';
 import { flames, wash } from './stair_hall_fx.js';
 
 const FRAMEWOOD = MAT.OAKD, SLATE = 'slate_floor', SOOT = 'c#1e1813/0.95', IRON = MAT.IRON;
@@ -101,8 +102,8 @@ export default function (f) {
       for (let i = q.N - 1; i >= 0; i--) {
         const u = q.foot - i * q.run, top = q.lo + (i + 1) * q.rise, lower = top - q.rise, T0 = top + 0.035;
         P(u - 0.02, T0);
-        arc(u + 0.04, T0 - 0.07, 0.07, Math.PI / 2, -Math.PI / 2, 5);                               // round the nosing
-        P(u + 0.03, top - 0.17); P(u + 0.035, lower + 0.08);
+        arc(u + 0.085, T0 - 0.075, 0.075, Math.PI / 2, -Math.PI / 2, 8);                               // round the nosing
+        P(u + 0.03, top - 0.18); P(u + 0.035, lower + 0.08);
         arc(u + 0.035 + 0.045, lower + 0.08, 0.045, Math.PI, 1.5 * Math.PI, 3);                     // into the tread below
         const rx = u - q.run + 0.07; rods.push(sweep([[rx, RW0 - 0.12, top + 0.065], [rx, RW1 + 0.12, top + 0.065]], 0.018, { seg: 6 }));
       }
@@ -133,7 +134,8 @@ export default function (f) {
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.computeVertexNormals();
       geo.b.push(g);
     }
-    put('wool#3e5232', merge(geo.m)); put('wool#e6dcc4', merge(geo.b)); put('wool#c4902e', merge(geo.o));      // moss green, a cream edge, a line of ochre put(MAT.BRONZE, merge(rods));
+    put('wool#3e5232', merge(geo.m)); put('wool#e6dcc4', merge(geo.b)); put('wool#c4902e', merge(geo.o));      // moss green, a cream edge, a line of ochre
+    put(MAT.BRONZE, merge(rods));
 
     // ---- the handrail: round oak on iron brackets, down each flight, its ends returned to the wall -------------------
     const YR = YS + 0.3, rail = [], brk = [];
@@ -199,7 +201,7 @@ export default function (f) {
       for (let i = 0; i < 5; i++) { const y = -0.32 + i * 0.16; g.box(IRON, -0.7, 0.7, y - 0.025, y + 0.025, GZ - F - 0.06, GZ - F - 0.02); }
       g.box(IRON, -0.7, 0.7, 0.33, 0.38, GZ - F - 0.06, GZ - F + 0.3);
       const lb = f.fr(32.95, 19.35, F + 0.45, 0);      // split birch stacked on the hearth's end
-      for (let i = 0; i < 6; i++) K.put(lb, 'bark', lathe([[0.09, -0.45], [0.09, 0.45]], { seg: 7 }).rotateX(Math.PI / 2).translate(((i % 3) - 1) * 0.18, 0, 0.09 + Math.floor(i / 3) * 0.16));
+      storedLogs(K, lb, 0, 0, 0, .88, .11, 3, 2);
       const h = f.fr(29.75, 19.75, F + 0.45, 0); pillar(K, h, 0, 0, 0, 0.6, 0.17, fl.hall); pillar(K, h, 0.35, -0.2, 0, 0.38, 0.13, fl.hall);      // candles on the hearth's other end
     }
     const fireLamp = f.lamp(FX, FY + 1.6, F + 1.7, { power: 0.9, kind: 'candle' });
@@ -209,11 +211,8 @@ export default function (f) {
       const hearth = new THREE.Group(); hearth.position.set(o.x, o.y, o.z); hearth.rotation.y = Math.atan2(-dx[1], dx[0]);      // local x along the opening, local z through it
       const uT = { value: 0 };
       hearth.add(makeFlames(THREE, mergeGeometries, uT, [[0, 0, 0, 1.5, 1.5, 0], [0, 0.18, 0.16, 1.3, 1.3, 3.7], [0, -0.16, -0.14, 1.15, 1.15, 8.1]], 0.1));
-      const logMat = new THREE.MeshStandardMaterial({ color: 0x241710, roughness: 1, emissive: 0x9a2c08, emissiveIntensity: 0.1 });
-      for (const [ddx, dz, up, len, rot, rad] of [[0.05, 0.16, 0.13, 1.4, 0.08, 0.15], [-0.08, -0.16, 0.12, 1.3, -0.1, 0.14], [0.02, 0.0, 0.36, 1.2, 0.05, 0.12]]) {
-        const l = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad * 0.9, len, 9).rotateZ(Math.PI / 2), logMat); l.rotation.y = rot; l.position.set(ddx, up, dz); hearth.add(l);
-      }
-      const embers = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.8).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
+      hearth.add(burningLogs(ctx.materials.bark, 1.58, .77));
+    const embers = new THREE.Mesh(new THREE.PlaneGeometry(1.45, 0.8).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
         uniforms: { uT }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false,
         vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader: `uniform float uT; varying vec2 vUv;
@@ -227,14 +226,11 @@ void main() {
       embers.position.set(0, 0.03, 0); hearth.add(embers);
       hearth.traverse(n => { n.userData.cat = 'fire'; });
       ctx.scene.add(hearth); ctx.track(hearth, ctx.zoneAt(o.x, o.y + 0.5, o.z, 0.4));
-      ctx.animated.push(t => { uT.value = t; logMat.emissiveIntensity = 0.1 + 0.04 * Math.sin(t * 6.3) + 0.025 * Math.sin(t * 14.1); });
+      ctx.animated.push(t => { uT.value = t; });
     });
     print(f.fr(FX, BY + 0.05, 0, 0), 0, F + 6.6, 1.8, 1.82, 'klimt_farm_garden_sunflowers', { mat: 0.2,      // (2.4 ft overall on a breast 3.9 wide: 9 in. of stone each side)
       title: 'Farm Garden with Sunflowers', kicker: 'Gustav Klimt, about 1906',
       text: 'Oil on canvas: a cottage garden packed to its edges, sunflowers standing up out of it.', foot: 'Via Wikimedia Commons. Public domain.' });
-    print(f.fr(13.5, 35.0, 0, 3), 0, F + 5.5, 3.9, 2.51, 'golden_autumn', { title: 'Golden Autumn', kicker: 'Isaac Levitan, 1895',
-      text: 'Oil on canvas: birches turned gold along a river, a blue autumn sky.', foot: 'State Tretyakov Gallery; via Wikimedia Commons. Public domain.' });      // the west wall north of the stair's doorway
-
     // ---- facing the fire: a thick oak bench with sheepskins, and one quiet chair of oak and linen to the west -----------
     put('wool#d8ccb4', box5(23.2, 35.2, 20.3, 24.9, F - 0.01, F + 0.03));                         // a plain undyed rug, under all of it
     {
@@ -278,7 +274,7 @@ void main() {
       // the peg rail and the robes
       r.bev(MAT.OAK, -hw + 0.45, hw - 0.45, 0.05, 0.15, 5.65, 6.1, 0.015, { grain: 'x' });
       const cols = [MAT.WOOL, 'wool#e2d8c6', MAT.WOOL, 'wool#c9bca2'];
-      for (let i = 0; i < 4; i++) { const x = -hw + 0.9 + i * (2 * hw - 1.8) / 3; K.put(r, MAT.OAK, lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0.055, 0.36], [0, 0.37]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.15, 5.88] }); K.coatOnPeg(r, x, 0.25, 5.83, cols[i], 'coat', { squash: 1.3 }); }
+      for (let i = 0; i < 4; i++) { const x = -hw + 0.9 + i * (2 * hw - 1.8) / 3; K.put(r, MAT.OAK, lathe([[0.05, 0], [0.04, 0.3], [0.06, 0.32], [0.055, 0.36], [0, 0.37]], { seg: 8 }), { rx: -Math.PI / 2 - 0.25, at: [x, 0.15, 5.88] }); K.coatOnPeg(r, x, 0.25, 5.83, cols[i], 'robe'); }
       // the bench under them, slippers below
       for (const x of [-hw + 0.75, hw - 0.75]) r.bev(MAT.OAK, x - 0.08, x + 0.08, 0.2, d - 0.05, 0, 1.4, 0.012, { grain: 'z' });
       r.bev(MAT.OAK, -hw + 0.45, hw - 0.45, 0.15, d, 1.4, 1.55, 0.015, { grain: 'x' });
@@ -306,29 +302,35 @@ void main() {
       K.put(c, MAT.BRONZE, lathe([[0, 0], [0.2, 0], [0.21, 0.02], [0.19, 0.05], [0.16, 0.08], [0.17, 0.1], [0.15, 0.13], [0.1, 0.2], [0.04, 0.23], [0.02, 0.24], [0.02, 0.3], [0.04, 0.31], [0.04, 0.33], [0, 0.34]], { seg: 18 }).translate(-0.85, 2.05, 0.0));
       K.put(c, MAT.OAKD, lathe([[0, 0], [0.25, 0], [0.25, 0.03], [0, 0.03]], { seg: 18 }).translate(-0.85, 2.05, -0.012));
       f.label(c, -0.85, 2.05, 0.3, { label: 'ring the bell', reach: 5, note: 'A clear note. Somebody is already on the way.' });
-      const cf = f.fr(19.6, 39.93, F + 4.76, 2);      // the card's own frame: standing on the pigeonholes in the key niche
-      f.sign(cf, 0, 0.62, 0.85, 1.15, (g, W, H) => {
+      const cf = c.sub(-1.5, 0.9);      // the card stands on the counter, facing arriving guests
+      f.sign(cf, 0, 0.66, 0.95, 1.23, (g, W, H) => {
         D.paper(g, W, H, '#efe7d6', 8);
-        D.T(g, 'TREATMENTS', W / 2, H * 0.1, H * 0.045, '#2a2119', { f: D.F.goudy, ls: H * 0.012 });
+        D.T(g, 'TREATMENTS', W / 2, H * 0.11, H * 0.069, '#241508', { f: D.F.goudy, ls: H * 0.012 });
         g.fillStyle = '#2a2119'; g.fillRect(W * 0.38, H * 0.145, W * 0.24, Math.max(1, H * 0.003));
         const L = [['Parenie, birch veniks', '40 min'], ['The cold plunge, three rounds', '20 min'], ['Salt and honey scrub', '45 min'], ['Massage', '60 or 90 min'], ['Pedicure', '60 min'], ['Tea at the samovar', '—'], ['The Quiet Room', '1 hour']];
-        L.forEach(([a, b], i) => { const y = H * (0.24 + i * 0.09); D.T(g, a, W * 0.1, y, H * 0.033, '#2a2119', { f: D.F.goudy, a: 'left', max: W * 0.58 }); D.T(g, b, W * 0.9, y, H * 0.03, '#5a4a3a', { f: D.F.goudy, it: true, a: 'right' }); });
-        D.T(g, 'Coffee in seven minutes.', W / 2, H * 0.91, H * 0.03, '#5a4a3a', { f: D.F.goudy, it: true });
-      }, { y: 0.0, tilt: 0.08, res: 360 });
-      K.put(cf, MAT.OAK, bev(-0.4, 0.4, -0.08, 0.1, 0.0, 0.06, 0.01, { grain: 'x' }));
+        L.forEach(([a, b], i) => { const y = H * (0.24 + i * 0.09); D.T(g, a, W * 0.1, y, H * 0.042, '#241508', { f: D.F.goudy, a: 'left', max: W * 0.58 }); D.T(g, b, W * 0.9, y, H * 0.039, '#342516', { f: D.F.goudy, it: true, a: 'right' }); });
+        D.T(g, 'Coffee in seven minutes.', W / 2, H * 0.91, H * 0.039, '#342516', { f: D.F.goudy, it: true });
+      }, { y: 0.026, tilt: 0.1, res: 480 });
+      K.put(cf, MAT.OAKD, bev(-0.51, 0.51, -0.047, 0.01, -0.64, 0.64, 0.012, { grain: 'z' }), { rx: 0.1, at: [0, 0.012, 0.66] });
+      cf.bev(MAT.OAK, -0.54, 0.54, -0.23, 0.16, 0, 0.06, 0.012, { grain: 'x' });
       f.label(cf, 0, 0.1, 0.6, { label: 'read the treatments', reach: 6, title: 'Treatments', kicker: 'Ask at the desk',
         text: 'Parenie in the Parnaya: steam, and birch veniks soaked in hot water, laid on and swept. 40 minutes, with rests.\nThe cold plunge in the Banya: three rounds, a blanket between. 20 minutes.\nSalt and honey scrub, in the Treatment Room. 45 minutes.\nMassage. 60 or 90 minutes.\nPedicure in the Tea Room\'s corner, facing the clouds. 60 minutes.\nTea at the samovar in the Tea Room, for as long as you like.\nThe Quiet Room. One hour; nobody talks.\nCoffee in seven minutes.',
         foot: 'Anna’s Basement' });
-      // a banker's lamp with its green shade
-      f.model('st_bankers_lamp', c, -2.45, 0.55, 0.03, 2); K.lampAt(c, -2.45, 0.6, 1.1, 0.5); { const l = K.lamps[K.lamps.length - 1]; l.kind = 'glow'; l.halo = 0.7; }
+      // a hand lantern at the east end of the counter
+      handLantern(K, c, -2.46, 0.56, 0, fl.hall, 1.12); K.lampAt(c, -2.46, 0.56, 0.53, 0.5); { const l = K.lamps[K.lamps.length - 1]; l.kind = 'glow'; l.halo = 0.7; }
       {
-        const st = f.fr(23.0, 35.4, F, 2), top = K.sideTable(st, 0, 0, { kind: 'round', h: 2.4, r: 0.85 }) ?? 2.4, sc = f.fr(23.0, 35.4, F + top, 2), bx = 0.35, by = -0.2;      // a small round side table east of the desk: the oranges, and the robes ready to hand over
-        K.put(sc, 'c#e9e2d2/0.25', lathe([[0, 0], [0.18, 0], [0.33, 0.12], [0.38, 0.2], [0.36, 0.21], [0.3, 0.14], [0, 0.04]], { seg: 20 }).translate(bx, by, 0));
-        const fr = [];
-        for (const [dx, dy, dz] of [[-0.12, 0.05, 0.12], [0.12, -0.04, 0.12], [0.02, 0.14, 0.12], [-0.02, -0.12, 0.13], [0.0, 0.01, 0.27]]) fr.push(lathe([[0, -0.11], [0.07, -0.09], [0.11, 0], [0.07, 0.09], [0, 0.11]], { seg: 10 }).translate(bx + dx, by + dy, dz + 0.02));
-        K.put(sc, 'c#e07a22/0.55', merge(fr));
-        K.foldedStack(sc, -0.3, 0.15, 0.0, 3, [MAT.WOOL, 'wool#e2d8c6'], { w: 0.9, d: 0.65, t: 0.13 });
-        K.put(sc, 'velvet#7a2e24', merge([bev(-0.35, -0.25, -0.18, 0.48, 0.41, 0.44, 0.005), bev(-0.35, -0.25, -0.18, -0.15, 0.0, 0.42, 0.003), bev(-0.35, -0.25, 0.45, 0.48, 0.0, 0.42, 0.003)]));      // the ribbon
+        const st = f.fr(23.1, 35.4, F, 2);
+        const top = K.sideTable(st, 0, 0, { kind: 'round', wood: MAT.OAK, h: 2.4, r: 1.02 });
+        const sc = st.sub(0, 0, top), bx = 0.44, by = -0.14;
+        K.put(sc, 'c#e9e2d2/0.25', lathe([[0, 0], [0.19, 0], [0.39, 0.14], [0.42, 0.23], [0.39, 0.23], [0.32, 0.13], [0, 0.055]], { seg: 24 }), { at: [bx, by, 0] });
+        const oranges = [], stems = [];
+        for (const [dx, dy, dz, r] of [[-0.15, 0.06, 0.22, 0.15], [0.15, 0.05, 0.22, 0.16], [0.02, -0.15, 0.22, 0.15], [0.005, 0.01, 0.421, 0.15]]) {
+          oranges.push(lathe([[0, -r * 0.9], [r * 0.66, -r * 0.7], [r, 0], [r * 0.68, r * 0.73], [r * 0.2, r * 0.88], [0, r * 0.85]], { seg: 16 }).translate(bx + dx, by + dy, dz));
+          stems.push(sweep([[bx + dx, by + dy, dz + r * 0.85], [bx + dx + 0.018, by + dy, dz + r]], 0.014, { seg: 5, caps: true }));
+        }
+        K.put(sc, 'c#e68228/0.62', merge(oranges));
+        K.put(sc, 'c#5a6132/0.87', merge(stems));
+        K.foldedStack(sc, -0.43, 0.11, 0, 3, ['wool#e9e1d2', 'wool#cca982'], { w: 0.79, d: 0.62, t: 0.13 });
       }
       // a tray of room keys on tasselled fobs
       {
@@ -346,10 +348,10 @@ void main() {
       K.stool(f.fr(21.1, 37.9, F, 2), 0, 0, { h: 2.05, wood: MAT.OAK });
       f.rug(15.4, 21.8, 31.9, 33.8, F, 'kilim');
       // a generous vase of flowers at its west end (the lamp at the east); and beyond it a fiddle-leaf fig in a great clay jar
-      { const Lv = leaves(K); bouquet(K, Lv, c, 2.25, 0.6, 0, 1.0, 9); Lv.flush(); }
+      K.posy(c, 2.23, 0.65, 0, ['c#b84f53/0.55', 'c#e9ab9d/0.6', 'c#f4ddae/0.6'], { kinds: ['tulip'], jar: 'c#ded6c4/0.35', scale: 1.5 });
       { const jf = f.fr(14.6, 38.9, F, 0), top = jar(K, jf, 0, 0, 0.75, 2.3, 'plaster#b86f4e');
         const Lf = leaves(K); fiddleFig(K, Lf, jf, 0, 0, top, 1.0, 5); Lf.flush(); }
-      // the keys: an arched stone niche in the north wall behind the desk, oak pegs in two rows, a lantern on its sill
+      // the keys: an arched stone niche in the north wall behind the desk, oak pegs in two rows
       const n = f.fr(18.6, 40.25, F, 2), sill = archNiche(K, n, 0, 5.4, 3.6, 3.4, { face: 0.65, margin: 0.4, cap: 0.45 });
       const pegs = [], keys = [], tags = [], tags2 = [];
       for (let r = 0; r < 2; r++) for (let i = 0; i < 6; i++) {
@@ -373,7 +375,6 @@ void main() {
         }
         K.put(n, MAT.OAK, merge(parts)); K.put(n, 'c#efe6d2/0.9', merge(paper)); K.put(n, 'c#b08a5a/0.85', merge(parcel));
       }
-      handLantern(K, n, 1.5, 0.35, sill + 1.0, fl.hall, 0.9);
       washes.push({ a: [16.85, 40.2, sill + 0.05], b: [20.35, 40.2, sill + 0.05], n: [0, -1], d: [0, 0, 3.0], k: 0.9, at: 'hall' });
     }
 
@@ -383,7 +384,7 @@ void main() {
       K.put(bd, MAT.STONED, lathe([[0, 0], [1.6, 0], [1.62, 0.5], [1.5, 0.52], [1.48, 0.42], [0, 0.42]], { seg: 20, sx: 1.0, sy: 1.0 }));
       K.put(bd, 'plaster#3a2a1e', lathe([[0, 0.42], [1.48, 0.42], [0, 0.46]], { seg: 16 }));
       f.model('st_rock_4', bd, -0.5, 0.4, 0.38, 0, { turn: 0.6 }); f.model('moon_rock_02', bd, 0.7, -0.4, 0.38, 0, { turn: 1.4 });
-      const L = leaves(K); fern(L, bd, 0.2, 0.1, 0.45, 1.25, 3); fern(L, bd, -0.8, -0.6, 0.45, 0.9, 7); fern(L, bd, 0.9, 0.7, 0.45, 0.85, 11); L.flush();
+      const L = leaves(K); fern(K, L, bd, 0.2, 0.1, 0.45, 1.25, 3); fern(K, L, bd, -0.8, -0.6, 0.45, 0.9, 7); fern(K, L, bd, 0.9, 0.7, 0.45, 0.85, 11); L.flush();
       bd.block(-1.6, 1.6, -1.6, 1.6, 0, 1.5);
     }
   }

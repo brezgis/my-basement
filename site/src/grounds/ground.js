@@ -184,7 +184,18 @@ export class Ground {
   // Any non-indexed geometry (rocks): texture coordinates projected from the world
   mesh(kind, g) {
     const p = g.attributes.position, n = g.attributes.normal, uv = new Float32Array(p.count * 2);
-    for (let i = 0; i < p.count; i++) { const ny = Math.abs(n.getY(i)), nx = Math.abs(n.getX(i)); uv[i * 2] = ny > 0.7 ? p.getX(i) : nx > 0.7 ? p.getZ(i) : p.getX(i); uv[i * 2 + 1] = ny > 0.7 ? p.getZ(i) : p.getY(i); }
+    for (let i = 0; i < p.count; i += 3) {
+      // All three corners of a face use one projection. Changing axis halfway
+      // across a sloping rim stretched individual stone triangles into streaks.
+      const nx = Math.abs(n.getX(i) + n.getX(i + 1) + n.getX(i + 2));
+      const ny = Math.abs(n.getY(i) + n.getY(i + 1) + n.getY(i + 2));
+      const nz = Math.abs(n.getZ(i) + n.getZ(i + 1) + n.getZ(i + 2));
+      const top = ny >= nx && ny >= nz;
+      for (let j = i; j < i + 3; j++) {
+        uv[j * 2] = !top && nx > nz ? p.getZ(j) : p.getX(j);
+        uv[j * 2 + 1] = top ? p.getZ(j) : p.getY(j);
+      }
+    }
     for (const k of Object.keys(g.attributes)) if (!['position', 'normal'].includes(k)) g.deleteAttribute(k);
     g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     this.parts[kind].push(g);
