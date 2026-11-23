@@ -195,8 +195,9 @@ export default function (f) {
     // one picture, over the west lounger: morning mist
     f.framed(wW(56.7).sub(0, 0.0), 0, 5.6, 3.4, 2.18, 'hiroshige_mishima_mist', { frame: 'oak_light#5a4532', title: 'Mishima: Morning Mist', kicker: 'Utagawa Hiroshige, c. 1833/34',
       text: 'From the Fifty-three Stations of the Tokaido: travellers going out of Mishima into the mist, the shrine gate behind them. A woodblock print.', foot: 'Art Institute of Chicago (CC0).' });
-    // the one lamp the engine lights here: high in the tall part, as if from the cove
-    f.lamp(60, 82.6, 8.0, { power: 0.8, kind: 'lantern' });
+    // the chapel's doors are lit by what can be seen: a bronze lantern either side of them (there was one lamp here with
+    // no fitting, high in front of the doors: a bright patch on the oak from nowhere)
+    for (const X of [56.75, 63.25]) K.sconce(f.fr(X, YN - 0.03, F, 2), 0, 6.1, { kind: 'lantern', lit: true, size: 1.35, metal: MAT.BRONZE, power: 0.26 });
   }
 
   // =================================================================================================================
