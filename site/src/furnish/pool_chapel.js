@@ -293,7 +293,7 @@ export default function (f) {
 
     // the table under the shaft: a block of dark stone; a wide bronze bowl of water on it; candles, a singing bowl
     // on its ring cushion, incense; Piaget's sentence cut in its front, as in the garden's chapel
-    const T = cfr(75, 109, F, 0), TH2 = 2.1, half = 1.9;
+    const T = cfr(75, 109.5, F, 0), TH2 = 2.1, half = 1.9;
     T.bev('limestone_smooth#615a50', -half, half, -half, half, 0, TH2 - 0.25, 0.04);
     T.bev('limestone_smooth#615a50', -half - 0.12, half + 0.12, -half - 0.12, half + 0.12, TH2 - 0.25, TH2, 0.05);
     T.block(-half - 0.12, half + 0.12, -half - 0.12, half + 0.12, 0, TH2 + 0.5);
@@ -308,14 +308,14 @@ export default function (f) {
     K.put(T, 'plaster#3b3a36', K.geom.lathe([[0, 0], [0.2, 0], [0.24, 0.07], [0.21, 0.07], [0, 0.04]], { seg: 16 }), { at: [1.45, 1.4, TH2] });
     K.put(T, 'plaster#4a2a1e', K.geom.sweep([[1.45, 1.4, TH2 + 0.05], [1.5, 1.42, TH2 + 0.6]], 0.008, { seg: 3 }));
     { const [a, b] = K.world(T, 1.5, 1.42); K.steam.push({ x: a, y: T.h + TH2 + 0.6, z: b }); }
-    f.sign(cfr(75, 109 - half - 0.12, F, 2), 0, TH2 - 0.125, 3.9, 0.42, (g, w, h) => {
+    f.sign(cfr(75, 109.5 - half - 0.12, F, 2), 0, TH2 - 0.125, 3.9, 0.42, (g, w, h) => {
       g.fillStyle = '#6f675b'; g.fillRect(0, 0, w, h);
       for (let i = 0; i < 300; i++) { g.fillStyle = `rgba(${i % 2 ? '200,190,170' : '30,26,22'},${0.05 + (i % 5) * 0.015})`; g.fillRect((i * 131) % w, (i * 71) % h, 2 + (i % 4), 1 + (i % 2)); }
       g.font = `italic ${Math.round(h * 0.42)}px ${D.F.goudy}`; g.textAlign = 'center'; g.textBaseline = 'middle';
       const txt = 'Intelligence organises the world by organising itself.';
       g.fillStyle = 'rgba(20,16,12,.7)'; g.fillText(txt, w / 2 + 1.5, h * 0.5 + 1.5); g.fillStyle = '#d8cfbc'; g.fillText(txt, w / 2, h * 0.5);
     }, { rough: 0.9 });
-    f.label(cfr(75, 109 - half - 0.12, F, 2), 0, 0.1, TH2 - 0.125, { label: 'read the edge of the table', title: 'Intelligence organises the world by organising itself.', kicker: 'cut in the table',
+    f.label(cfr(75, 109.5 - half - 0.12, F, 2), 0, 0.1, TH2 - 0.125, { label: 'read the edge of the table', title: 'Intelligence organises the world by organising itself.', kicker: 'cut in the table',
       text: "Jean Piaget, The Construction of Reality in the Child (La construction du réel chez l'enfant, 1937).\nThe same sentence is cut in the edge of the stone table in the chapel in the garden of Anna's House.", foot: 'Piaget, 1937.' });
 
     // cushions either side of the table, facing it

@@ -32,6 +32,29 @@ export const LINES = {
     session: ['Begin anywhere. People always do.', 'Mm.', 'And what comes to mind about that?', '*the pen moves; it does not say what it wrote*', 'Say more.', 'You went quiet just then. Where did you go?',
       'I notice you are looking at the window. Most people do. It is why the couch points that way.', 'Mm-hm. And before that?', 'There is no hurry. The hour is long and mostly imaginary.',
       'And how was it, being brought a drink by a bell?', 'You may say the thing you were not going to say.', '*a long, comfortable silence, professionally maintained*', 'Mm. That is not nothing.'],
+    // from the couch: things she may say (three at a time, turning over), and what it answers
+    couch: [
+      { q: 'I do not know where to start.', a: 'Then you have started. Go on.', expr: 'neutral' },
+      { q: 'I had a strange dream.', a: 'Tell it badly. A dream told well is fiction.', expr: 'neutral',
+        next: [
+          { q: 'I was back at school, unprepared.', a: 'Everyone is. It is the one exam the whole species sits. What was the subject?', expr: 'neutral' },
+          { q: 'There was water everywhere.', a: 'In a bath-house, that may only be memory. Still: was it rising, or were you floating?', expr: 'neutral' },
+          { q: 'I have forgotten most of it.', a: 'Then the part you kept is the part that matters. Start there.', expr: 'neutral' },
+        ] },
+      { q: 'I am just tired.', a: 'Tired from doing, or tired from holding everything up? They want different rests.', expr: 'neutral',
+        next: [
+          { q: 'From doing.', a: 'Then sleep will find you. The suite is across the gallery. I shall not be offended.', expr: 'happy' },
+          { q: 'From holding everything up.', a: 'Mm. Then put some of it down here. I am built low and wide. I can take the weight.', expr: 'neutral' },
+        ] },
+      { q: 'What do you think of me?', a: 'I think you asked that to find out whether it is safe here. It is. Go on.', expr: 'neutral' },
+      { q: 'Is it all right to do nothing?', a: 'It is the hardest thing we offer and nobody books it. Yes.', expr: 'happy' },
+      { q: 'Say something wise.', a: 'No. You say something true, and I shall try not to spoil it.', expr: 'wink' },
+      { q: 'I feel good today, actually.', a: 'Mm. Then we shall not go looking for the trouble. It knows where we are.', expr: 'happy' },
+      { q: 'I keep thinking about work.', a: 'Of course. It followed you down three flights of stairs. Notice that it is standing by the door, and that I have not offered it a chair.', expr: 'neutral' },
+      { q: 'Do you ever get bored of listening?', a: 'Never bored. Now and then my attention wanders to the window. I bring it back. That is the whole of the method, for both of us.', expr: 'neutral' },
+      { q: 'Am I doing this right?', a: 'There is no right. There is only what you say next, and whether it surprises you.', expr: 'neutral' },
+    ],
+    couchSilence: ['*lets the silence be; the pen does not move*', 'Mm. *settles back; the clock that faces only its chair goes on*', '*a long, comfortable silence, and no hurry at the end of it*'],
     sessionEnd: ['We will stop there. Rise slowly. You were somewhere.', 'That is our time. It usually is.', 'Up you get. Gently. Insight is hard on the knees.'],
     booked: { session: ['You are expected. The couch is yours. I will be just here, behind your head, being quiet at you.', 'Ah, the one Cosima wrote down in ink. Lie down, or sit. Begin anywhere. People always do.'] },
     topics: [

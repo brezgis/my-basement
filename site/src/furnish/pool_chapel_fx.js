@@ -342,6 +342,20 @@ void main() { vec3 c = texture2D(map, vec2(vUv.x, 0.3 + 0.3 * vD.y)).rgb;
   if (Q.has('lifesteps')) { const n = Number(Q.get('lifesteps')); const wait = () => { if (life) { for (let i = 0; i < n; i++) life.step(); lifeTex.needsUpdate = true; } else setTimeout(wait, 200); }; wait(); }
 }
 
+// The oculus's glass (skylight_glass.js), once: sharp, for the glass itself and its image in the bowl; and soft, as the
+// chapel's other windows are copied small and blurred for the light they throw (pool_chapel_glass.js poolCopy): black
+// outside the rim, white in the clear eye.
+let GLASS = null;
+function oculusGlass() {
+  if (GLASS) return GLASS;
+  const src = drawSkylightGlass(1024), sharp = new THREE.CanvasTexture(src); sharp.colorSpace = THREE.SRGBColorSpace; sharp.anisotropy = 8;
+  const a = document.createElement('canvas'); a.width = a.height = 256; { const g = a.getContext('2d'); g.fillStyle = '#000'; g.fillRect(0, 0, 256, 256); g.fillStyle = '#fff'; g.beginPath(); g.arc(128, 128, 128 * EYE, 0, 7); g.fill(); g.drawImage(src, 0, 0, 256, 256); }
+  const b = document.createElement('canvas'); b.width = b.height = 44; b.getContext('2d').drawImage(a, 0, 0, 44, 44);
+  const c = document.createElement('canvas'); c.width = c.height = 176; { const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(b, 0, 0, 176, 176); }
+  const soft = new THREE.CanvasTexture(c); soft.colorSpace = THREE.SRGBColorSpace;
+  return (GLASS = { sharp, soft });
+}
+
 // ---- the oculus: daylight down the shaft ---------------------------------------------------------------------------
 // o: { X, Y, r, top (the ceiling), floor, table: { h, r } }. A soft pool of light on the floor under the shaft and on the
 // table's top; a faint column of it in the air, brightest where you look through most of it; motes turning slowly
@@ -350,19 +364,25 @@ export function oculus(ctx, W, o) {
   // The light comes down the shaft as a column that leans away from the sun (or the moon), as far as the shaft lets it
   // (uLean: where its foot is, in world feet, from straight under the oculus), brightest at noon, warm and faint toward
   // evening, a thin silver-blue one when the moon is up, nothing on a moonless night. Where it lands, a pool of light.
-  const c0 = W(o.X, o.Y, o.floor), U = { uK: { value: 0 }, uT: { value: 0 }, uCol: { value: new THREE.Color(1, 0.96, 0.88) }, uLean: { value: new THREE.Vector2() }, uW: { value: 1 } };
+  const c0 = W(o.X, o.Y, o.floor), GL = oculusGlass(), U = { uK: { value: 0 }, uT: { value: 0 }, uCol: { value: new THREE.Color(1, 0.96, 0.88) }, uLean: { value: new THREE.Vector2() }, uW: { value: 1 }, uSoft: { value: GL.soft } };
   const H = o.top - o.floor, cone = new THREE.CylinderGeometry(o.r * 0.97, o.r * 1.08, H, 40, 1, true).translate(0, H / 2, 0);
   const lean = `uniform vec2 uLean; uniform float uW; vec3 leanP(vec3 p) { float u = 1.0 - p.y / ${H.toFixed(2)}; p.xz *= mix(1.0, uW, u); p.xz += uLean * u; return p; }`;
-  const beam = new THREE.Mesh(cone, new THREE.ShaderMaterial({
-    uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
-    vertexShader: `${lean} varying vec3 vW; varying vec3 vN; varying float vY; void main() { vec3 p = leanP(position); vec4 w = modelMatrix * vec4(p, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); vY = position.y; gl_Position = projectionMatrix * viewMatrix * w; }`,
-    fragmentShader: `uniform float uK, uT; uniform vec3 uCol; varying vec3 vW; varying vec3 vN; varying float vY;
+  // The column is two: the white light the clear eye lets down, and round it a sleeve of the ring's colours, each side of
+  // it taking the colour of the glass above it (so the amber and the blues stand in the air, as light through any
+  // of the chapel's windows does), a little uneven, as air is.
+  const beamMat = tint => new THREE.ShaderMaterial({
+    uniforms: { ...U, uTint: { value: tint } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false,
+    vertexShader: `${lean} varying vec3 vW; varying vec3 vN; varying float vY; varying vec2 vP; void main() { vP = normalize(position.xz); vec3 p = leanP(position); vec4 w = modelMatrix * vec4(p, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal); vY = position.y; gl_Position = projectionMatrix * viewMatrix * w; }`,
+    fragmentShader: `uniform float uK, uT, uTint; uniform vec3 uCol; uniform sampler2D uSoft; varying vec3 vW; varying vec3 vN; varying float vY; varying vec2 vP;
 ${NOISE}
 void main() { vec3 V = normalize(cameraPosition - vW); float f = abs(dot(normalize(vec3(vN.x, 0.0, vN.z)), V));
   float body = pow(f, 1.6) * smoothstep(0.0, 1.5, vY) * (0.6 + 0.4 * smoothstep(0.0, ${H.toFixed(1)}, vY));
   body *= 0.8 + 0.35 * noise(vec2(atan(vN.z, vN.x) * 3.0, vY * 0.15 - uT * 0.05));      // a little uneven, as air is
-  gl_FragColor = vec4(uCol * body * uK * 0.55, 1.0); }`,
-  }));
+  vec3 gc = texture2D(uSoft, 0.5 + vec2(vP.x, -vP.y) * 0.41).rgb; vec3 tint = mix(vec3(1.0), gc * gc * 2.6 + 0.06, uTint);
+  gl_FragColor = vec4(uCol * tint * body * uK * mix(0.5, 0.75, uTint), 1.0); }`,
+  });
+  const beam = new THREE.Mesh(cone, beamMat(1)), core = new THREE.Mesh(new THREE.CylinderGeometry(o.r * EYE * 0.95, o.r * EYE * 1.06, H, 32, 1, true).translate(0, H / 2, 0), beamMat(0));
+  core.position.set(c0.x, c0.y, c0.z); core.name = 'chapel oculus beam core'; core.renderOrder = 5;
   beam.position.set(c0.x, c0.y, c0.z); beam.name = 'chapel oculus beam'; beam.renderOrder = 5;
   const disc = (h, r, k) => { const p = W(o.X, o.Y, h); const g = new THREE.CircleGeometry(r, 48).rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
     uniforms: { ...U, uR: { value: r }, uKk: { value: k } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
@@ -373,12 +393,22 @@ void main() { vec3 V = normalize(cameraPosition - vW); float f = abs(dot(normali
   // The glass in the oculus (skylight_glass.js: autopoiesis, the same glass that lies in the grass at Anna's House):
   // seen from below at the shaft's mouth, a clear eye with the coloured ring round it; and on the floor, round the
   // white pool that the eye lets down, the ring's colours as a halo that goes where the pool goes.
-  const gtex = new THREE.CanvasTexture(drawSkylightGlass(1024)); gtex.colorSpace = THREE.SRGBColorSpace; gtex.anisotropy = 8;
-  const glassMat = new THREE.MeshBasicMaterial({ map: gtex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: false });
+  const glassMat = new THREE.MeshBasicMaterial({ map: GL.sharp, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: false });
   const glassRing = new THREE.Mesh(new THREE.RingGeometry(o.r * EYE - 0.01, o.r * 1.02, 96, 1).rotateX(-Math.PI / 2), glassMat);
   { const p = W(o.X, o.Y, o.top + 0.22); glassRing.position.set(p.x, p.y, p.z); glassRing.name = 'chapel oculus glass'; }
-  const haloMat = new THREE.MeshBasicMaterial({ map: gtex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
-  const halo = new THREE.Mesh(new THREE.CircleGeometry(o.r * 1.32, 72).rotateX(-Math.PI / 2), haloMat); halo.position.set(c0.x, c0.y + 0.024, c0.z); halo.renderOrder = 2; halo.name = 'chapel oculus halo';
+  // On the floor it is light, not a picture: the blurred copy, squared as the other windows' spill is, its colours
+  // swimming a little, fading at its rim; the white of the eye is the pool's own.
+  const haloMat = new THREE.ShaderMaterial({
+    uniforms: U, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3,
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform sampler2D uSoft; uniform vec3 uCol; uniform float uK, uT; varying vec2 vUv;
+${NOISE}
+void main() { vec2 p = (vUv - 0.5) * 1.5; p += (vec2(noise(vUv * 7.0 + uT * 0.11), noise(vUv * 7.0 + 3.1 - uT * 0.09)) - 0.5) * 0.05;
+  float r = length(p) * 2.0; vec3 c = texture2D(uSoft, 0.5 + p).rgb;
+  float f = smoothstep(0.44, 0.66, r) * (1.0 - smoothstep(0.9, 1.3, r));
+  gl_FragColor = vec4(c * c * 1.7 * uCol * uK * f * (0.82 + 0.36 * noise(vUv * 11.0 - uT * 0.07)), 1.0); }`,
+  });
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(o.r * 1.7, 72).rotateX(-Math.PI / 2), haloMat); halo.position.set(c0.x, c0.y + 0.024, c0.z); halo.renderOrder = 2; halo.name = 'chapel oculus halo';
   ctx.interact?.push({ x: c0.x, y: c0.y + 10.5, z: c0.z, reach: 20, size: 3.4, label: () => 'look up at the glass', act: () => import('../card.js').then(m => m.showCard(CAPTION)).catch(() => ctx.flash?.(`${CAPTION.title}. ${CAPTION.kicker}.`)) });
   const N = 320, pos = new Float32Array(N * 3), sd = new Float32Array(N);
   let k = 3; const rnd = () => ((k = (k * 16807) % 2147483647) / 2147483647);
@@ -395,7 +425,7 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
   }));
   motes.position.set(c0.x, c0.y, c0.z); motes.name = 'chapel motes';
   const at = W(o.X, o.Y, o.floor + 6);
-  for (const m of [beam, floorPool, tablePool, motes, glassRing, halo]) if (m) addTracked(ctx, m, at, 1);
+  for (const m of [beam, core, floorPool, tablePool, motes, glassRing, halo]) if (m) addTracked(ctx, m, at, 1);
   const warm = new THREE.Color(1.0, 0.6, 0.32), gold = new THREE.Color(1.0, 0.9, 0.7), moon = new THREE.Color(0.62, 0.74, 1.0), dir = new THREE.Vector3();
   ctx.animated.push(t => {
     U.uT.value = t; const day = ctx.day ?? {}, L = day.light ?? 1, sd2 = day.sunDir ?? new THREE.Vector3(0, 1, 0);
@@ -407,7 +437,7 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
     const y = Math.max(0.2, dir.y), lx = -dir.x / y * H * 0.18, lz = -dir.z / y * H * 0.18, ll = Math.hypot(lx, lz), cap = Math.min(1, 3.2 / Math.max(ll, 1e-6));
     U.uLean.value.set(lx * cap, lz * cap); U.uK.value = kk; U.uCol.value.copy(col); U.uW.value = wdt;
     floorPool.position.set(c0.x + U.uLean.value.x, c0.y + 0.018, c0.z + U.uLean.value.y); floorPool.scale.setScalar(wdt);
-    halo.position.set(floorPool.position.x, c0.y + 0.024, floorPool.position.z); halo.scale.setScalar(wdt); haloMat.color.copy(col).multiplyScalar(kk * 0.85);
+    halo.position.set(floorPool.position.x, c0.y + 0.024, floorPool.position.z); halo.scale.setScalar(wdt);
     glassMat.color.setScalar(0.2 + 0.85 * smooth(L, 0.1, 0.9));      // lit by the sky behind it: dim after dark, never black
     if (tK) tK.value = 0.7 * (1 - smooth(Math.hypot(U.uLean.value.x, U.uLean.value.y), 0.8, 2.6));
   });
@@ -424,14 +454,14 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
 export function bowl(ctx, W, water, bell, sky = {}) {
   const p = W(water.X, water.Y, water.h);
   const L = (sky.flames ?? []).slice(0, 6).map(l => { const q = W(l.X, l.Y, l.h); return new THREE.Vector4(q.x, q.y, q.z, 1); }); while (L.length < 6) L.push(new THREE.Vector4(0, -999, 0, 0));
-  const U = { uT: { value: 0 }, uC: { value: V(p) }, uR: { value: water.r }, uRing: { value: new THREE.Vector2(-100, 0) }, uSky: { value: new THREE.Color() }, uNight: { value: 0 }, uDrum: { value: new THREE.Color() }, uL: { value: L }, uCeil: { value: p.y + Math.min(6.5, (sky.ceil ?? 19) - water.h) }, uTop: { value: p.y + Math.min(12, (sky.top ?? 36.2) - water.h) }, uOR: { value: sky.r ?? 3 }, uMoon: { value: 0 } };
+  const U = { uT: { value: 0 }, uC: { value: V(p) }, uR: { value: water.r }, uRing: { value: new THREE.Vector2(-100, 0) }, uSky: { value: new THREE.Color() }, uNight: { value: 0 }, uDrum: { value: new THREE.Color() }, uL: { value: L }, uCeil: { value: p.y + Math.min(6.5, (sky.ceil ?? 19) - water.h) }, uTop: { value: p.y + Math.min(12, (sky.top ?? 36.2) - water.h) }, uOR: { value: sky.r ?? 3 }, uMoon: { value: 0 }, uGlass: { value: oculusGlass().sharp } };
   // (uCeil, uTop: the shaft brought down to a third of its height in the mirror, so that its opening shows from anywhere near
   // the bowl, not only from straight over it; it still slides across the water as you move)
   { const o = W(sky.X ?? water.X, sky.Y ?? water.Y, 0); U.uC.value.x = o.x; U.uC.value.z = o.z; }      // (the oculus is over the bowl: one centre for both)
   const surf = new THREE.Mesh(new THREE.CircleGeometry(water.r, 48).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
     uniforms: U, fog: false,
     vertexShader: 'varying vec3 vW; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }',
-    fragmentShader: `uniform float uT, uR, uNight, uCeil, uTop, uOR, uMoon; uniform vec3 uC, uSky, uDrum; uniform vec2 uRing; uniform vec4 uL[6]; varying vec3 vW;
+    fragmentShader: `uniform float uT, uR, uNight, uCeil, uTop, uOR, uMoon; uniform vec3 uC, uSky, uDrum; uniform vec2 uRing; uniform vec4 uL[6]; uniform sampler2D uGlass; varying vec3 vW;
 ${NOISE}
 void main() {
   vec2 d = vW.xz - uC.xz; float r = length(d); vec2 dir = d / max(r, 1e-4);
@@ -450,7 +480,10 @@ void main() {
   if (R.y > 0.0) {
     vec3 Hc = vW + R * ((uCeil - vW.y) / R.y), Ht = vW + R * ((uTop - vW.y) / R.y);
     float dc = length(Hc.xz - uC.xz), dt = length(Ht.xz - uC.xz);
-    if (dc < uOR) {
+    if (dc < uOR && dc > uOR * 0.60) {      // the ring of glass in the opening, lit by the sky behind it
+      vec3 gc = texture2D(uGlass, vec2(0.5 + (Hc.x - uC.x) / (2.0 * uOR), 0.5 - (Hc.z - uC.z) / (2.0 * uOR))).rgb;
+      env = gc * (0.2 + 1.5 * dot(uSky, vec3(0.3, 0.6, 0.1)));
+    } else if (dc < uOR) {
       if (dt < uOR) {
         vec3 skyc = uSky;
         vec2 sp = (Ht.xz - uC.xz) * 4.0; float hs = hash(floor(sp));

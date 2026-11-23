@@ -140,6 +140,13 @@ class Staffer extends Polite {
       return t.next ? this.topics(t.next) : null;
     } }));
   }
+  // What she can say from the couch: three from the list, turning over, and always the choice of saying nothing
+  couchCard() {
+    const all = this.L.couch ?? [], S = this.session ?? {}, n = all.length, k = (S.said ?? 0) % Math.max(1, n), three = n <= 3 ? all : [0, 1, 2].map(i => all[(k + i) % n]);
+    const quiet = { q: '*say nothing for a while*', a: this.L.couchSilence ?? ['Mm.'], expr: 'neutral', then: (ctx, me) => { if (me.session) { me.session.quietUntil = me.H.now + 50; me.session.next = me.H.now + 26; } } };
+    const wrap = t => ({ ...t, then: (ctx, me) => { if (me.session) { me.session.said = (me.session.said ?? 0) + 3; me.session.next = me.H.now + 30; } t.then?.(ctx, me); }, next: t.next?.map(x => ({ ...x })) });
+    return this.topics([...three.map(wrap), quiet]);
+  }
   dialogue() {
     const all = this.L.topics ?? [], n = all.length, k = (this.asked ?? 0) % Math.max(1, n);
     const list = n <= 4 ? all : [...all.slice(0, 2), ...[0, 1].map(i => all[2 + ((k + i) % (n - 2))])];
@@ -422,10 +429,15 @@ class Staffer extends Polite {
       const hm = this.spots.home, atChair = Math.hypot(hm.x - this.x, hm.z - this.z) < 2.2;
       if (lying && !this.busyWithOrder() && !atChair && this.taskName !== 'toChair') { const me = this; this.run('toChair', (function* () { me.state = 'go'; yield* me.travel(hm.x, hm.z, { must: true, patience: 20 }); yield* me.turn(me.homeYaw, 0.6); })(), true); }      // (wherever it was: over to its chair)
       if (lying && !this.busyWithOrder() && atChair) {
-        if (!this.session) { this.session = { i: 0, next: now + 5 }; }
+        if (!this.session) { this.session = { i: 0, next: now + 9, cardAt: now + 5, quietUntil: 0, said: 0 }; }
         this.sitTo = 1;
-        if (this.sitK > 0.8 && now > this.session.next && !talking && !this.bubble.talking(now)) { const l = this.L.session ?? []; if (l.length) this.say(l[this.session.i++ % l.length], 'neutral'); this.session.next = now + 15 + Math.random() * 9; this.nextIdle = now + 30; }
-      } else if (this.session && !lying) { this.session = null; this.sitTo = 0; if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
+        // From the couch she may say things, or choose to say nothing: a card of them is kept open for her while she lies
+        // there (it is put up again a little after each answer; choosing the silence keeps it away for a while).
+        const S = this.session, free = !talking && now > (this.replyUntil ?? 0) + 2.5 && now > S.quietUntil;
+        if (this.sitK > 0.85 && !H.talk.robot && free && now > S.cardAt) { H.talk.open(this, this.couchCard()); S.cardAt = now + 9; }
+        // and now and then, if she has said nothing for a good while, one small thing from the chair
+        if (this.sitK > 0.85 && now > S.next && !talking && !this.bubble.talking(now)) { const l = this.L.session ?? []; if (l.length) this.say(l[S.i++ % l.length], 'neutral'); S.next = now + 38 + Math.random() * 20; this.nextIdle = now + 40; }
+      } else if (this.session && !lying) { this.session = null; this.sitTo = 0; if (talking) H.talk.close(); if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
       else if (!lying) this.sitTo = 0;
     }
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
@@ -452,7 +464,7 @@ class Staffer extends Polite {
     if (at.yaw !== null && !talking && !this.aside.phase && m.v < 0.3 && !seated && this.state !== 'offer') m.face(at.yaw, dt * at.rate);
     else if (this.fixed && at.yaw === null && !this.act) m.face(this.homeYaw, dt);
     // sitting: the body drawn onto its chair from where it stands beside it
-    this.sitK += (this.sitTo - this.sitK) * Math.min(1, dt * 2.6); if (this.sitK < 0.002) this.sitK = 0;
+    this.sitK += (this.sitTo - this.sitK) * Math.min(1, dt * (sp.seat?.when ? 1.0 : 2.6));      // (the analyst lowers itself into its chair, and rises from it, slowly) if (this.sitK < 0.002) this.sitK = 0;
     const q = sp.seat, k = q ? this.sitK : 0, sm = k * k * (3 - 2 * k);
     if (q && k > 0.3) { let dy = q.yaw - m.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); m.yaw += dy * Math.min(1, dt * 3); }
     // behind its counter it floats higher, so that it is seen over it (cast.js `counter`)
