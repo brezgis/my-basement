@@ -935,7 +935,7 @@ void main() {
     let best = null, least = Infinity;
     for (const it of interact) {
       to.set(it.x - camera.position.x, it.y - camera.position.y, it.z - camera.position.z);
-      const d = to.length(); if (d > it.reach || d < 1e-3) continue;
+      const d = to.length(); if (d > it.reach || d < 1e-3 || it.hidden?.()) continue;      // (hidden: e.g. "lie down" while lying there)
       const ang = Math.acos(Math.max(-1, Math.min(1, to.multiplyScalar(1 / d).dot(fwd))));
       const size = it.size ?? (it.seat ? 1.9 : it.reach >= 7 ? 1.7 : 1.05);            // feet: seats, doors and other big things are wider targets
       const allow = Math.min(0.45, Math.atan(size / d) + 0.09);

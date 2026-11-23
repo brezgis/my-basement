@@ -59,8 +59,9 @@ export default function (f) {
     const p = f.world(X, Y, F + h), q = f.world(TX, TY, F + h);
     const seat = { x: p.x, y: p.y, z: p.z, yaw: Math.atan2(-(q.x - p.x), -(q.z - p.z)), label };
     const act = () => { ctx.walker.sit(seat); ctx.walker.pitch = pitch; };
-    ctx.interact.push({ x: p.x, y: p.y - 0.7, z: p.z, reach: 6, size: 1.9, label: () => label, act });
-    for (const [MX, MY] of more) { const m = f.world(MX, MY, F + h); ctx.interact.push({ x: m.x, y: m.y - 0.7, z: m.z, reach: 6, size: 1.9, label: () => label, act }); }
+    const hidden = () => { try { return ctx.walker?.seated?.label === label; } catch { return false; } };      // (not offered again to someone already lying there)
+    ctx.interact.push({ x: p.x, y: p.y - 0.7, z: p.z, reach: 6, size: 1.9, label: () => label, hidden, act });
+    for (const [MX, MY] of more) { const m = f.world(MX, MY, F + h); ctx.interact.push({ x: m.x, y: m.y - 0.7, z: m.z, reach: 6, size: 1.9, label: () => label, hidden, act }); }
   });
   // a model turned to face plan point (TX, TY) from (X, Y)
   const modelFacing = (id, X, Y, TX, TY, o = {}) => { const face = Math.atan2(TY - Y, TX - X); f.model(id, f.fr(X, Y, F, 0), 0, 0, 0, 0, { ...o, turn: Math.atan2(Math.cos(face), -Math.sin(face)) - Math.PI }); };

@@ -159,6 +159,9 @@ class Staffer extends Polite {
       this.auraS = new T3.Sprite(m); this.auraS.scale.set(1.2, 1.2, 1); this.auraS.position.set(tb.fx + (tb.x - tb.fx) * 0.62, this.y + 4.3, tb.fz + (tb.z - tb.fz) * 0.62); this.auraS.name = 'reiki'; this.H.ctx.scene.add(this.auraS); this.auraK = 0; }
     this.auraK += ((on ? 1 : 0) - this.auraK) * 0.02; this.auraS.visible = this.auraK > 0.01; this.auraS.material.opacity = this.auraK * (0.6 + 0.2 * Math.sin(now * 0.9)); const k = 1.0 + 0.18 * Math.sin(now * 0.6); this.auraS.scale.set(k, k, 1);
   }
+  // Fetching something for her it steps out: a third quicker than its ordinary pace (Anna: "when they are going to get
+  // you something, they go a bit faster"); its rounds and its errands of its own are as they were
+  *travel(x, z, o = {}) { return yield* super.travel(x, z, this.making && this.making !== 'booking' && o.speed === undefined ? { ...o, speed: 1.32 } : o); }
   // (lying on the treatment table she is not in anybody's way: its keeper comes right up to her, as it never would to someone standing)
   about() { return this.treat ? false : super.about(); }
   // On the treatment table: what may be asked for (three, and the rest behind "something else"), or nothing at all
@@ -175,7 +178,7 @@ class Staffer extends Polite {
       this.state = 'go'; if (H.talk.robot === this) H.talk.close();
       yield* this.travel(tb.x, tb.z, { must: true, patience: 20, beside: true }); yield* this.turn(tb.yaw, 0.8);
       if (!T.lying) return;
-      T.at = true; this.bubble.pinned = true; this.state = 'treat';
+      T.at = true; this.bubble.pinned = true; this.bubble.pinY = 0.68; this.state = 'treat';      /* (its words below the middle of the view: it is itself in the upper half, upside down) */
       this.say(this.next('tableOpen', this.L.tableOpen ?? ['There.']), 'sleepy', 6); let wait = W.now + 6.5;
       while (T.lying) {
         this.m.v = 0; this.m.face(tb.yaw, W.dt); this.nextIdle = W.now + 30;
@@ -406,7 +409,7 @@ class Staffer extends Polite {
         if (!reach && !still) {
           this.offered = false; this.state = 'carry';
           if (W.now > replan || !goal || Math.hypot(goal.x - v.x, goal.z - v.z) > stop + 2.5) { replan = W.now + 1.5; goal = this.standNear(stop); if (!goal || !m.goTo(goal.x, goal.z)) { m.goTo(v.x, v.z); goal = null; } }
-          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? (this.spec.runner ? 1.45 : 1.1) : 0.85);
+          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? (this.spec.runner ? 1.6 : 1.35) : d > 6 ? 1.1 : 0.85);
           if (st === 'failed' && fail && Math.hypot(fail.x - this.x, fail.z - this.z) < 1 && this.nudge()) { fail = null; replan = W.now + 1.6; }      // twice in one place: out to roomier floor first
           else if (st === 'failed') { fail = { x: this.x, z: this.z }; replan = 0; } else if (st === 'idle' || st === 'arrived') replan = 0;
           stuck = Math.hypot(this.x - x0, this.z - z0) < W.dt * 0.2 ? stuck + W.dt : 0;

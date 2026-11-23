@@ -136,7 +136,7 @@ export function makeBubbles(THREE, camera, headless = false, opts = {}) {
         b.ox = ease ? b.ox + (ox - b.ox) * e : ox; b.oy = ease ? b.oy + (oy - b.oy) * e : oy; b.placedAt = now;
         x = sx + b.ox; y = sy + b.oy;
       } else {
-        if (b.pinned) { x = W / 2; y = Math.max(h + 12, H * 0.34); }
+        if (b.pinned) { x = W / 2; y = Math.max(h + 12, H * (b.pinY ?? 0.34)); }
         else { x = Math.max(hw + 10, Math.min(W - hw - 10, (v.x + 1) / 2 * W)); y = Math.min(floor, Math.max(h + 12, (1 - v.y) / 2 * H - 10)); }
       }
       const top = lec ? h / 2 : h, bot = lec ? h / 2 : 0;

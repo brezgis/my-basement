@@ -130,30 +130,39 @@ const CREATURE = {
     g.strokeStyle = rgb(DARK); g.lineWidth = 0.08 * s; for (const k of [-0.1, 0.15, 0.4]) { g.beginPath(); g.moveTo(x - 0.6 * s, y + k * s); g.lineTo(x - 0.33 * s, y + (k + 0.06) * s); g.stroke(); } },
 };
 
-// The emblem on the warm pool's bed: the A in a laurel wreath; a wave band; a band of running vine; the rim.
-export function drawEmblem(N = 2048, n = 124) {
-  const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), R = N / 2, C = N / 2;
-  const disc = (rad, col) => { g.beginPath(); g.arc(C, C, rad * R, 0, 7); g.fillStyle = rgb(col); g.fill(); };
-  disc(0.995, OCHRE); disc(0.965, DEEP);
-  // the vine band (0.80 to 0.965): a stem that wanders between its edges, a leaf at every turn, a berry in every hollow
-  disc(0.945, CELADON); { const T = 14, mid = 0.872, amp = 0.034; g.strokeStyle = rgb(LEAF); g.lineWidth = 0.02 * R; g.beginPath();
-    for (let k = 0; k <= 720; k++) { const a = k / 720 * Math.PI * 2, rr = (mid + amp * Math.sin(a * T)) * R; k ? g.lineTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr) : g.moveTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr); } g.closePath(); g.stroke();
-    for (let i = 0; i < T * 2; i++) { const a = (i + 0.5) / (T * 2) * Math.PI * 2, out = i % 2 ? 1 : -1, rr = (mid + amp * out) * R, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr; leafAt(g, x, y, a + (out > 0 ? 0.35 : Math.PI - 0.35) + Math.PI / 2 * 0, 0.085 * R, i % 4 < 2 ? LEAF : [84, 150, 118]);
-      const rb = (mid - amp * out * 0.75) * R; ell(g, C + Math.cos(a) * rb, C + Math.sin(a) * rb, 0.016 * R, 0.016 * R, 0, i % 3 ? OCHRE : TERRA); } }
-  disc(0.80, OCHRE); disc(0.782, DEEP);
-  // the wave band (0.62 to 0.78): cream water under a breaking deep-green crest, sixteen times round
-  { const T = 16; g.beginPath(); for (let k = 0; k <= 960; k++) { const a = k / 960 * Math.PI * 2, ph = a * T, rr = (0.70 + 0.05 * Math.sin(ph + 0.9 * Math.sin(ph))) * R; k ? g.lineTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr) : g.moveTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr); } g.closePath(); g.fillStyle = rgb(CREAM); g.fill();
-    for (let i = 0; i < T; i++) { const a = (i + 0.37) / T * Math.PI * 2; ell(g, C + Math.cos(a) * 0.722 * R, C + Math.sin(a) * 0.722 * R, 0.017 * R, 0.017 * R, 0, DEEP); } }
-  disc(0.632, OCHRE); disc(0.612, DEEP); disc(0.595, CELADON);
-  // the laurel: two sprays from the foot, meeting at the head, the leaves in pairs
-  for (const sx of [-1, 1]) for (let i = 0; i < 11; i++) { const a = Math.PI / 2 + sx * (0.2 + i * 0.262), rr = 0.5 * R, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr, t = a + sx * Math.PI / 2;
-    leafAt(g, x, y, t - sx * 0.55, 0.11 * R, LEAF); leafAt(g, x, y, t + sx * 0.5, 0.1 * R, [84, 150, 118]); if (i % 3 === 1) ell(g, C + Math.cos(a) * 0.5 * R, C + Math.sin(a) * 0.5 * R, 0.017 * R, 0.017 * R, 0, OCHRE); }
-  ell(g, C, C + 0.5 * R, 0.03 * R, 0.022 * R, 0, OCHRE);                                               // the tie at the foot
-  // the letter, with a cream line round it, and a small leaf where the bar meets the stem
-  g.fillStyle = rgb(CREAM); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]]) { g.save(); g.translate(dx * 0.014 * R, dy * 0.014 * R); letterA(g, C, C - 0.01 * R, 0.66 * R); g.restore(); }
-  g.fillStyle = rgb(DEEP); letterA(g, C, C - 0.01 * R, 0.66 * R);
-  g.fillStyle = rgb(OCHRE); g.fillRect(C - 0.17 * R, C + 0.108 * R, 0.3 * R, 0.014 * R);                 // a line of gold along the bar
-  return mosaic(c, N / n, { polar: 0.612, seed: 71 });
+// The emblem on the warm pool's bed: a script A, written as with a pointed pen (hairline going up, swelling coming
+// down), its three strokes ending in loops, and a vine growing out of two of them. Not in a round, not on a ground of
+// its own: the letter and the leaves are set straight into the bed's tile, with a line of cream round the strokes so
+// that they read through the water.
+export function drawEmblem(N = 2048, n = 150) {
+  const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), U = N * 0.345, C = N / 2, tile = N / n;
+  const P = ([x, y]) => [C + x * U, C + y * U];
+  const bez = (p0, p1, p2, p3, t) => { const m = 1 - t; return [m * m * m * p0[0] + 3 * m * m * t * p1[0] + 3 * m * t * t * p2[0] + t * t * t * p3[0], m * m * m * p0[1] + 3 * m * m * t * p1[1] + 3 * m * t * t * p2[1] + t * t * t * p3[1]]; };
+  // a pen stroke along a chain of cubics [[p0, c1, c2, p1], ...]: thin going up or across, swelling going down
+  const pts = segs => { const out = []; for (const sg of segs) for (let k = 0; k <= 60; k++) out.push(bez(...sg, k / 60)); return out; };
+  const pen = (segs, col, thin, thick, grow = 0) => { const q = pts(segs); g.fillStyle = col;
+    for (let i = 0; i < q.length; i++) { const a = q[Math.max(0, i - 1)], b2 = q[Math.min(q.length - 1, i + 1)], dx = b2[0] - a[0], dy = b2[1] - a[1], d = Math.hypot(dx, dy) || 1, down = Math.max(0, dy / d), ends = Math.min(1, i / 14, (q.length - 1 - i) / 14);
+      const w = (thin + (thick - thin) * Math.pow(down, 1.6)) * (0.55 + 0.45 * ends) + grow, [x, y] = P(q[i]); g.beginPath(); g.arc(x, y, w * U / 2, 0, 7); g.fill(); } };
+  // the three strokes (x right, y down; the letter about 2 units high)
+  const UP = [[[-0.62, 0.86], [-1.02, 0.98], [-1.12, 0.5], [-0.78, 0.44]], [[-0.78, 0.44], [-0.48, 0.4], [-0.5, 0.74], [-0.3, 0.3]], [[-0.3, 0.3], [-0.12, -0.1], [0.06, -0.62], [0.2, -0.98]]];
+  const DOWN = [[[0.2, -0.98], [0.24, -0.5], [0.34, 0.2], [0.46, 0.68]], [[0.46, 0.68], [0.54, 0.98], [0.86, 1.0], [0.98, 0.72]], [[0.98, 0.72], [1.04, 0.56], [0.9, 0.46], [0.8, 0.56]]];
+  const BAR = [[[-0.98, 0.02], [-0.9, -0.22], [-0.6, -0.16], [-0.42, 0.06]], [[-0.42, 0.06], [-0.1, 0.42], [0.36, 0.3], [0.7, 0.02]], [[0.7, 0.02], [0.92, -0.16], [1.12, -0.12], [1.06, 0.06]], [[1.06, 0.06], [1.0, 0.2], [0.84, 0.12], [0.9, 0.0]]];
+  // the vine: a tendril from the foot loop round under the letter, and one from the bar's end up and over it
+  const V1 = [[[-0.92, 0.86], [-1.3, 1.1], [-0.7, 1.36], [-0.1, 1.22]], [[-0.1, 1.22], [0.4, 1.1], [0.9, 1.3], [1.24, 1.08]]];
+  const V2 = [[[1.08, -0.02], [1.4, -0.3], [1.18, -0.86], [0.76, -1.02]], [[0.76, -1.02], [0.4, -1.16], [0.0, -1.3], [-0.42, -1.14]], [[-0.42, -1.14], [-0.74, -1.02], [-0.86, -0.72], [-0.66, -0.6]]];
+  const DEEPc = rgb(DEEP), CR = rgb(CREAM), k1 = 2.3 * tile / U;                       // (the cream line: a little over two tesserae wide in all)
+  const leaves = (segs, every, len, start = 0) => { const q = pts(segs); for (let i = 10 + start; i < q.length - 6; i += every) { const a = q[i - 2], b2 = q[i + 2], t = Math.atan2(b2[1] - a[1], b2[0] - a[0]), side = (Math.round(i / every) % 2 ? 1 : -1), [x, y] = P(q[i]);
+    leafAt(g, x, y, t - side * 0.95, len * U, (Math.round(i / every) % 3) ? LEAF : [84, 150, 118]); if (Math.round(i / every) % 3 === 0) { g.beginPath(); g.arc(x + Math.cos(t + side * 1.3) * 0.07 * U, y + Math.sin(t + side * 1.3) * 0.07 * U, 0.028 * U, 0, 7); g.fillStyle = rgb(OCHRE); g.fill(); } } };
+  // cream first, everywhere a little wider; then the vine; then the letter over it
+  for (const sg of [V1, V2]) pen(sg, CR, 0.03, 0.03, k1 * 0.8);
+  pen(UP, CR, 0.034, 0.06, k1); pen(BAR, CR, 0.034, 0.075, k1); pen(DOWN, CR, 0.04, 0.2, k1);
+  for (const sg of [V1, V2]) pen(sg, rgb(LEAF), 0.03, 0.03);
+  leaves(V1, 15, 0.2); leaves(V2, 16, 0.19, 4);
+  pen(UP, DEEPc, 0.034, 0.06); pen(BAR, DEEPc, 0.034, 0.075); pen(DOWN, DEEPc, 0.04, 0.2);
+  // a line of gold down the swell of the stem, and a drop of it in each loop
+  { const q = pts([DOWN[0]]); g.strokeStyle = rgb(OCHRE); g.lineWidth = 1.15 * tile; g.beginPath(); for (let i = 14; i < q.length - 8; i++) { const [x, y] = P([q[i][0] - 0.035, q[i][1]]); i === 14 ? g.moveTo(x, y) : g.lineTo(x, y); } g.stroke();
+    for (const d of [[-0.82, 0.68], [0.86, 0.74], [0.97, -0.02]]) { const [x, y] = P(d); g.beginPath(); g.arc(x, y, 0.036 * U, 0, 7); g.fillStyle = rgb(OCHRE); g.fill(); } }
+  return mosaic(c, tile, { seed: 71 });
 }
 // A small round with one of the creatures in it, for paving
 export function drawCreatureRound(kind, N = 1024, n = 52) {

@@ -6,6 +6,16 @@
 // side. No font: every letter is drawn here as strokes. Black and cinnabar on pale lime-wood, a ruled border.
 const INK = '#1d1712', RED = '#b3261b', GOLD = '#b8913a';
 
+// The small plate under the board: silver, engraved, in brackets
+export function drawSpanyaPlate(g, W, H) {
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#e4e6e8'); gr.addColorStop(0.45, '#c3c7cb'); gr.addColorStop(1, '#a9aeb3'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 90; i++) { g.strokeStyle = `rgba(${i % 2 ? 255 : 70},${i % 2 ? 255 : 76},${i % 2 ? 255 : 84},${0.05 + (i % 4) * 0.015})`; g.lineWidth = 1; const y = (i * 53) % H; g.beginPath(); g.moveTo(0, y); g.lineTo(W, y + ((i * 7) % 5) - 2); g.stroke(); }      // brushed
+  g.strokeStyle = 'rgba(60,66,74,.55)'; g.lineWidth = Math.max(2, H * 0.03); g.strokeRect(H * 0.09, H * 0.09, W - H * 0.18, H - H * 0.18);
+  for (const [x, y] of [[H * 0.3, H / 2], [W - H * 0.3, H / 2]]) { g.beginPath(); g.arc(x, y, H * 0.07, 0, 7); g.fillStyle = '#8d939a'; g.fill(); g.strokeStyle = 'rgba(40,44,50,.6)'; g.lineWidth = 1.5; g.stroke(); }      // two pins
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `italic ${Math.round(H * 0.46)}px Fraunces, "Iowan Old Style", Georgia, serif`;
+  g.fillStyle = 'rgba(255,255,255,.6)'; g.fillText('(a spa and banya for Anya)', W / 2 + 1, H / 2 + H * 0.05 + 1.5); g.fillStyle = '#343a42'; g.fillText('(a spa and banya for Anya)', W / 2, H / 2 + H * 0.05);
+}
+
 // draw(g, W, H): the whole board
 export function drawSpanya(g, W, H) {
   // the board: pale lime-wood, a little grain, a double rule in cinnabar and ink

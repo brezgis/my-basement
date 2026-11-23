@@ -38,7 +38,8 @@ export class Walker {
     addEventListener('blur', () => this.keys.clear());
     document.addEventListener('pointerlockchange', () => this.onLockChange(document.pointerLockElement === d));
     const look = (dx, dy, k) => {
-      this.yaw -= dx * k; this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch - dy * k));
+      const s = this.seated?.roll ? -1 : 1;      // (lying with the view turned over, the mouse still moves the picture the way the hand goes)
+      this.yaw -= s * dx * k; this.pitch = Math.max(-1.45, Math.min(1.45, this.pitch - s * dy * k));
     };
     let drag = false;
     d.addEventListener('mousedown', () => { drag = true; });
@@ -147,6 +148,6 @@ export class Walker {
     else if (this.wasSeated) c.lerp(new THREE.Vector3(this.pos.x, this.pos.y + EYE * (1 - 0.45 * (this.crouch ?? 0)), this.pos.z), 0.15);
     else c.set(this.pos.x, this.pos.y + EYE * (1 - 0.45 * (this.crouch ?? 0)), this.pos.z);
     this.wasSeated = s || (this.wasSeated && c.distanceTo(new THREE.Vector3(this.pos.x, this.pos.y + EYE * (1 - 0.45 * (this.crouch ?? 0)), this.pos.z)) > 0.05);
-    this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
+    this.camera.rotation.set(this.pitch, this.yaw, this.seated?.roll ?? 0, 'YXZ');      // (seat.roll: on her back on the treatment table she sees whoever stands at her head upside down, as one does)
   }
 }

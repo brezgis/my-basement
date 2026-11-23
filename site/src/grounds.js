@@ -21,7 +21,7 @@
 // The pool attendant's outdoor posts on the coping and beside the tub stairs are in staff/cast.js.
 // The two lounge chairs and their drinks table are furnished by furnish/pool_chapel.js.
 
-import { layMonogram } from './furnish/monogram.js';
+import { layMonogram, layLife } from './furnish/monogram.js';
 import { makeFlames } from './flame.js';
 import { burningLogs } from './kit/firewood.js';
 import * as THREE from 'three';
@@ -232,11 +232,19 @@ function edgePoolWater(ctx) {
     const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
     const halo = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -8 });
     const lens = new THREE.MeshBasicMaterial({ color: 0xffe9c0, toneMapped: false, fog: false }), bed = EDGE_POOL.bed;
+    const uK = { value: 0.3 }, shaft = new THREE.ShaderMaterial({ uniforms: { uK, uH: { value: h - bed } }, transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false,
+      vertexShader: 'varying float vY; varying float vF; void main() { vY = position.y; vec4 mv = modelViewMatrix * vec4(position, 1.0); vF = abs(dot(normalize(normalMatrix * normal), normalize(-mv.xyz))); gl_Position = projectionMatrix * mv; }',
+      fragmentShader: 'uniform float uK, uH; varying float vY; varying float vF; void main() { float k = vY / uH; float a = ((1.0 - k) * (1.0 - k) * 0.4 + 0.08 * (1.0 - k)) * vF * vF; gl_FragColor = vec4(vec3(1.0, 0.93, 0.74) * a * uK, 1.0); }' });
     for (const i of [1.5, 4, 6.5]) { const a = brink[Math.floor(i)], b2 = brink[Math.ceil(i)], k = i % 1, bx = a[0] + (b2[0] - a[0]) * k, by = a[1] + (b2[1] - a[1]) * k, cp = coping[Math.round(i)], d = Math.hypot(cp[0] - bx, cp[1] - by) || 1, X = bx + (cp[0] - bx) / d * 0.55, Y = by + (cp[1] - by) / d * 0.55;
       const disc = new THREE.Mesh(new THREE.CircleGeometry(0.17, 16).rotateX(-Math.PI / 2), lens); disc.position.set(Y, bed + 0.03, X); disc.name = 'edge pool lamp'; ctx.scene.add(disc);
-      const pool = new THREE.Mesh(new THREE.PlaneGeometry(7, 7).rotateX(-Math.PI / 2), halo); pool.position.set(Y, bed + 0.035, X); pool.renderOrder = 2; ctx.scene.add(pool);
-      const glow = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), halo); glow.position.set(Y, h + 0.045, X); glow.renderOrder = 5; ctx.scene.add(glow); }      // (and its light coming up through the surface)
-    ctx.animated.push(t => { const nt = ctx.day?.night ?? 0; halo.opacity = (0.16 + 0.5 * nt) * (0.94 + 0.06 * Math.sin(t * 0.8)); const v = 0.55 + 0.45 * nt; lens.color.setRGB(v, v * 0.92, v * 0.76); }); }
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(7, 7).rotateX(-Math.PI / 2), halo); pool.position.set(Y, bed + 0.035, X); pool.renderOrder = -3;      /* (both drawn before the water, which is then laid over them: after it, they were hidden under its surface) */ ctx.scene.add(pool);
+      // its light in the water itself: a cone widening up from the lamp to the surface (it was only on the bed and on top)
+      const cone = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 0.25, h - bed - 0.06, 28, 1, true).translate(0, (h - bed) / 2, 0), shaft); cone.position.set(Y, bed + 0.03, X); cone.renderOrder = -2; cone.name = 'edge pool light'; ctx.scene.add(cone);
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4).rotateX(-Math.PI / 2), halo); glow.position.set(Y, h + 0.045, X); glow.renderOrder = 5; ctx.scene.add(glow); }      // (and coming up through the surface)
+    ctx.animated.push(t => { const nt = ctx.day?.night ?? 0; halo.opacity = (0.16 + 0.7 * nt) * (0.94 + 0.06 * Math.sin(t * 0.8)); const v = 0.55 + 0.45 * nt; lens.color.setRGB(v, v * 0.92, v * 0.76); uK.value = 0.3 + 1.0 * nt; }); }
+  // Conway's game here too, in a few odd tiles: a glider on the first step, one on the second, one on the white kerb
+  { const P = (i, u) => [coping[i][0], coping[i][1] + (brink[i][1] - coping[i][1]) * u], [g1X, g1Y] = P(4, 0.062), [g2X, g2Y] = P(3, 0.19), k = coping[5];
+    layLife(ctx, 'glider', g1X + 1.2, g1Y, 0.56, 0.11, 1); layLife(ctx, 'glider', g2X, g2Y, -0.16, 0.12, 3); layLife(ctx, 'glider', k[0], k[1] + 0.2, 0.94, 0.085, 2); }
   // the house's A on its bed, in the same tesserae as the warm pool's (furnish/monogram.js), its head to the clouds
   { const a = brink[4], c = coping[4]; layMonogram(ctx, a[0] + (c[0] - a[0]) * 0.19, a[1] + (c[1] - a[1]) * 0.19, EDGE_POOL.bed, 2.6, [a[0] - c[0], a[1] - c[1]], 'edge pool monogram'); }
 }

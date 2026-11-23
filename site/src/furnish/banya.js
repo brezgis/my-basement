@@ -60,7 +60,7 @@ import { flames, steam, glow, noise, bucketTip, clockHands, rings, lieSpots, wal
 import { parts as nailParts, C as NC, BOUCLE, OCHRE, prettyShelf } from './banya_nails_parts.js';
 import { polishBottles, bells } from './banya_nails_fx.js';
 import * as NTX from './banya_nails_text.js';
-import { drawSpanya } from './banya_sign.js';
+import { drawSpanya, drawSpanyaPlate } from './banya_sign.js';
 import * as THREE from 'three';
 
 export default function (f) {
@@ -229,6 +229,7 @@ export default function (f) {
     { const SG = fr(106.46, PY, 1), w = 5.0, tall = 1.58, sz = 6.25;
       SG.bev('oak_light#9a7448', -w / 2 - 0.12, w / 2 + 0.12, 0.02, 0.1, sz - tall / 2 - 0.12, sz + tall / 2 + 0.12, 0.02);
       f.sign(SG, 0, sz, w, tall, drawSpanya, { y: 0.13, rough: 0.6 });
+      f.sign(SG, 0, sz - tall / 2 - 0.42, 2.5, 0.3, drawSpanyaPlate, { y: 0.04, rough: 0.3 });      // (a small silver plate under it, in brackets: Anna's words)
       f.label(SG, 0, 0.2, sz, { label: 'read the sign', title: 'СПАНЬЯ', kicker: 'Spanya: the banya of Anna\'s Basement',
         text: 'Spa and banya, for Anya. Lettered by the robots as a scribe of the Moscow Printing Yard would have lettered the heading of a psalter in 1650: tall ustav capitals, the first one a great cinnabar initial with a sprig growing out of it, the Н and the Ь sharing a stem, the я written the old way as ꙗ, a titlo over the whole and stops of four red dots either side.\nThe robots wished it noted that it took them eleven days, and that a psalter would have been quicker.' }); }
 
@@ -410,7 +411,7 @@ export default function (f) {
   // =================================================================================================================
   {
     const TX = 101.0, TY = 61.0, T = fr(TX, TY, 0), t = massageTable(K, T, { sheet: MAT.LINEN, bolster: 'linen#a8b39c' });
-    lies.push({ at: [TX, TY + 3.0, F + t.top + 0.4], eye: [TX, TY + t.head, F + t.top + 0.55], look: [TX, TY + t.head + 3.7, F + CL], label: 'lie down on the table', size: 2.0, then: c => !c.staff?.who?.opal && c.flash?.(['You lie down on the warm linen. "Relax, darling," says somebody with eight fingers on each hand. "We are professionals."', 'You lie back. The candles flicker. A robot warms the oil in its palms and hums something by Glinka.', 'Face up, eyes closed. Somewhere honey is being warmed, which can only mean one thing.'][Math.floor(Math.random() * 3)]) });
+    lies.push({ at: [TX, TY + 3.0, F + t.top + 0.4], eye: [TX, TY + t.head, F + t.top + 0.55], look: [TX, TY + t.head + 3.7, F + CL], label: 'lie down on the table', size: 2.0, roll: Math.PI, then: c => !c.staff?.who?.opal && c.flash?.(['You lie down on the warm linen. "Relax, darling," says somebody with eight fingers on each hand. "We are professionals."', 'You lie back. The candles flicker. A robot warms the oil in its palms and hums something by Glinka.', 'Face up, eyes closed. Somewhere honey is being warmed, which can only mean one thing.'][Math.floor(Math.random() * 3)]) });
     { const G = fr(TX, TY + 3.2); glowOnly(() => akari(K, G, 0, 0, CL, 3.2, 0.7, 1.2));
       for (let i = 0; i < 9; i++) { const a = i * 0.7; tube(K, G, i % 3 ? 'c#7a8a5a/0.8' : 'c#8a6aa8/0.8', [[0.15, 0, CL - 2.3], [0.15 + Math.cos(a) * 0.18, Math.sin(a) * 0.18, CL - 3.4]], 0.012, 3); }
       tube(K, G, 'c#c8b07a/0.9', [[0.15, 0, CL], [0.15, 0, CL - 2.4]], 0.01, 3); }

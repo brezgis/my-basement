@@ -273,9 +273,10 @@ export function lieSpots(ctx, W, spots) {
   for (const s of spots) {
     const a = W(...s.at), e = W(...s.eye), l = W(...s.look), dx = l.x - e.x, dy = l.y - e.y, dz = l.z - e.z;
     const yaw = Math.atan2(-dx, -dz), pitch = Math.atan2(dy, Math.hypot(dx, dz));
-    ctx.interact.push({ x: a.x, y: a.y, z: a.z, reach: s.reach ?? 6, size: s.size ?? 1.4, label: () => s.label, act: () => {
+    const lyingHere = () => { try { return ctx.walker?.seated?.label === s.label; } catch { return false; } };
+    ctx.interact.push({ x: a.x, y: a.y, z: a.z, reach: s.reach ?? 6, size: s.size ?? 1.4, label: () => s.label, hidden: lyingHere, act: () => {
       let w = null; try { w = ctx.walker; } catch { w = null; } if (!w) return;
-      w.sit({ x: e.x, y: e.y, z: e.z, yaw, label: s.label }); w.pitch = pitch;
+      w.sit({ x: e.x, y: e.y, z: e.z, yaw, label: s.label, roll: s.roll ?? 0 }); w.pitch = pitch;
       s.then?.(ctx);
     } });
   }

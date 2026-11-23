@@ -363,7 +363,7 @@ export default function (f) {
     // The house's A, in the pool's own tile (monogram.js): on the bed, read coming down the steps; set in the paving at
     // the head of the steps; and running round the tall part as the frieze. And Conway's game in a few odd tiles.
     { const WL2 = 43.75, WR2 = 76.25, YN = 84.5, FZ = F + 13.4, bedH = F - BASIN.deep;
-      layRound(ctx, 'emblem', 63.0, 68.75, bedH, 8.6, [1, 0]); layRound(ctx, 'bee', 46.85, 68.75, F, 2.8, [1, 0]);      // (the A in its wreath, wave and vine on the bed; at the head of the steps not the letter again but the bee from the house's medallion)
+      layRound(ctx, 'emblem', 63.0, 68.75, bedH, 9.9, [1, 0]); layRound(ctx, 'bee', 46.85, 68.75, F, 2.8, [1, 0]);      // (the A in its wreath, wave and vine on the bed; at the head of the steps not the letter again but the bee from the house's medallion)
       layPanel(ctx, ['starling', 'bee'], WL2 + 0.035, 79.25, 1, F + 8.3, 8.4, 4.4); layPanel(ctx, ['kitten', 'moth'], WR2 - 0.035, 79.25, -1, F + 8.3, 8.4, 4.4);      // (and in the tall part's side walls, a panel of small tiles set in the large: the medallion's vine and its creatures)
       layFrieze(ctx, WL2 + 0.085, YN - 0.05, WL2 + 0.085, 74.05, FZ); layFrieze(ctx, WR2 - 0.085, 74.05, WR2 - 0.085, YN - 0.05, FZ); layFrieze(ctx, WL2 + 0.08, YN - 0.085, WR2 - 0.08, YN - 0.085, FZ);
       layLife(ctx, 'glider', 72.6, 62.3, F, 0.1, 0); layLife(ctx, 'glider', 66.4, 61.2, bedH, 0.14, 1); layLife(ctx, 'glider', 46.2, 80.6, F, 0.1, 2); layLife(ctx, 'pulsar', 60, 81.6, F, 0.085, 0); }
