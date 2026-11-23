@@ -69,7 +69,9 @@ a card of things you can say to it. What you ask for is brought to you on a tray
 The chapel's light shaft comes up in the garden of Anna's House as a ring of stones in the grass, glazed with a
 stained-glass ring round a clear eye. The glass is after F. G. Varela, H. R. Maturana and R. Uribe, "Autopoiesis: the
 organization of living systems, its characterization and a model" (BioSystems, 1974): a membrane of links that keeps
-making itself. From below it colours the column of light over the chapel's table.
+making itself. From below it colours the column of light over the chapel's table. Down in the chapel the glass
+goes on outward in a second ring set in the ceiling round the shaft, after Maturana and Varela's "Autopoiesis and
+Cognition" (1980): other small membranes round the first, closing, whole, dividing, and gold threads between them.
 
 ## Running it yourself
 
