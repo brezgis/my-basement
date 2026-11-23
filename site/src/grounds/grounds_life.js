@@ -47,6 +47,13 @@ export function animals(ctx, E, meadowOn = false) {
   // below the cliff is given as a negative height above it)
   swallows(kit, { name: 'mouth swallows', x: cx - 40, z: cz, rx: 30, rz: 45, y: -14, amp: 6, n: 3, load: 260, live: 240, when: afternoon });
   bats(kit, { name: 'mouth bats', beats: [[cx - 32, cz - 18, 9, -18, 0], [cx - 38, cz + 12, 11, -16, 2], [cx - 30, cz + 2, 8, -21, 4]], load: 220, live: 200, when: dusk });
+  // and nearer: a pair of swallows looping round the courtyard itself at the height of the upper windows, and a pair along
+  // the cliff's face past the fronts' outer windows; at dusk two bats take the courtyard over and two more the face
+  // (Anna: "they fly by windows, by outside")
+  swallows(kit, { name: 'court swallows', x: cx + 1, z: cz, rx: 13, rz: 16, y: 13, amp: 4, n: 2, load: 200, live: 180, when: afternoon });
+  swallows(kit, { name: 'face swallows', x: cx - 28, z: cz, rx: 5, rz: 54, y: -17, amp: 5, n: 2, load: 260, live: 240, when: afternoon });
+  bats(kit, { name: 'court bats', beats: [[cx + 4, cz - 9, 7, 13, 1], [cx - 3, cz + 9, 8, 15, 3]], load: 200, live: 180, when: dusk });
+  bats(kit, { name: 'face bats', beats: [[cx - 27, cz - 30, 8, -16, 5], [cx - 27, cz + 30, 8, -17, 1]], load: 240, live: 220, when: dusk });
   // a dragonfly over the brink at midday, between the loungers and the parapet
   dragonflies(kit, { name: 'brink dragonfly', x: cx - 16, z: cz - 3, y: PAVE + 0.2, at: (a, s) => [cx - 15 - Math.sin(a) * 4 * s, cz - 3 + Math.cos(a) * 8 * s], n: 1, when: () => day.light > 0.75 && hour() >= 10.5 && hour() < 16.5 });
   // moths at the hanging lanterns after dark
