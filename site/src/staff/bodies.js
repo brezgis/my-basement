@@ -131,7 +131,7 @@ export function buildStaff(look) {
   if (look.apron) { const ap = SH.apron(under - 0.04); for (const g of ap.cloth) put(g, look.apron); put(ap.pocket, look.apronTrim ?? TRIM); }
   else if (look.shirt !== false && pat !== 'vest') put(SH.plate(-low * 0.45, 0, 0.6, low * 0.34, 0.006, { m: 2.6, rings: 4, seg: 32 }), BELLY);
   if (look.cardigan) {      // open down the front: two soft panels either side of the shirt, a ribbed edge, leather buttons on one
-    for (const sx of [-1, 1]) { put(SH.patch(sx > 0 ? 0.2 : -1.5, sx > 0 ? 1.5 : -0.2, -low * 0.82, under + 0.02, (u, v) => 0.012 + 0.022 * roll(u) * roll(v * 0.9 + 0.05), 14, 8), look.cardigan); put(SH.patch(sx * 0.17, sx * 0.24, -low * 0.82, under + 0.02, 0.03, 2, 8), look.cardiganRib ?? '#5b4a3c'); }
+    for (const sx of [-1, 1]) { put(SH.patch(sx > 0 ? 0.2 : -Math.PI - 0.02, sx > 0 ? Math.PI + 0.02 : -0.2, -low * 0.82, under + 0.02, (u, v) => 0.012 + 0.022 * Math.min(1, roll(sx > 0 ? Math.min(u, 0.5) : Math.max(u, 0.5)) * 3) * roll(v * 0.9 + 0.05), 30, 8), look.cardigan); /* (all the way round to the middle of the back, where the two halves meet: it used to stop at the sides) */ put(SH.patch(sx * 0.17, sx * 0.24, -low * 0.82, under + 0.02, 0.03, 2, 8), look.cardiganRib ?? '#5b4a3c'); }
     for (let i = 0; i < 3; i++) put(SH.place(cyl(0.032, 0.032, 0.02, 10).translate(0, 0.012, 0), under - 0.14 - i * low * 0.2, 0.3, 0.03), '#3d3028');
   }
   if (look.buttons) { for (let i = 0; i < 3; i++) put(T(sph(0.035, 8, 6), { p: SH.at(under - 0.1 - i * low * 0.2, 0, 0.012) }), look.buttons); if (look.epaulettes !== false) for (const sx of [-1, 1]) put(SH.plate(top * 0.56, sx * 1.35, 0.32, 0.055, 0.016, { m: 6, rings: 2, seg: 24 }), look.buttons); }
