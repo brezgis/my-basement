@@ -719,7 +719,7 @@ export function bringToLife({ doorBodies = [], scene, outdoors = scene, vis = nu
       g.add(body, pull);
       d.isOpen = false;
       interact.push({ x: d.cx, y: (h0 + h1) / 2, z: d.cz, reach: 5.5, label: () => `${d.isOpen ? 'close' : 'open'} the ${d.label}`, act: () => { d.isOpen = !d.isOpen; } });
-      animated.push((t, dt) => { const aim = d.isOpen ? d.open : d.closed, cur = g.rotation.y; if (Math.abs(aim - cur) > 1e-3) g.rotation.y = cur + (aim - cur) * Math.min(1, dt * 6); });
+      animated.push((t, dt) => { const aim = d.isOpen && !globalThis.__fromAir ? d.open : d.closed, cur = g.rotation.y; if (Math.abs(aim - cur) > 1e-3) g.rotation.y = cur + (aim - cur) * Math.min(1, dt * 6); });
       continue;
     }
     {
@@ -761,7 +761,7 @@ export function bringToLife({ doorBodies = [], scene, outdoors = scene, vis = nu
     const bodyAt = a => bodies().some(q => q.y1 > h0 + 0.3 && q.y0 < h1 && reach(a, (q.x0 + q.x1) / 2, (q.z0 + q.z1) / 2) < Math.max(q.x1 - q.x0, q.z1 - q.z0) / 2 + 0.15);      // a robot in the way
     const inBox = (q, px, pz, r) => Math.hypot(px - Math.max(q.x0, Math.min(px, q.x1)), pz - Math.max(q.z0, Math.min(pz, q.z1))) < r;
     animated.push((t, dt) => {
-      const aim = d.isOpen ? d.open : d.closed, cur = g.rotation.y;
+      const aim = d.isOpen && !globalThis.__fromAir ? d.open : d.closed      /* (from the air every door is drawn shut: main.js) */, cur = g.rotation.y;
       if (Math.abs(aim - cur) > 1e-3) {
         let step = (aim - cur) * Math.min(1, dt * 5);
         if (here()) {

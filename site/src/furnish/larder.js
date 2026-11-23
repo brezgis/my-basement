@@ -401,9 +401,19 @@ export default function (f) {
       cabinet(BRASS,K.geom.bev(0.28,0.43,0.529,0.54,0.49,0.53,0.004));
       S.block(x-0.65,x+0.65,0.42,1.61,0,2.53);
     }
-    f.framed(S, 0, 5.54, 3.22, 2.19, 'shishkin_morning_pine_forest', { frame: WALD, mat: 0.12, border: 0.085,
-      title: 'Morning in a Pine Forest', kicker: 'Ivan Shishkin and Konstantin Savitsky, 1889',
-      text: 'Four bears on a fallen tree in a pine forest, with pale morning light high in the branches.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    // (Anna did not care for the bears: Levitan's Golden Autumn, which she named among her favourites, and a smaller
+    // picture over each speaker so the corner is not one frame on a bare wall)
+    f.framed(S, 0, 5.54, 3.3, 2.15, 'golden_autumn', { frame: WALD, mat: 0.12, border: 0.085,
+      title: 'Golden Autumn', kicker: 'Isaac Levitan, 1895',
+      text: 'Birches turned yellow along a small river under a clear cold sky.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    f.framed(S, -4.15, 4.55, 1.36, 1.38, 'klimt_poppy_field', { frame: WALD, mat: 0.08, border: 0.07,
+      title: 'Poppy Field', kicker: 'Gustav Klimt, 1907', text: 'A meadow so full of poppies that the trees have to stand at the top of the picture to be seen.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    f.framed(S, 4.15, 4.6, 1.18, 1.5, 'sunflowers', { frame: WALD, mat: 0.08, border: 0.07,
+      title: 'Sunflowers', kicker: 'Vincent van Gogh, 1888', text: 'Fourteen sunflowers in a yellow jar against a yellow wall.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    // on the console: tulips in a jar at the left end, and three books lying on the receiver
+    K.posy(S, -2.62, 1.05, top, ['c#e0a23a/0.55', 'c#d9694a/0.55', 'c#f4ddae/0.6'], { kinds: ['tulip'], jar: 'c#ded6c4/0.35', scale: 1.5 });
+    [['c#7a2f2a/0.7', 0.62, 0.9, 0.05], ['c#2f4a44/0.7', 0.56, 0.84, 0.07], ['c#c9a45c/0.6', 0.5, 0.74, -0.04]].forEach(([mat, w, d, turn], i) =>
+      K.put(S, mat, K.geom.bev(-w / 2, w / 2, -d / 2, d / 2, 0, 0.11, 0.012).rotateZ(turn), { at: [1.05, 1.0, top + 0.38 + i * 0.112] }));
     for (const x of [-2.66, 2.66]) K.sconce(S, x, 5.53, { kind: 'lantern', metal: 'c#5e4a36/0.36/1', size: 1.14, lit: true, power: 0.37 });
   }
 

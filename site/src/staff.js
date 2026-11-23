@@ -130,7 +130,7 @@ class Staffer extends Polite {
   topics(list) {
     return list.slice(0, 4).map(t => ({ text: t.q, act: () => {
       this.say(one(t.a), t.expr ?? (t.serve || t.bring ? 'wink' : 'happy'), 6); this.replyUntil = this.H.now + 6;
-      if (t.serve) this.queue.push({ kind: this.spec.serve?.pickup ? 'serve' : 'bring', name: t.serve });
+      if (t.serve) this.queue.push({ kind: 'bring', name: t.serve });      // (everything asked for is brought to her on the tray, as in the house: set down on a counter, it was missed)
       if (t.bring) this.queue.push({ kind: 'bring', name: t.bring });
       if (t.book) this.H.book(t.book);
       if (t.call) this.H.ring({ by: t.call, quiet: true });
@@ -340,7 +340,7 @@ class Staffer extends Polite {
         const here = v.present && this.about() && (this.fixed || this.plan.inBoxes(v.x, v.z));
         if (!here) {      // she has gone where it cannot follow: it waits a while, then keeps it for her
           away += W.dt; this.offered = false; m.v = 0; this.state = 'wait';
-          if (away > 25) { this.line('kept', c.name); this.unload(); return; }
+          if (away > 60) { this.line('kept', c.name); this.unload(); return; }
           yield; continue;
         }
         away = 0;
@@ -438,6 +438,8 @@ class Staffer extends Polite {
     this.sitK += (this.sitTo - this.sitK) * Math.min(1, dt * 2.6); if (this.sitK < 0.002) this.sitK = 0;
     const q = sp.seat, k = q ? this.sitK : 0, sm = k * k * (3 - 2 * k);
     if (q && k > 0.3) { let dy = q.yaw - m.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); m.yaw += dy * Math.min(1, dt * 3); }
+    // behind its counter it floats higher, so that it is seen over it (cast.js `counter`)
+    { const c = sp.counterW, inside = c && !seated && Math.hypot(m.x - c.x, m.z - c.z) < c.r; this.lift = (this.lift ?? 0) + ((inside ? Math.max(0, c.top - 0.2 - (b.hover + b.bottom)) : 0) - (this.lift ?? 0)) * Math.min(1, dt * 2.5); }
     const t = now + this.phase, moving = m.v > 0.25, speak = this.bubble.talking(now), act = talking || this.aside.phase || (hold && !seated) ? null : this.act;
     b.root.position.set(m.x + (q ? (q.x - m.x) * sm : 0), m.y, m.z + (q ? (q.z - m.z) * sm : 0)); b.root.rotation.y = m.yaw;
     const P = act && act !== 'idle' ? pose(act, this.actT, b.D) : null, w = 1 - at.w * (at.yaw !== null ? 0.7 : 0.25);
@@ -445,10 +447,10 @@ class Staffer extends Polite {
     const Lf = this.life.step(now, dt, { w: at.w, eye: at.eye, work: P ? (P.ly ?? 0) : null, moveLook: moving && at.w < 0.5 && m.path?.[m.i] ? Math.atan2(Math.sin(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw), Math.cos(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw)) * 1.5 : null });
     const close = ['paint', 'file', 'note', 'probe', 'tamp', 'light', 'pourTea', 'pour', 'water'].includes(act), restful = ['rest', 'breathe', 'listen', 'tea', 'taste', 'ponder'].includes(act);
     const expr = now < this.exprUntil ? this.expr : this.carrying ? 'happy' : at.w > 0.5 && inRoom ? (['neutral', 'sleepy', 'focus'].includes(this.rest) && !this.quiet && this.id !== 'winnicbott' ? 'happy' : this.rest) : close ? 'focus' : restful ? (this.rest === 'sass' ? 'sass' : 'sleepy') : this.rest;
-    b.animate({ t, dt, pose: P, w, moving, speak: speak && !this.quiet, expr, look: Lf.lx, shut: Lf.shut, ly: Lf.ly, head, sitK: k, sitY: q ? q.sitY : b.hover, ringOn: !!q, carry: this.carrying ? (this.offered ? 2 : 1) : 0 });
+    b.animate({ t, dt, pose: P, w, moving, speak: speak && !this.quiet, expr, look: Lf.lx, shut: Lf.shut, ly: Lf.ly, head, sitK: k, sitY: q ? q.sitY : b.hover, ringOn: !!q, lift: this.lift, carry: this.carrying ? (this.offered ? 2 : 1) : 0 });
     this.ghost = seated;
     this.updateBounds();
-    const drop = q ? (b.hover - q.sitY) * sm : 0;
+    const drop = (q ? (b.hover - q.sitY) * sm : 0) - (this.lift ?? 0);
     this.item.x = b.root.position.x; this.item.z = b.root.position.z; this.item.y = m.y + b.hover - drop;
     H.tmp.set(b.root.position.x, m.y + b.top + 0.35 - drop, b.root.position.z); H.bubbles.place(this.bubble, H.tmp, now, b.root.visible);
   }
@@ -486,7 +488,8 @@ export function hireStaff(ctx, plans, ask = '1') {
         court.push({ name: 'The Courtyard', x0: Math.min(xa, xb), x1: Math.max(xa, xb), z0: Math.min(za, zb), z1: Math.max(za, zb) });
       }
     }
-    return { ...c, court, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
+    const counterW = c.counter ? (() => { const [x, z] = xz(c.counter.at); return { x, z, r: c.counter.r, top: c.counter.top }; })() : null;
+    return { ...c, court, counterW, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
       posts: [...(c.posts ?? []), ...(c.outdoor ?? [])].filter(p => !p.room || P.rooms[p.room] || (console.warn(`staff: ${c.id} has a post in "${p.room}", which is not in the building`), false)).map(p => ({ ...p, at: xz(p.at), faces: p.faces ? xz(p.faces) : null })),
       serve: sv ? { ...sv, machine: sv.machine ? xz(sv.machine) : null, faces: sv.faces ? xz(sv.faces) : null, pickup: sv.pickup ? { xz: xz(sv.pickup), y: y + sv.pickup[2] } : null, menu: Object.fromEntries(Object.entries(sv.menu ?? {}).map(([k, it]) => [k, it.at ? { ...it, at: xz(it.at) } : it])) } : undefined };
   };

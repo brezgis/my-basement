@@ -238,7 +238,7 @@ export function buildStaff(look) {
     st.lean += ((P ? P.lean * w : 0) + (moving ? 0.1 : 0) + (o.bow ?? 0) - st.lean) * k; st.side += ((P?.side ?? 0) - st.side) * k; st.rise += ((P ? P.rise : 0) - st.rise) * k;
     st.pour += ((P ? P.pour * w : 0) - st.pour) * k; st.twist += ((P?.twist ?? 0) * w - st.twist) * k; st.head += ((o.head ?? 0) - st.head) * Math.min(1, dt * 4);
     const calm = P?.calm || sitK > 0.5, by = hover + (sitY - hover) * sitK, bobY = Math.sin(t * (calm ? 0.9 : 1.7)) * (calm ? 0.03 : 0.07) * (1 - sitK);
-    bob.position.y = by + bobY + st.rise;
+    bob.position.y = by + bobY + st.rise + (o.lift ?? 0);
     bob.rotation.set(st.lean + (P ? 0 : Math.sin(t * 0.7) * 0.02), st.head + st.twist, Math.sin(t * 0.9) * 0.03 * (1 - sitK) + st.side + (moving ? 0.03 : 0), 'YXZ');
     ring.visible = sitK < 0.5 || !!o.ringOn;      // (ringOn: it hovers over its seat) ring.scale.setScalar(1 + 0.08 * Math.sin(t * 5)); ring.material.opacity = 0.6 + 0.25 * Math.sin(t * 5);
     // the tray: eases out in front, comes forward when offered

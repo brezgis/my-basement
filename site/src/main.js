@@ -282,6 +282,7 @@ function cullScene(all = cullOff) {
   // From the air the place is drawn plainly, as Anna's House is: no clutter in the rooms, and the windows are panes
   // (nearly opaque by day, warm and see-through by night), not views into every room.
   const far = mode === 'orbit' && !all, glass = materials.glass;
+  globalThis.__fromAir = far;      // (and the doors stand shut: life.js)
   if (glass) { glass.userData.o0 ??= glass.opacity; const o = far ? 0.42 + 0.44 * Math.min(1, day.light ?? 1) : glass.userData.o0; if (glass.opacity !== o) glass.opacity = o; }
   for (const m of zoned) { const z = m.userData.zone, b = m.userData.box; m.visible = all || (vis.shows(z) && !(far && m.userData.small) && (!m.userData.small || vis.occupied(z) || b.distanceToPoint(eye) < SMALL_NEAR) && vis.inView(z, b)); }
   outdoors.visible = all || vis.state.out;
