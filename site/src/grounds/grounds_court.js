@@ -408,7 +408,7 @@ export function layCourt(E) {
     for (let h = y0 + 0.15; h < y1; h += 0.34) put('c#8a7a62/0.9', new THREE.TorusGeometry(0.55 + (h - y0) / (y1 - y0) * 0.075, 0.012, 3, 24).rotateX(Math.PI / 2).translate(ax, h, az));
     K.lamp(ax, y0 - 0.08, az, 0.52);
     K.collide(ax - 0.6, ax + 0.6, az - 0.6, az + 0.6, y1, PAVE - 0.5);
-    E.perches.push([Y_parapet(CX - 13.5), PAVE + 2.62, CX - 13.5], [Y_parapet(CX + 13.5), PAVE + 2.62, CX + 13.5]);      // (the parapet's top: the robin's)
+    E.perches.push([Y_parapet(CX - 13.5) + 0.75, PAVE + 2.32, CX - 13.5], [Y_parapet(CX + 13.5) + 0.75, PAVE + 2.32, CX + 13.5]);      // (the parapet's top: the robin's)
   }
 
   // ---- the light: warm lanterns and small floor uplights under the rock --------------------------------------------------

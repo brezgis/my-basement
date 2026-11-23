@@ -26,7 +26,8 @@ import { burningLogs } from './kit/firewood.js';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { makeKit, PAINT } from './grounds/tools.js';
-import { TREES, MEADOW, COURT } from './campus.js';
+import { TREES, MEADOW, COURT, EDGE_POOL } from './campus.js';
+import { waterSheet } from './furnish/pool_chapel_fx.js';
 import { Wild, WILD, FLOWERING } from './grounds/grounds_flora.js';
 import { wind } from './grounds/cards.js';
 import { layCourt, FALL } from './grounds/grounds_court.js';
@@ -114,6 +115,7 @@ function lay(B, items) {
     swinging(ctx, E);
     try { caveSetup(ctx, E, Object.getPrototypeOf(ctx).scene ?? ctx.scene); } catch (e) { console.warn('grounds: cave', e); }
     water(ctx, E);
+    edgePoolWater(ctx);
     if (FALLS_ON) falls(ctx);
     for (const n of E.net) net(scene, n);
     fire(ctx, E);
@@ -139,9 +141,9 @@ function pebbles(scene, list) {
 // with the breeze the planting moves with (cards.js wind), gently and never still. Five draws for all of it.
 function swinging(ctx, E) {
   const patch = (mat, key) => { mat.onBeforeCompile = sh => { sh.uniforms.uWind = wind; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aSway; attribute float aPh; uniform float uWind;').replace('#include <begin_vertex>', `#include <begin_vertex>
-  { float sw = 0.55 + 0.45 * sin(uWind * 0.13 + aPh * 0.7);
-    transformed.x += aSway * sw * (0.75 * sin(uWind * 0.62 + aPh) + 0.25 * sin(uWind * 1.37 + aPh * 2.1));
-    transformed.z += aSway * sw * 0.6 * cos(uWind * 0.48 + aPh * 1.3); }`); }; mat.customProgramCacheKey = () => 'sway-' + key; return mat; };
+  { float sw = 0.55 + 0.45 * sin(uWind * 0.05 + aPh * 0.7);
+    transformed.x += aSway * sw * (0.75 * sin(uWind * 0.24 + aPh) + 0.25 * sin(uWind * 0.53 + aPh * 2.1));
+    transformed.z += aSway * sw * 0.6 * cos(uWind * 0.19 + aPh * 1.3); }`); }; mat.customProgramCacheKey = () => 'sway-' + key; return mat; };
   const mats = {
     iron: patch(new THREE.MeshStandardMaterial({ color: 0x1d1b19, roughness: 0.55, metalness: 0.5 }), 'iron'),
     bulb: patch(new THREE.MeshStandardMaterial({ color: 0xfff0d8, emissive: 0xffb45a, emissiveIntensity: 2, roughness: 0.2, transparent: true, opacity: 0.92 }), 'bulb'),
@@ -156,8 +158,8 @@ function swinging(ctx, E) {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('aSway', new THREE.Float32BufferAttribute(sw, 1)); g.setAttribute('aPh', new THREE.Float32BufferAttribute(ph, 1)); g.setAttribute('aSize', new THREE.Float32BufferAttribute(sz, 1));
     const c = document.createElement('canvas'); c.width = c.height = 64; const q = c.getContext('2d'), grd = q.createRadialGradient(32, 32, 0, 32, 32, 32); grd.addColorStop(0, 'rgba(255,220,160,1)'); grd.addColorStop(0.25, 'rgba(255,190,110,0.45)'); grd.addColorStop(1, 'rgba(255,170,80,0)'); q.fillStyle = grd; q.fillRect(0, 0, 64, 64);
     halo = new THREE.ShaderMaterial({ uniforms: { map: { value: new THREE.CanvasTexture(c) }, uWind: wind, uOn: { value: 1 }, uPx: { value: 400 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute float aSway; attribute float aPh; attribute float aSize; uniform float uWind, uPx; void main(){ vec3 p = position; float sw = 0.55 + 0.45 * sin(uWind * 0.13 + aPh * 0.7);
-  p.x += aSway * sw * (0.75 * sin(uWind * 0.62 + aPh) + 0.25 * sin(uWind * 1.37 + aPh * 2.1)); p.z += aSway * sw * 0.6 * cos(uWind * 0.48 + aPh * 1.3);
+      vertexShader: `attribute float aSway; attribute float aPh; attribute float aSize; uniform float uWind, uPx; void main(){ vec3 p = position; float sw = 0.55 + 0.45 * sin(uWind * 0.05 + aPh * 0.7);
+  p.x += aSway * sw * (0.75 * sin(uWind * 0.24 + aPh) + 0.25 * sin(uWind * 0.53 + aPh * 2.1)); p.z += aSway * sw * 0.6 * cos(uWind * 0.19 + aPh * 1.3);
   vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_PointSize = min(uPx * aSize / max(0.5, -mv.z), 96.0); gl_Position = projectionMatrix * mv; }`,
       fragmentShader: 'uniform sampler2D map; uniform float uOn; void main(){ vec4 t = texture2D(map, gl_PointCoord); gl_FragColor = vec4(t.rgb * t.a * uOn, 1.0); }' });
     const pts = new THREE.Points(g, halo); pts.name = 'bulb halos'; pts.renderOrder = 5; ctx.scene.add(pts); ctx.track?.(pts, 'o:courtyard');
@@ -213,6 +215,15 @@ function water(ctx, E) {
     stream.name='stream'; stream.receiveShadow=true; ctx.scene.add(stream);
   }
   ctx.animated.push(t => { nm.offset.set(t * 0.03, t * 0.05); });
+}
+// The edge pool's surface: the warm pool's own sheet of slow ripples (furnish/pool_chapel_fx.js), cut to the crescent
+// between the brink and the kerb, a hair over the building's water plane; the terrace's lanterns lie broken on it at night.
+function edgePoolWater(ctx) {
+  const { brink, coping, water: h } = EDGE_POOL, y = h + 0.03, pos = [];
+  for (let i = 0; i < brink.length - 1; i++) for (const [X, Y] of [brink[i], coping[i], coping[i + 1], brink[i], coping[i + 1], brink[i + 1]]) pos.push(Y, y, X);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  const lamps = [{ x: 21.3, y: 2.3, z: 71.1, k: 1 }];      // (the paper lantern by the loungers: grounds_court.js)
+  waterSheet(ctx, g, lamps, new THREE.Vector3(COURT.Y - COURT.r + 5, h + 1, COURT.X));
 }
 // The water falling from the edge pool's rim down the cliff: a thin, broken, translucent sheet hung just outside the rim
 // along its bearings, streaks sliding down it at two speeds, brightest at the lip, thinning and fading out over some 28 ft,

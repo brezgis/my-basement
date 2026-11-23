@@ -67,7 +67,19 @@ export function makeVisibility({ rooms, portals, footprints = [], quality = {} }
   for (const p of portals) {
     const c = [(p.x0 + p.x1) / 2, (p.y0 + p.y1) / 2, (p.z0 + p.z1) / 2], k = { x: 0, y: 1, z: 2 }[p.n], d = k === 1 ? 1.6 : 1.3;
     const side = s => { const q = [...c]; q[k] += s * d; return roomAt(q[0], q[1], q[2])?.id ?? (k === 1 ? null : 'out'); };
-    const a = side(-1), b = side(1);
+    let a = side(-1), b = side(1);
+    // A window in a round wall (the courtyard's): its facet stands at a slant to the axes and the rooms behind it are
+    // stepped boxes, so a probe 1.3 ft along one axis can end in the wall or in the wedge between a box and the wall on
+    // both sides. Such a window was dropped: its room was not drawn through it, nor the courtyard from the room. Look
+    // further, a step at a time and across the opening's width, and take the nearest room found on either side.
+    if (a === 'out' && b === 'out' && k !== 1) {
+      const w = k === 0 ? 2 : 0, half = (k === 0 ? p.z1 - p.z0 : p.x1 - p.x0) / 2;
+      find: for (const far of [2, 2.8, 3.6, 4.6, 5.6]) for (const s of [-1, 1]) for (const off of [0, -0.7, 0.7]) {
+        const q = [...c]; q[k] += s * far; q[w] += off * half;
+        const r = roomAt(q[0], q[1], q[2])?.id;
+        if (r) { if (s < 0) a = r; else b = r; break find; }
+      }
+    }
     if (!a || !b || a === b) continue;
     const e = { a, b, k, at: c[k], box: new THREE.Box3(new THREE.Vector3(p.x0, p.y0, p.z0), new THREE.Vector3(p.x1, p.y1, p.z1)), kind: p.kind, centre: new THREE.Vector3(...c) };
     P.push(e);
@@ -127,13 +139,19 @@ export function makeVisibility({ rooms, portals, footprints = [], quality = {} }
     // Where am I? (more than one room when standing in a doorway)
     const here = R.filter(r => inRoom(r, eye.x, eye.y, eye.z, 0.15, 0.5)).map(r => r.id);
     for (const p of P) if (p.box.distanceToPoint(eye) < 0.9) for (const z of [p.a, p.b]) if (!here.includes(z)) here.push(z);
-    if (!here.length) here.push('out');
+    // In no room's box: outdoors. But the rooms round the courtyard are stepped boxes against a round wall: in the
+    // wedges left between them and the glass the eye was 'outdoors' with its back to the window, and everything in the
+    // room vanished on the step up to the glass. So a room whose box is within arm's reach on this storey is drawn as
+    // from indoors too (drawn only: `here` stays 'out', which the lamps read).
+    const beside = [];
+    if (!here.length) { here.push('out'); for (const r of R) if (!beside.includes(r.id) && inRoom(r, eye.x, eye.y, eye.z, 2.5, 0.5)) beside.push(r.id); }
     const inside = !here.includes('out');
     // Each chain of openings remembers whether it began outdoors (o): it is then held back as seen from the garden.
     // (It had been the one `inside` for all of them: standing in a doorway still counted as outdoors, so the rooms
     // beyond the hall stayed bare until the eye was a step inside, and then all came at once.)
     const queue = [];
     for (const z of here) { const o = AHEAD ? z === 'out' : !inside; seen.set(z, { rect: FULL, level: 2, inside: !o }); queue.push([z, FULL, 0, 2, o]); }
+    for (const z of beside) { seen.set(z, { rect: FULL, level: 2, inside: true }); queue.push([z, FULL, 0, 2, false]); }
     while (queue.length) {
       const [z, rect, d, level, o] = queue.shift();
       if (d >= MAXD || (z === 'out' && !o)) continue;      // from indoors, the garden is the end of the line

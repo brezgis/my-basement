@@ -26,10 +26,11 @@ export const HOLDS = {
   file: [null, 'file'], paint: ['polish', 'brush'], admire: [null, null],
   pourTea: ['cup', 'teapot'], light: [null, 'taper'], dust: [null, 'duster'], plump: [null, null], turnDown: [null, null],
   cloche: [null, 'silver'],
+  lightPole: [null, 'pole'], gaze: [null, 'pole'], bowl: [null, null],
 };
 export const SECS = { wipe: 10, polish: 11, tamp: 5, pull: 8, restock: 12, straighten: 11, read: 30, listen: 22, stir: 12, shake: 6, pour: 7, taste: 12, probe: 10, note: 14, ponder: 12, readNotes: 16,
   ledger: 12, ring: 3, toast: 8, robe: 9, bow: 3, present: 5, whisk: 9, shakeVenik: 6, steam: 7, tea: 9, fold: 13, stack: 8, skim: 16, water: 8, roll: 8, file: 10, paint: 12, admire: 6, gossip: 8,
-  pourTea: 8, light: 8, dust: 11, plump: 8, turnDown: 10, cloche: 6, rest: 22, breathe: 12, idle: 5, salute: 2.5, tend: 10 };
+  pourTea: 8, light: 8, dust: 11, plump: 8, turnDown: 10, cloche: 6, rest: 22, breathe: 12, idle: 5, salute: 2.5, tend: 10, lightPole: 9, gaze: 14, bowl: 9 };
 
 export function pose(name, t, D) {
   const { x, y, f, lo, mid, hi } = D, o = { L: [-x, y, 0.1], R: [x, y, 0.1], lean: 0, rise: 0, ly: 0, pour: 0 };
@@ -107,6 +108,10 @@ export function pose(name, t, D) {
       at('R', 0.34 - 0.12 * p, lo + 0.12 + 0.3 * chop, f + 0.22); at('L', -0.34 + 0.12 * p, lo + 0.12, f + 0.22); if (chop) o.R[0] = 0.02; o.lean = 0.22; o.ly = 0.85; break;
     }
     case 'turnDown': { const k = ease(wave(t, 5)); at('R', 0.3 - 0.5 * k, lo + 0.05 + 0.1 * Math.sin(k * Math.PI), f + 0.25 + 0.2 * k); at('L', -0.3 - 0.1 * k, lo + 0.05, f + 0.25); o.lean = 0.26; o.twist = -0.15 * k; o.ly = 0.9; break; }      // the corner of the duvet folded back, smoothed
+    // ---- the chapel ------------------------------------------------------------------------------------------------
+    case 'lightPole': { const k = ease(wave(t, 4.5)); at('R', x * 0.5, y + 0.1 + 0.25 * k, f + 0.1 + 0.2 * k); at('L', -x, y, 0.1); o.tipR = 0.25 + 0.55 * k; o.ly = -0.5 * k; o.calm = true; break; }      // the pole reached out to a wick, held, drawn back
+    case 'gaze': { const k = ease(Math.min(1, t / 2)); at('R', x, y + 0.04, 0.12); at('L', -x * 0.5, mid - 0.1, f + 0.05); o.lean = -0.14 * k; o.ly = -1 * k; o.calm = true; break; }      // looking up the shaft at the light, the pole grounded
+    case 'bowl': { const k = ease(wave(t, 6)); at('R', 0.16, lo + 0.1 - 0.06 * k, f + 0.24); at('L', -0.16, lo + 0.1 - 0.06 * k, f + 0.24); o.lean = 0.18 + 0.06 * k; o.ly = 0.9; o.calm = true; break; }      // both hands over the still water, not touching it
     default: break;
   }
   return o;

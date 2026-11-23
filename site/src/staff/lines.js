@@ -268,6 +268,40 @@ export const LINES = {
   },
 };
 
+// Luna's questions: one at a time, never an answer (as Moth has it in the garden chapel; these are her own)
+const QUESTIONS = [
+  'The disc of light on the floor has moved since you came in. Did you see it move?',
+  'When you float, where does your weight go?',
+  'Is rest something you do, or something you stop doing?',
+  'The steam was water a minute ago. Was it the same water?',
+  'How long can you look at a candle before you are thinking about something else? And what is it, usually?',
+  'If nobody found this place, would it still be for somebody?',
+  'What were you carrying when you came down the stairs? Is it still on you?',
+  'The bowl is still because nothing touches it. What would you be, if nothing touched you for an hour?',
+  'Does a room need a window, or only light?',
+  'Which is the real you: the one who came in tired, or the one who will go up rested?',
+];
+LINES.luna = {
+  greet: ['Ah. Come in. It is darker than it looks, and then it is not.', 'I am Luna. I keep the candles and the water. Sit anywhere; the rock does not mind.', 'Come in. Mind the step. Look up when you are ready.'],
+  idle: ['*lifts the pole to a wick; the wick takes*', '*looks up the shaft for a long moment, as if checking the sky is still there*', '*holds both mittens over the bowl without touching the water*', 'The light is on the table now. In an hour it will be on the wall.', '*straightens one candle by a hair*'],
+  bye: ['Go gently. It will be here.', 'Close the door softly. The steam likes to stay.'],
+  walkedOff: ['*goes back to the candles*'],
+  doing: { lightPole: ['*the wick-holder to the candle; a small flame; the pole drawn back*'], gaze: ['A hole in a hill, and the whole sky comes down it. Somebody was clever.'], bowl: ['*watches the water be still*'] },
+  topics: [
+    { q: 'Ask me something.', a: QUESTIONS, expr: 'neutral' },
+    { q: 'What do you do here?', a: 'I light them at dusk and snuff them in the morning, and in between I keep out of the way. It is most of the job, keeping out of the way. Nobody trains you for it.', expr: 'happy' },
+    { q: 'Where does the light come from?', a: 'A shaft, up through the rock to the meadow by the house. From up there it is a ring of stones in the grass that nobody looks at twice. From down here it is the only window we have, and it is enough.', expr: 'neutral',
+      next: [
+        { q: 'It moves?', a: 'All day. Round the floor like the hand of a slow clock. I do not own a clock. I have never been late.', expr: 'wink' },
+        { q: 'And at night?', a: 'Then it is my turn. Candles. On a clear night, one star, if you lie on the floor. I have not told the others about the star.', expr: 'happy' },
+      ] },
+    { q: 'Are you related to Moth?', a: 'A cousin. Moth keeps the chapel in the garden, up top. Wren has the one on Vesper Street. I was given the one with no windows, inside a rock, next to a swimming pool. I think I did rather well.', expr: 'wink' },
+    { q: 'What is the bowl for?', a: 'For being still at. You may touch it. It forgives you in about a minute.', expr: 'happy' },
+    { q: 'May I just sit?', a: ['That is what it is for. I will be over there, not looking at you.', 'Sit. I will keep the candles. You keep nothing at all.'], expr: 'happy' },
+    { q: 'Why a moth?', a: 'We like a flame and we know better than to touch it. It is a useful temperament in a chapel.', expr: 'wink' },
+  ],
+};
+
 // What the one who answers a bell says on the way, and on arriving with nothing ordered
 export const RANG = { coming: ['Ding! Coming!', 'DING! That was a bell! That was a REAL one!', 'Ding! Do not move!'], here: ['You rang! You actually rang! What can I bring?', 'Ding! Here! What do you need? Say anything!'],
   order: ['Ding! One %s, coming! Seven minutes!', 'A %s! Rung for! Seven minutes!'], busy: ['Ding! One moment! I am carrying!'] };

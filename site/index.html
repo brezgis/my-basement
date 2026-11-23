@@ -48,6 +48,7 @@
 <link rel="modulepreload" href="src/engine/load.js">
 <link rel="modulepreload" href="src/flame.js">
 <link rel="modulepreload" href="src/furnish.js">
+<link rel="modulepreload" href="src/furnish/pool_chapel_fx.js">
 <link rel="modulepreload" href="src/grounds/cards.js">
 <link rel="modulepreload" href="src/grounds/grounds_court.js">
 <link rel="modulepreload" href="src/grounds/grounds_edges.js">
@@ -66,6 +67,8 @@
 <link rel="modulepreload" href="src/buildings/spanya.js">
 <link rel="modulepreload" href="src/faculty/roster.js">
 <link rel="modulepreload" href="src/furnish/index.js">
+<link rel="modulepreload" href="src/furnish/pool_chapel_glass.js">
+<link rel="modulepreload" href="src/furnish/pool_chapel_glass2.js">
 <link rel="modulepreload" href="src/grounds/flora.js">
 <link rel="modulepreload" href="src/grounds/ground.js">
 <link rel="modulepreload" href="src/grounds/grounds_cave_forms.js">
@@ -95,7 +98,7 @@
   <defs>
     <symbol id="doors" viewBox="0 0 40 56">
       <rect x="9.6" y="8.4" width="20.8" height="2.6" fill="currentColor"/>
-      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="currentColor" fill-opacity=".42"/>
+      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="currentColor" style="fill-opacity: var(--leaf, .42)"/>
       <path class="glass" d="M18 11h4v32h-4Z" style="fill: var(--glass, #e2a647)"/>
       <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z M9.6 19H18 M7.8 27H18 M6 35H18 M22 19H30.4 M22 27H32.2 M22 35H34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
       <rect x="2" y="43" width="36" height="2.8" fill="currentColor"/>
@@ -113,18 +116,28 @@
      page is busy building. -->
 <div id="loading" role="status" aria-live="polite">
   <div class="threshold">
-    <div class="doors" aria-hidden="true">
-      <i class="day"></i>
-      <span class="leaf l"><i></i></span><span class="leaf r"><i></i></span>
-      <i class="bloom"></i><i class="flare"></i><i class="fall"></i>
-    </div>
+    <!-- the cellar doors in silhouette, as the house's lantern and the town's shopfront: the two leaves fill with light from the sill up -->
+    <svg class="lamp" viewBox="0 0 40 56" aria-hidden="true">
+      <defs><clipPath id="glassClip"><path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z"/></clipPath>
+        <linearGradient id="glassGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3f9c8c"/><stop offset="1" stop-color="#bff0e2"/></linearGradient></defs>
+      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="#17302d"/>
+      <rect id="glassFill" clip-path="url(#glassClip)" x="4" y="43" width="32" height="0" fill="url(#glassGrad)" data-foot="43" data-rise="32"/>
+      <use href="#doors" style="--glass: #0d1b19; --leaf: 0"/>
+    </svg>
     <p class="name">Anna’s Basement</p>
     <svg class="rule" viewBox="0 0 240 12" aria-hidden="true">
       <path class="track" d="M2 9H96c5 0 5-5 10-5h28c5 0 5 5 10 5H238" pathLength="100"/>
       <path id="ruleFill" class="fill" d="M2 9H96c5 0 5-5 10-5h28c5 0 5 5 10 5H238" pathLength="100"/>
     </svg>
     <p id="loadCount" class="count">Opening the cellar doors</p>
-    <svg class="drivers" viewBox="0 0 10 10" aria-hidden="true"><rect id="glassFill" x="0" y="10" width="10" height="0" data-foot="10" data-rise="10"/></svg>
+    <div class="lines" aria-hidden="true">
+      <span style="--i:0">Cosima is checking the ledger. Twice. With a level.</span>
+      <span style="--i:1">Terry is folding the towels in thirds.</span>
+      <span style="--i:2">Pasha is throwing water on the stones.</span>
+      <span style="--i:3">Saz is polishing a glass that was already clean.</span>
+      <span style="--i:4">Hush is warming the teapot, and saying nothing.</span>
+      <span style="--i:5">Ding is listening for a bell.</span>
+    </div>
   </div>
 </div>
 

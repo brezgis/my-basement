@@ -1,6 +1,6 @@
 # The staff of Anna's Basement
 
-Nine robots work the house by default. Press E near one to speak or take a delivery. For an empty house, add `?staff=0`.
+Ten robots work the house by default. Press E near one to speak or take a delivery. For an empty house, add `?staff=0`.
 
     ?at=court&staff=lineup            all nine in a row in the courtyard, going through their gestures (E talks to them)
     ?staff=lineup:ding,saz&staffr=6   only those, six feet off
@@ -20,6 +20,7 @@ of light, two mitten hands), not the lab's FORM kit. Six draw calls each.
 | **Terry**, the pool | The Pool | Sea-glass green, a towel round the head. Folds, skims the pool with a net, brings towels (to the edge, if you are in the water). |
 | **Bijou**, nails | The Tea Room's nail corner | Hot pink with glitter, a beehive with a file through it. "Honey", always, and gossip. |
 | **Hush**, the quiet rooms | The Quiet Room, the Gallery, the Suite | A grey ball in a tea cosy. Says nothing (asterisks only). Brings tea unasked, tends the fire, turns the bed down. |
+| **Luna**, the chapel | The Chapel | A luna moth, cousin of Moth (the house's garden chapel) and Wren (Vesper Street's). Lamplighter's pole; keeps the candles and the bowl; offers a question, not an answer. |
 | **Ding**, the bell | The Hall, and every ground-floor room | A brass bell. Answers every bell at speed; collects from Saz's bar and carries it to you. Plumps and dusts between. |
 
 ## Files

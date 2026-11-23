@@ -78,7 +78,12 @@ void main() { float r = dot(vUv, vUv); if (r > 1.0) discard; float g = 1.0 - r; 
 export function poolWater(ctx, W, rect, h, lamps) {
   const [X0, X1, Y0, Y1] = rect, a = W(X0, Y0, h), b = W(X1, Y0, h), c = W(X1, Y1, h), d = W(X0, Y1, h);
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute([a, b, c, a, c, d].flatMap(p => [p.x, p.y, p.z]), 3));
-  const L = lamps.slice(0, 8).map(l => { const p = W(l.X, l.Y, l.h); return new THREE.Vector4(p.x, p.y, p.z, l.k ?? 1); });
+  return waterSheet(ctx, g, lamps.map(l => { const p = W(l.X, l.Y, l.h); return { x: p.x, y: p.y, z: p.z, k: l.k }; }), W((X0 + X1) / 2, (Y0 + Y1) / 2, h + 1));
+}
+// The same sheet over any outline of water (the courtyard's edge pool is a crescent): g in the world, lamps
+// [{ x, y, z, k }] in the world, `at` a point over the water (for the zone it is drawn with).
+export function waterSheet(ctx, g, lamps, at) {
+  const L = lamps.slice(0, 8).map(l => new THREE.Vector4(l.x, l.y, l.z, l.k ?? 1));
   while (L.length < 8) L.push(new THREE.Vector4(0, -999, 0, 0));
   const U = { uT: { value: 0 }, uL: { value: L }, uSheen: { value: new THREE.Color(0.2, 0.17, 0.13) }, uNight: { value: 0 } };
   const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
@@ -111,8 +116,9 @@ void main() {
 }`,
   }));
   m.renderOrder = 2; m.name = 'pool water ripples';
-  addTracked(ctx, m, W((X0 + X1) / 2, (Y0 + Y1) / 2, h + 1), 1);
+  addTracked(ctx, m, at, 1);
   ctx.animated.push(t => { U.uT.value = t; U.uNight.value = ctx.day?.night ?? 0; });
+  return m;
 }
 
 // ---- steam ----------------------------------------------------------------------------------------------------------

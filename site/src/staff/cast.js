@@ -1,4 +1,4 @@
-// The staff of Anna's Basement: nine robots, in one place. Who each is, what it looks like, where it is posted and
+// The staff of Anna's Basement: ten robots, in one place. Who each is, what it looks like, where it is posted and
 // what it does there. Their words are in lines.js, their bodies in bodies.js, their gestures in acts.js, and how
 // they behave in ../staff.js.
 //
@@ -181,6 +181,22 @@ export const CAST = [
       { at: [18.25, 37.25], faces: [16.5, 37.8], acts: ['tend'], w: 0.4, room: 'The Suite', when: 'empty' },                  // the stove
     ],
     serve: { machine: [63.7, 70.3], pickup: [63.7, 71.7, 2.7], menu: QUIET } },
+
+  // ---- LUNA, who keeps the Chapel: a cousin of Moth (the chapel in the house's garden) and of Wren (Vesper Street's).
+  // A luna moth: pale green, feathery antennae, wings folded down its back with an eye-spot and a tail on each, a
+  // bookbinder's apron, a lamplighter's pole. Small, quiet, a little dry. Keeps the candles and the bowl of still
+  // water under the shaft, looks up at the light, and offers a question rather than an answer.
+  { id: 'luna', name: 'Luna', role: 'the chapel', rest: 'neutral', speed: 1.5, chirp: [64, 71],
+    look: { shape: 'pip', scale: 0.92, hover: 2.5, colour: '#b9cfa6', belly: '#e6ebd2', apron: '#5a4030', apronTrim: '#4b3427', top: 'antennae', frond: '#e9dfb0', wings: ['#c9dcae', '#7d5a6a', '#e9d68a'], capColour: '#b8954f',
+      eyeW: 28, eyeH: 30, gap: 38, eye: '#ffd28e', faceBg: '#120c08', ring: 0xd9f0a8, glove: '#ece0c8', tools: [[], ['pole']], tray: 'oak', trayScale: 0.8 },
+    room: 'The Chapel', roam: [],
+    home: [65.0, 91.0], faces: [60, 87.5], homeActs: ['gaze', 'breathe', 'gaze', 'rest'],
+    posts: [
+      { at: [57.0, 84.5], faces: [60, 87.5], acts: ['lightPole', 'bowl'], w: 1.3 },            // the table under the shaft: the candles, the water
+      { at: [63.0, 84.5], faces: [60, 87.5], acts: ['lightPole', 'gaze'], w: 1 },
+      { at: [60.0, 97.0], faces: [60, 101], acts: ['gaze', 'lightPole'], w: 0.8 },               // the glass in the far wall
+      { at: [50.0, 80.0], faces: [46, 80], acts: ['gaze', 'straighten'], w: 0.6 },               // a niche in the west wall
+    ] },
 
   // ---- DING, the bellhop. A brass bell with a turned wooden handle and a red collar, the glow under it where the
   // clapper would be. Ring any bell in the place and it is Ding who comes, at speed, delighted. Between calls:

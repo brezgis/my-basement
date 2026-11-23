@@ -120,13 +120,15 @@ export default function (b) {
   };
   { // Cut the paving to the basin. The outside panes, water and tiled bed use the same vertices.
     const { brink, coping, bed, water:level } = EDGE_POOL;
-    const parapetTop = CY + 2.6;
+    const parapetTop = CY + 2.3;      // (one height with the walks' stone parapets either side)
     flat(COURTFLOOR, [...deck.slice(0,32), ...coping, ...deck.slice(41)], CY);
     const poolBack = Math.max(...coping.map(p=>p[1])) + 0.42;
     for (const ax of ['X','Y']) for (const [x0,x1,y0,y1] of b.arcRects(XC,YC,deckRadius,0,360,6,ax)) {
       if (y1>poolBack) b.surface(x0,x1,Math.max(y0,poolBack),y1,CY);
     }
-    const white = 'tile_hex#f7f7eb', blue = 'tile_hex#386e8c';
+    // The warm pool's own tiles (Anna: the same family as indoors): its floor tile on the kerb, its sea-green mosaic
+    // border round the water, its celadon basin tile on every tread, riser and wall under the water.
+    const white = POOLFLOOR, blue = 'tile_hex#2f6a63', BRASS = 'c#b08d4a/0.32/1';      // (blue: pool_chapel.js BORDER; BRASS: pool_chapel_parts.js MAT.BRASS)
     const deckLip = CY + 0.60, firstStep = CY + 0.22, rise = (firstStep - bed) / 4;
     const row = (a, b, u) => [a[0], a[1] + (b[1] - a[1]) * u];
     // Four broad steps follow the whole tiled bank, tapering into the ends.
@@ -136,10 +138,8 @@ export default function (b) {
       for (let k = 0; k < 4; k++) {
         const depth = k / 8, next = (k + 1) / 8, h = firstStep - k * rise;
         const [ba, bb] = points(depth), [fa, fb] = points(next);
-        const [na, nb] = points(next - 0.018);
-        flat(white, [ba, bb, nb, na], h);
-        flat(blue, [na, nb, fb, fa], h);
-        face(white, fa, fb, h - rise, h);
+        flat(BASIN_TILE, [ba, bb, fb, fa], h);
+        face(BASIN_TILE, fa, fb, h - rise, h);
         b.surfacePolygon([ba, bb, fb, fa], h);
       }
       b.surfacePolygon([a, b1, [b1[0], b1[1] + 0.39], [a[0], a[1] + 0.39]], deckLip);
@@ -149,17 +149,17 @@ export default function (b) {
     // The brass rail follows the treads from the dry paving to a socket in the bed.
     const side = 2, rx = coping[side][0], ry = coping[side][1], run = (ry - brink[side][1]) / 8;
     const rail = b.fr(rx, ry, CY, 2);
-    b.kit.put(rail, 'c#9d8663/0.34/1', b.kit.geom.sweep([
+    b.kit.put(rail, BRASS, b.kit.geom.sweep([
       [0, -0.76, 0], [0, -0.76, 2.86], [0, -0.68, 3.07], [0, -0.48, 3.2],
       [0, -0.19, 3.20], [0, run, 3.0], [0, 4 * run + 0.22, 3.0 - 3 * rise],
       [0, 4 * run + 0.39, 2.65 - 3 * rise], [0, 4 * run + 0.39, bed - CY]
     ], 0.066, { seg: 12 }));
-    for (const [y, h] of [[-0.76, 0], [4 * run + 0.39, bed - CY]]) rail.cyl('c#84765c/0.4/1', 0, y, h, h + 0.05, 0.15, 0.115, 16);
+    for (const [y, h] of [[-0.76, 0], [4 * run + 0.39, bed - CY]]) rail.cyl(BRASS, 0, y, h, h + 0.05, 0.15, 0.115, 16);
     b.block(rx - 0.066, rx + 0.066, ry - 4 * run - 0.45, ry + 0.83, bed, CY + 3.26);
     const basin = [...brink, ...coping.slice(1,-1).reverse()];
     // The bed ends at the lowest riser to avoid a coplanar sheet under the stairs.
     const bottom = coping.map((p, i) => row(p, brink[i], 0.5));
-    flat(BASIN_TILE, [...brink, ...bottom.slice(1, -1).reverse()], bed); flat('pool_surface', basin, level);
+    flat(BASIN_TILE, [...brink, ...bottom.slice(1, -1).reverse()], bed); flat('water', basin, level);      // (the warm pool's water; its ripples are laid over it in grounds.js)
     for (let i = 0; i < brink.length-1; i++) {
       const a = brink[i], d = brink[i+1], c = coping[i], e = coping[i+1];
       face('pool_glass', a, d, bed, parapetTop);
@@ -168,21 +168,27 @@ export default function (b) {
       if (i > 0) b.cyl('c#71978e/0.5', a[0], a[1], bed, parapetTop - 0.01, 0.025, 0.025, 8);
       face(STONE, a, d, -8, bed);
       face(BASIN_TILE, c, e, firstStep, level - 0.11);
-      face(blue, c, e, level - 0.11, level + 0.085);
-      face(white, c, e, level + 0.085, deckLip);
+      face(BASIN_TILE, c, e, level - 0.11, deckLip);
       const back = pt => [pt[0],pt[1]+0.39];
-      flat(white, [c,e,back(e),back(c)], deckLip);
+      flat(blue, [c,e,back(e),back(c)], deckLip);
       face(white, back(e),back(c),CY,deckLip);
       barrier(a,d,bed);
 
     }
     // Set the end panes into bronze channels at the matching stone parapets.
     for (const [x, y] of [brink[0], brink.at(-1)]) b.cyl('c#6c6654/0.49/0.52', x, y, bed, parapetTop, 0.16, 0.16, 12);
-    const angle = THREE.MathUtils.radToDeg(Math.asin((YC-WK.Y0)/R));
-    for (const [from,to] of [[180+angle,240],[300,360-angle]]) {
-      b.arcWall({ X:XC, Y:YC, r:R, from,to,n:3,t:T,h0:-7,h1:parapetTop,out:STONE,in:STONE });
-      const points = arcPts(R,from,to,3);
-      for (let j=1;j<points.length;j++) barrier(points[j-1],points[j],CY);
+    // The stone parapet between each walk and the pool: the walks' own section (0.4 ft thick, 2.3 high) carried along
+    // the paving's edge to the end pane. (It was a stub of the courtyard's 1.5 ft wall, taller: "a weird big chunk".)
+    const top = CY + 2.3, walkEnd = (i, j) => { const [x, y] = deck[i], [nx, ny] = deck[j]; return [x + (WK.Y0 - y) * (nx - x) / (ny - y), WK.Y0]; };
+    for (const pts of [[walkEnd(30, 31), deck[31], brink[0]], [brink.at(-1), deck[41], walkEnd(41, 42)]]) {      // (each in the order of +X: its faces look out)
+      const inner = pts.map(([x, y]) => { if (y === WK.Y0) return [x, y + 0.4]; const l = Math.hypot(XC - x, YC - y); return [x + (XC - x) / l * 0.4, y + (YC - y) / l * 0.4]; });
+      for (let j = 1; j < pts.length; j++) {
+        face(STONE, pts[j - 1], pts[j], -8, top); face(STONE, inner[j], inner[j - 1], CY, top);
+        flat(STONE, [pts[j - 1], pts[j], inner[j], inner[j - 1]], top);
+        barrier(pts[j - 1], pts[j], CY);
+      }
+      const k = pts[0][1] === WK.Y0 ? pts.length - 1 : 0;      // the end at the pool: closed
+      face(STONE, ...(k ? [pts[k], inner[k]] : [inner[k], pts[k]]), CY, top);
     }
   }
   { // the walks: paving, a solid base, a parapet; the lookout, a half-round balcony on the west walk
@@ -561,7 +567,7 @@ export default function (b) {
   { const X0 = HATCH.X0 - 1, X1 = HATCH.X1, hi = M + 6.2, lo = M + 0.5;
     const left = TW0 - 0.36, right = TW1 + 0.36;
     const profile = [[X1, lo], [X1 + 7.7, L1 + HEAD], [xB0, L1 + HEAD],
-      [xB1, L2 + HEAD], [xC0, L2 + HEAD], [BX0 + TO, F1 + HEAD]];
+      [xB1, L2 + HEAD], [xC0, L2 + HEAD], [BX0 + TO - 0.3, F1 + HEAD]];      // (stopped inside the hall's wall: ended on its face, the boards' end flickered against the stone over the hall's doorway)
     for (let i = 1; i < profile.length; i++) {
       const [xa, ha] = profile[i - 1], [xb, hb] = profile[i];
       b.prism('boards', [[xa, ha], [xb, hb], [xb, hb + 0.32], [xa, ha + 0.32]], -right, -left);
@@ -581,7 +587,7 @@ export default function (b) {
       b.mesh(hardware, g.translate(...a.lerp(end, 0.5).toArray()));
     }
     // An unbroken flashing behind the leaves seals the central joint and their four edges.
-    plate(frame, X0, X1, left, right, 0.10, 0.32);
+    plate(frame, X0 - 0.6, X1 + 0.05, TW0 - 1, TW1 + 1, 0.10, 0.5);
     for (const side of [-1, 1]) {
       const outer = side < 0 ? TW0 : TW1, center = YC + side * 0.026;
       const edge = outer - side * 0.10, bounds = [edge, center].sort((a, b) => a - b);
@@ -606,12 +612,15 @@ export default function (b) {
     const [nextX, nextHeight] = profile[1];
     const cheekEnd = X1 + (nextX - X1) * (lo + 0.17 - masonryTop) / (lo - nextHeight);
     const cheek = [[X0, masonryTop], [cheekEnd, masonryTop], [X1, lo + 0.17], [X0, hi + 0.17]];
-    b.prism('boards', cheek, -TW0, -left);
-    b.prism('boards', cheek, -right, -TW1);
+    // (the stair's own stone carried up to the steel, the full thickness of the wall: the boarded cheeks read as a
+    // plywood box round the hatch, and their thin edges let the light in along the frame)
+    const cheekUp = [[X0, masonryTop], [cheekEnd, masonryTop], [X1, lo + 0.3], [X0, hi + 0.3]];
+    b.prism('coursed', cheekUp, -TW0, -(TW0 - 1));
+    b.prism('coursed', cheekUp, -(TW1 + 1), -TW1);
     for (const Y of [TW0, TW1]) plate(frame, X0, X1, Y - 0.075, Y + 0.075, -0.082, 0.145);
     for (const X of [HATCH.X0, X1 - 0.15]) plate(frame, X, X + 0.15, TW0, TW1, -0.09, 0.125);
     const endX = HATCH.X0;
-    b.prism('boards', [[X0, masonryTop], [endX, masonryTop], [endX, height(endX) + 0.12], [X0, hi + 0.12]], -right, -left);
+    b.box('coursed', X0 - 0.6, endX, TW0 - 1, TW1 + 1, masonryTop, height(endX) + 0.3);      // (a box, not a prism: its courses lie level)
     for (const Y of [TW0, TW1]) {
       b.box(frame, endX, endX + 0.095, Y - 0.07, Y + 0.07, masonryTop, height(endX + 0.095));
     }
@@ -643,6 +652,7 @@ export default function (b) {
     b.wall({ ...s, ax: 'X', c: CY0 - 0.5, a: X1 + 0.5, b: CX1, neg: ROCKM, pos: WALL, outside: 'neg' });
     b.floor(X0, X1 + 0.5, Y0 - 0.05, Y1, f, { thick: 1, under: null }); b.floor(X1 + 0.5, CX1, CY0, Y1, f, { thick: 1, under: null }); b.ceiling(X0, CX1, Y0, Y1, c);
     b.room('The Laundry', X0, X1, Y0, Y1, f, c); b.room('The Linen Closet', X1 + 0.5, CX1, CY0, Y1, f, c);
+    b.interior(X0 + 5.2 - 1.9, X0 + 5.2 + 1.9, TW1, Y0 + 0.1, f - 0.6, f + 7.6, { floor: f, ceil: c });      // (the thickness of its doorway: the stair's light stops at 31.35 and the laundry's begins at 31.7, and the strip of lining between them was lit as out of doors)
     b.fill((X0 + X1) / 2, (Y0 + Y1) / 2, c - 1, 1.6); b.fill((X1 + CX1) / 2, (CY0 + Y1) / 2, c - 1, 1); }
 
   // ---- rooms: captions, what is drawn, the light indoors -------------------------------------------------------------
@@ -693,7 +703,7 @@ export default function (b) {
     [29, 30, 2], [18.5, 22, 2], [17, 55, 2], [33, 47, 2], [XC, 62, 2], [31, 66, 2], [92, 56, 2], [95.5, 44.5, 2]];
   b.fill(XC, YC, CY + 7, 0.7); b.fill(XC, YC - 12, CY + 7, 0.5);      // the terrace: under the vault the paving was dim by day
   for (const [X, Y, s, top] of FILLS) b.fill(X, Y, (top ?? (s === 1 ? C1 : C2)) - 1, s === 1 ? 1.5 : 1.3);      // (stronger than a pale room needs: the wood drinks the daylight)
-  for (const [X, h] of [[(xA1 + xB0) / 2, L1], [(xB1 + xC0) / 2, L2], [xC1 - 4, F1 + 3]]) { b.lamp(X, YC, h + 7, { power: 1.3, kind: 'candle' }); b.fill(X, YC, h + 6.5, 1.2); }      // (lit at every hour: it is a tunnel)
+  for (const [X, h] of [[(xA1 + xB0) / 2, L1], [(xB1 + xC0) / 2, L2], [xC1 - 4, F1 + 3]]) { b.lamp(X, YC, h + 7, { power: 1.8 });      /* (a steady lamp: as a candle it swung the whole wall by a fifth, which read as a fault by the laundry door) */ b.fill(X, YC, h + 6.5, 1.2); }      // (lit at every hour: it is a tunnel)
   // Low wall lanterns rake across the iron door leaves above the first flight.
   for (const [X, wallY, face, h] of [[HATCH.X0 + 6.75, TW0, 0, M + 1.12], [HATCH.X0 + 12.35, TW1, 2, M - 1.18]]) {
     const frame = b.fr(X, wallY, 0, face);

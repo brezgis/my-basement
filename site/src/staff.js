@@ -445,7 +445,7 @@ class Staffer extends Polite {
     const Lf = this.life.step(now, dt, { w: at.w, eye: at.eye, work: P ? (P.ly ?? 0) : null, moveLook: moving && at.w < 0.5 && m.path?.[m.i] ? Math.atan2(Math.sin(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw), Math.cos(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw)) * 1.5 : null });
     const close = ['paint', 'file', 'note', 'probe', 'tamp', 'light', 'pourTea', 'pour', 'water'].includes(act), restful = ['rest', 'breathe', 'listen', 'tea', 'taste', 'ponder'].includes(act);
     const expr = now < this.exprUntil ? this.expr : this.carrying ? 'happy' : at.w > 0.5 && inRoom ? (['neutral', 'sleepy', 'focus'].includes(this.rest) && !this.quiet && this.id !== 'winnicbott' ? 'happy' : this.rest) : close ? 'focus' : restful ? (this.rest === 'sass' ? 'sass' : 'sleepy') : this.rest;
-    b.animate({ t, dt, pose: P, w, moving, speak: speak && !this.quiet, expr, look: Lf.lx, shut: Lf.shut, ly: Lf.ly, head, sitK: k, sitY: q ? q.sitY : b.hover, carry: this.carrying ? (this.offered ? 2 : 1) : 0 });
+    b.animate({ t, dt, pose: P, w, moving, speak: speak && !this.quiet, expr, look: Lf.lx, shut: Lf.shut, ly: Lf.ly, head, sitK: k, sitY: q ? q.sitY : b.hover, ringOn: !!q, carry: this.carrying ? (this.offered ? 2 : 1) : 0 });
     this.ghost = seated;
     this.updateBounds();
     const drop = q ? (b.hover - q.sitY) * sm : 0;
@@ -473,7 +473,7 @@ export function hireStaff(ctx, plans, ask = '1') {
   const place = c => {
     const r = P?.rooms?.[c.room]; if (!r) { console.warn(`staff: ${c.id}'s room, "${c.room}", is not in the building; left out`); return null; }
     const y = P.world(c.home[0], c.home[1], r.floor).y, sv = c.serve;
-    const seat = c.seat ? (() => { const [x, z] = xz(c.seat.at), [fx, fz] = xz(c.seat.faces); return { x, z, top: c.seat.top, yaw: Math.atan2(fx - x, fz - z) }; })() : null;
+    const seat = c.seat ? (() => { const [x, z] = xz(c.seat.at), [fx, fz] = xz(c.seat.faces); const yaw = Math.atan2(fx - x, fz - z); return { x: x + Math.sin(yaw) * 0.5, z: z + Math.cos(yaw) * 0.5, top: c.seat.top, yaw }; })() : null;      // (forward on the seat, clear of the chair's back)
     // The pool attendant works both sides of the pool doors. Cross-sections
     // cover the dry courtyard only, ending behind the raised infinity coping.
     const court = c.outdoor ? [] : null;
@@ -493,7 +493,7 @@ export function hireStaff(ctx, plans, ask = '1') {
   const staff = [];
   const hire = sp => {
     const s = new Staffer(H, sp);
-    if (sp.seat) sp.seat.sitY = sp.seat.top - s.body.bottom + 0.03;
+    if (sp.seat) sp.seat.sitY = sp.seat.top - s.body.bottom + 0.34;      // (it hovers a hand above the cushion: a floating robot still)
     H.staff[s.id] = s; staff.push(s);
   };
   const cast = CAST.filter(c => !only.length || only.includes(c.id));

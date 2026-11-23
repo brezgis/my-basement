@@ -324,7 +324,6 @@ function daylightTint(day, out) {
 export function setHourLight(day, materials) {
   const on = lampOn(day), L = day.light;
   HL.fixedK[0] = lerp(0.18, 1, on);
-  materials.courtLampLevel.value = lerp(0.12, 1.35, on);
   // indoors: how much of the sky comes in, and the room's own light
   HL.k.x = lerp(0.12, 0.42, L);           // sky diffuse
   HL.k.y = lerp(0.1, 0.3, L);             // sky reflections

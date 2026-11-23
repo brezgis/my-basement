@@ -7,7 +7,7 @@
 //            colour, colour2, belly, trim; pattern: 'stripes' | 'speckle' | 'split' | 'band' | 'bark' | 'rind' | 'tweed' |
 //            'glitter' | 'knit' | 'vest'
 //            hat: 'pillbox' | 'banya' | 'turban' | 'beehive' | 'beret' | 'cosy'; hatColour, hatTrim
-//            top: 'cherry' | 'knob' | 'sprout'; ears: 'cups' | 'hoops' | 'bolts'; headphones: colour
+//            top: 'cherry' | 'knob' | 'sprout' | 'antennae'; wings: [colour, edge, eye-spot]; ears: 'cups' | 'hoops' | 'bolts'; headphones: colour
 //            apron, scarf, bowtie, buttons, collar, badge, cardigan: colours; chain: 'watch' | 'tastevin' | 'key'
 //            the face: eye, eyeW, eyeH, eyeR, gap, lashes, brows, moustache, freckles, specs, monocle, blush, faceBg
 //            ring (the glow underneath), glove; tools: [[for hands[0]], [for hands[1]]] (names from PROPS)
@@ -77,6 +77,9 @@ export const PROPS = {
   cup: () => [paint(T(lathe([[0, 0], [0.05, 0], [0.075, 0.09], [0.07, 0.09], [0.045, 0.012], [0, 0.012]], 12), { p: [0, 0.0, 0.1] }), '#e9e4d8'), paint(T(cyl(0.065, 0.055, 0.02, 12), { p: [0, 0.07, 0.1] }), '#9a7a2a')],
   taper: () => [paint(T(cyl(0.012, 0.012, 0.7, 6), { p: [0, 0.2, 0.14], r: [0.35, 0, 0] }), BRASS), paint(T(sph(0.03, 8, 6), { p: [0, 0.53, 0.26], s: [1, 1.8, 1] }), '#ffcf70')],
   duster: () => { const out = [paint(T(cyl(0.016, 0.02, 0.44, 6), { p: [0, 0.14, 0.08] }), WALNUT)]; for (let i = 0; i < 12; i++) { const a = i * 2.4; out.push(paint(T(sph(0.07, 6, 5), { p: [Math.cos(a) * 0.06, 0.42 + (i % 4) * 0.07, 0.08 + Math.sin(a) * 0.06], r: [0.4 * Math.sin(a), a, 0.4 * Math.cos(a)], s: [0.6, 1.7, 0.3] }), ['#d8c9a8', '#c4b28c', '#e6dcc4'][i % 3])); } return out; },
+  // Luna
+  pole: () => [paint(T(cyl(0.017, 0.017, 2.05, 6), { p: [0, 0.57, 0.04] }), '#a8844a'), paint(T(cyl(0.022, 0.022, 0.06, 6), { p: [0, -0.44, 0.04] }), '#7d6036'), paint(T(box(0.09, 0.015, 0.015), { p: [0.04, 1.53, 0.04] }), '#a8844a'),
+    paint(T(new THREE.ConeGeometry(0.05, 0.09, 10, 1, true), { p: [0.075, 1.485, 0.04] }), '#b8954f'), paint(T(cyl(0.012, 0.016, 0.05, 6), { p: [0, 1.595, 0.04] }), '#3a2c22'), paint(T(sph(0.026, 8, 6), { p: [0, 1.66, 0.04], s: [1, 2, 1] }), '#ffcf70')],      // a lamplighter's pole: wick-holder, snuffer bell, a small flame
   // Ding
   cushion: () => [paint(T(slab(0.6, 0.24, 0.6), { p: [0.3, 0.02, 0.24], r: [0.3, 0, 0] }), '#d9cbb2')],
   silver: () => [paint(T(lathe([[0, 0], [0.3, 0], [0.31, 0.02], [0.27, 0.16], [0.16, 0.26], [0.04, 0.29], [0.04, 0.32], [0, 0.34]], 20), { p: [0, 0.0, 0.3] }), '#cfd2d4'), paint(T(sph(0.035, 8, 6), { p: [0, 0.34, 0.3] }), BRASS)],      // a cloche
@@ -152,6 +155,26 @@ export function buildStaff(look) {
   if (look.top === 'cherry') { put(T(cyl(0.008, 0.008, 0.26, 5), { p: [0.03, ty + 0.12, 0], r: [0, 0, -0.25] }), '#5b4630'); put(T(sph(0.075, 12, 10), { p: [0.065, ty + 0.25, 0] }), '#b3202e'); put(T(sph(0.02, 6, 5), { p: [0.045, ty + 0.3, 0.035] }), '#f2a0a8'); hatTop = top + 0.34; }
   if (look.top === 'knob') { put(T(lathe([[0, 0], [0.07, 0], [0.05, 0.05], [0.04, 0.16], [0.075, 0.24], [0.085, 0.3], [0.06, 0.36], [0, 0.38]], 14), { p: [0, ty, 0] }), look.topColour ?? WALNUT); put(T(cyl(0.085, 0.085, 0.03, 14), { p: [0, ty + 0.01, 0] }), TRIM); hatTop = top + 0.38; }
   if (look.top === 'sprout') { put(T(cyl(0.014, 0.02, 0.2, 6), { p: [0, ty + 0.1, 0] }), '#5b4630'); for (const [rz, ry, k] of [[-0.75, 0.3, 1], [0.7, -0.5, 0.82]]) parts.push(paint(T(sph(0.2, 12, 8), { p: [0, 0.2, 0], s: [0.5 * k, 1.25 * k, 0.12] }), '#7fae52').applyMatrix4(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(0, ry, rz)).setPosition(0, ty + 0.16, 0))); hatTop = top + 0.4; }
+  // a moth's: feathery antennae, and wings folded down the back like a roof, an eye-spot and a long tail on each
+  if (look.top === 'antennae') {
+    for (const sx of [-1, 1]) {
+      const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(sx * 0.08, top - 0.03, 0.1), new THREE.Vector3(sx * 0.2, top + 0.16, 0.17), new THREE.Vector3(sx * 0.4, top + 0.2, 0.0));
+      put(new THREE.TubeGeometry(curve, 8, 0.011, 4, false), '#5b5a4a');
+      const mid = curve.getPoint(0.6), q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), curve.getTangent(0.6)), frond = sph(0.1, 10, 6); frond.scale(0.4, 1.8, 0.08); frond.applyQuaternion(q); frond.translate(mid.x, mid.y, mid.z); put(frond, look.frond ?? '#e9dfb0');
+    }
+    hatTop = top + 0.24;
+  }
+  if (look.wings) {
+    const [WC, WE, WS] = look.wings;      // the wing, its edge and seam, its eye-spot
+    for (const sx of [-1, 1]) {
+      put(SH.patch(Math.PI + sx * 0.03, Math.PI + sx * 1.25, -low * 0.7, top * 0.72, (u, v) => 0.014 + 0.03 * roll(u) * roll(v), 14, 10), p => {
+        const a = Math.abs(Math.atan2(p.x, -p.z)), v = p.y / top;
+        if (a < 0.09 || a > 1.12 - 0.25 * Math.max(0, -v)) return WE;
+        const d = Math.hypot(a - 0.55, (v - 0.05) * 1.3); return d < 0.07 ? '#3a2c3a' : d < 0.13 ? WS : d < 0.16 ? WE : WC;
+      });
+      put(T(sph(0.1, 10, 6), { p: [sx * SH.side(-low * 0.6) * 0.5, -low * 0.86, -SH.front(-low * 0.6) * 0.8], r: [0.5, 0, sx * 0.25], s: [0.5, 2.4, 0.16] }), WC);      // the tail
+    }
+  }
   // hats, fitted to the head
   const HC = look.hatColour ?? '#b8452e', HT = look.hatTrim ?? TRIM, ys = Math.max(yc + hh - 0.03, top * 0.66);
   if (look.hat === 'pillbox') {      // a bellhop's cap, cocked: a short drum, a band of braid, a button on top
@@ -217,7 +240,7 @@ export function buildStaff(look) {
     const calm = P?.calm || sitK > 0.5, by = hover + (sitY - hover) * sitK, bobY = Math.sin(t * (calm ? 0.9 : 1.7)) * (calm ? 0.03 : 0.07) * (1 - sitK);
     bob.position.y = by + bobY + st.rise;
     bob.rotation.set(st.lean + (P ? 0 : Math.sin(t * 0.7) * 0.02), st.head + st.twist, Math.sin(t * 0.9) * 0.03 * (1 - sitK) + st.side + (moving ? 0.03 : 0), 'YXZ');
-    ring.visible = sitK < 0.5; ring.scale.setScalar(1 + 0.08 * Math.sin(t * 5)); ring.material.opacity = 0.6 + 0.25 * Math.sin(t * 5);
+    ring.visible = sitK < 0.5 || !!o.ringOn;      // (ringOn: it hovers over its seat) ring.scale.setScalar(1 + 0.08 * Math.sin(t * 5)); ring.material.opacity = 0.6 + 0.25 * Math.sin(t * 5);
     // the tray: eases out in front, comes forward when offered
     const carry = o.carry ?? 0, on = carry > 0; tray.visible = on;
     if (on && !st.was) { tray.scale.setScalar(0.4); tray.position.set(trayRest[0], trayRest[1] - 0.15, trayRest[2]); }

@@ -145,7 +145,6 @@ export function makeMaterials(renderer, quality = {}) {
   // and up after dark by lighting.js: e0 is the full strength, day the fraction left by day. The
   // fridge's light and the garden's own bulbs (which garden.js dims itself) are left alone.
   const glows = [];
-  const courtLampLevel = { value: 0.5 };
   const DAY_GLOW = { ffd9a0: 0.25, ffcf8a: 0.1, fff4e0: 0.12, ffe2b4: 0.06 };
   function glowing(mat, hex) {
     if (['fff1d0', 'ffd49a', 'ffb866'].includes(hex)) return;
@@ -307,23 +306,15 @@ export function makeMaterials(renderer, quality = {}) {
     // flat into courses, warm; and over it, from where a point is in the world: wandering strata of paler and darker
     // stone, bands of brown earth between the beds, greyer weathered patches, and the same photograph again much larger
     // to break the repeat (it showed as a grid of identical tiles from the first view).
-    // Continuous rock across overhangs, the crown and the underside. Projection in
+    // Continuous rock across overhangs, the crown and the underside. It has no light of its own: the court's lamps
+    // (lighting.js, fixedExteriorLight) light it exactly as they light the walls under it. Projection in
     // world feet avoids a stretched strip at the wrap seam or a change of UV chart.
     bedrock: () => {
       const m = new THREE.MeshStandardMaterial({ map: tex('cliffrock_color', 1, true), color: 0xe5d5c1, roughness: 0.96, envMapIntensity: 0.3 });
       m.onBeforeCompile = shader => {
-        shader.uniforms.courtLampLevel = courtLampLevel;
         shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vRockP, vRockN;')
           .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockP = position; vRockN = normal;');
-        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRockP, vRockN;\nuniform float courtLampLevel;\nfloat courtSpill(vec3 delta, vec3 n) { return max(0., dot(n, normalize(delta))) / (1. + dot(delta,delta)/540.); }')
-          .replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
-            vec3 rockNormal = normalize(vRockN);
-            float spill = .44 * courtSpill(vec3(28.,10.,60.) - vRockP, rockNormal)
-                        + .28 * courtSpill(vec3(27.,13.,40.) - vRockP, rockNormal)
-                        + .28 * courtSpill(vec3(27.,13.,80.) - vRockP, rockNormal);
-            float vault = smoothstep(18., 28., vRockP.y) * (1. - smoothstep(58., 76., vRockP.y));
-            reflectedLight.indirectDiffuse += diffuseColor.rgb * vec3(.75,.48,.29) * spill * vault * courtLampLevel;
-          `)
+        shader.fragmentShader = shader.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec3 vRockP, vRockN;')
           .replace('#include <map_fragment>', `
             vec3 p = vRockP;
             p.y += 1.4 * sin(p.x * 0.072 + p.z * 0.046) + 0.14 * p.z;
@@ -382,7 +373,6 @@ export function makeMaterials(renderer, quality = {}) {
   all.shade.userData.e0 = 0.42; all.shade.userData.day = 0.03; glows.push(all.shade);          // full strength after dark (was 1.25 always: chalk white at night)
   all.glow.userData.e0 = 0.45; all.glow.userData.day = 0.08; glows.push(all.glow);                // the porch lantern's amber glass (was 2.2: blown white)
   all.glows = glows;
-  all.courtLampLevel = courtLampLevel;
   // The Builder paints tints onto vertices: tint(name, hex) is the colour make('name#hex') would
   // have given the material (or the plain material's own colour), and vc(name) the one shared
   // vertex-coloured copy of the material that all of them are drawn with (vcOf; not 'vc',
