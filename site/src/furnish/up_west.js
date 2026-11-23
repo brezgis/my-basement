@@ -120,7 +120,7 @@ export default function (f) {
     const Cf = f.fr(35.7, 53.0, F, 2);                                   // local x runs west (x = 35.7 - X), y south (53.0 - Y)
     const mz = P.daybed(Cf, 6.6, 2.6, { head: 1 });
     P.bolster(Cf, M.OCHRE, 2.95, 1.3, mz + 0.02, 2.2, 0.26);
-    K.cushion(Cf, 2.72, 1.3, mz + 0.16, 1.25, 1.0, M.GREEN, { tilt: 0.55, turn: -Math.PI / 2 });      // (laid back on the bolster, behind the head of whoever lies down: propped upright at 2.35 it stood where their face is)
+    K.cushion(Cf, 2.72, 1.3, mz + 0.16, 1.25, 1.0, M.GREEN, { tilt: 1.0, turn: Math.PI / 2 });      // (laid back on the bolster, behind the head of whoever lies down: propped upright at 2.35 it stood where their face is)
     later.push(ctx => drapeRug(ctx, Cf, { x0: -3.15, x1: 1.9, y0: 0.12, yEdge: 2.52, drop: 0.95, z: mz + 0.05, seed: 23 }));
     // (no label for the rug here: it took E from lying down, and the rug can be read about in the Hall. Here it is just a couch.)
     { const [X, Y] = Cf.map(1.85, 1.3); lie(X, Y, mz + 0.62, 41.3, 42.9, 0.45, 'lie on the couch', [Cf.map(0.2, 1.3), Cf.map(-1.5, 1.3), Cf.map(-2.8, 1.3), Cf.map(-0.6, 2.3)]); }      /* (anywhere along it, and on the rug over its edge: only its head end could be chosen) */      // (toward the courtyard window in the south-east corner)

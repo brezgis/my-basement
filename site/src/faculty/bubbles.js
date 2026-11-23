@@ -96,8 +96,10 @@ export function makeBubbles(THREE, camera, headless = false, opts = {}) {
     if (!b.el) return;
     b.tick(now);
     if (!clearing) { clearing = true; camera.updateMatrixWorld(); queueMicrotask(() => { rects.length = 0; clearing = false; }); }      // (the view as it is now; forgotten once this frame's work is done)
-    const wanted = now < b.until; let on = wanted && visible;
-    if (on) {
+    // (b.pinned: the speaker is behind the head of someone lying down, who cannot turn to it: its words are shown
+    // anyway, at a fixed place in the upper part of the view)
+    const wanted = now < b.until; let on = wanted && (visible || b.pinned);
+    if (on && !b.pinned) {
       v.copy(pos).project(camera);
       if (v.z > 1 || v.z < -1 || Math.abs(v.x) > 1.04 || v.y > 1.25 || v.y < -1.05) on = false;                        // behind you, or off the screen: no bubble pinned to the edge
       else if (camera.position.distanceTo(pos) > (b.far ?? (b.style === 'lecture' ? 80 : 36))) on = false;             // out of earshot
@@ -134,8 +136,8 @@ export function makeBubbles(THREE, camera, headless = false, opts = {}) {
         b.ox = ease ? b.ox + (ox - b.ox) * e : ox; b.oy = ease ? b.oy + (oy - b.oy) * e : oy; b.placedAt = now;
         x = sx + b.ox; y = sy + b.oy;
       } else {
-        x = Math.max(hw + 10, Math.min(W - hw - 10, (v.x + 1) / 2 * W));
-        y = Math.min(floor, Math.max(h + 12, (1 - v.y) / 2 * H - 10));
+        if (b.pinned) { x = W / 2; y = Math.max(h + 12, H * 0.34); }
+        else { x = Math.max(hw + 10, Math.min(W - hw - 10, (v.x + 1) / 2 * W)); y = Math.min(floor, Math.max(h + 12, (1 - v.y) / 2 * H - 10)); }
       }
       const top = lec ? h / 2 : h, bot = lec ? h / 2 : 0;
       for (let pass = 0; pass < 4; pass++) {

@@ -436,15 +436,18 @@ class Staffer extends Polite {
       const hm = this.spots.home, atChair = Math.hypot(hm.x - this.x, hm.z - this.z) < 2.2;
       if (lying && !this.busyWithOrder() && !atChair && this.taskName !== 'toChair') { const me = this; this.run('toChair', (function* () { me.state = 'go'; yield* me.travel(hm.x, hm.z, { must: true, patience: 20 }); yield* me.turn(me.homeYaw, 0.6); })(), true); }      // (wherever it was: over to its chair)
       if (lying && !this.busyWithOrder() && atChair) {
-        if (!this.session) { this.session = { i: 0, next: now + 9, cardAt: now + 5, quietUntil: 0, said: 0 }; }
+        if (!this.session) { this.session = { i: 0, next: now + 45, cardAt: now + 8, quietUntil: 0, said: 0, opened: false }; }
         this.sitTo = 1;
         // From the couch she may say things, or choose to say nothing: a card of them is kept open for her while she lies
         // there (it is put up again a little after each answer; choosing the silence keeps it away for a while).
         const S = this.session, free = !talking && now > (this.replyUntil ?? 0) + 2.5 && now > S.quietUntil;
+        this.bubble.pinned = true;      // (it sits behind her head: what it says is shown where she can read it)
+        // (first, once it is in its chair, one line to open with; the card comes after she has had time to read it)
+        if (this.sitK > 0.85 && !S.opened) { S.opened = true; this.say(this.next('sessionOpen', this.L.sessionOpen ?? ['Let us begin.']), 'neutral'); S.cardAt = now + 6.5; this.nextIdle = now + 40; }
         if (this.sitK > 0.85 && !H.talk.robot && free && now > S.cardAt) { H.talk.open(this, this.couchCard()); S.cardAt = now + 9; }
         // and now and then, if she has said nothing for a good while, one small thing from the chair
         if (this.sitK > 0.85 && now > S.next && !talking && !this.bubble.talking(now)) { const l = this.L.session ?? []; if (l.length) this.say(l[S.i++ % l.length], 'neutral'); S.next = now + 38 + Math.random() * 20; this.nextIdle = now + 40; }
-      } else if (this.session && !lying) { this.session = null; this.sitTo = 0; if (talking) H.talk.close(); if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
+      } else if (this.session && !lying) { this.session = null; this.bubble.pinned = false; this.sitTo = 0; if (talking) H.talk.close(); if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
       else if (!lying) this.sitTo = 0;
     }
     // She has come up to its counter (the desk, the bar) while it is off on its rounds: it leaves what it is doing, comes

@@ -29,7 +29,9 @@ export const LINES = {
     served: ['Sometimes a glass of water is only a glass of water.'],
     doing: { ponder: ['I wonder what you would make of that.', 'Hm. Not nothing.'], note: ['*writes "resistant to bookmarks"*', '*writes, crosses out, writes the same thing again*'], readNotes: ['Last week you said the opposite. Both are true.'] },
     // she lies on the couch: it takes its chair behind her head, and now and then says one of these, in order
-    session: ['Begin anywhere. People always do.', 'Mm.', 'And what comes to mind about that?', '*the pen moves; it does not say what it wrote*', 'Say more.', 'You went quiet just then. Where did you go?',
+    // the one line it opens with, once it has sat down behind her (then the card of things she may say)
+    sessionOpen: ['Let us begin. Anywhere will do.', 'There. Now. Whatever comes to mind.', 'Good. We have the time. Start wherever you are.', 'Comfortable? Then let us begin.', 'Take a moment. Then say the first thing, not the best thing.', 'So. Here we are. Go on.'],
+    session: ['Mm.', 'And what comes to mind about that?', '*the pen moves; it does not say what it wrote*', 'Say more.', 'You went quiet just then. Where did you go?',
       'I notice you are looking at the window. Most people do. It is why the couch points that way.', 'Mm-hm. And before that?', 'There is no hurry. The hour is long and mostly imaginary.',
       'And how was it, being brought a drink by a bell?', 'You may say the thing you were not going to say.', '*a long, comfortable silence, professionally maintained*', 'Mm. That is not nothing.'],
     // from the couch: things she may say (three at a time, turning over), and what it answers
