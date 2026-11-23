@@ -135,6 +135,7 @@ const help = makeCard('help', 'How to get about', `
       ${row(k('E') + ' or click', 'use whatever you are looking at <small>(a line on screen says what)</small>')}
       ${row(k('F'), 'carry a lantern')}
       ${row(k('G'), 'ring for Ding, from anywhere')}
+      ${row(k('T'), 'yes to a towel, when Terry offers one')}
       ${row(k('[ ]'), 'earlier or later in the day')}
       ${row(k('M') + ' ' + k('I'), 'sound on or off; about this place')}
     </dl></section>

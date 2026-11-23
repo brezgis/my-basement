@@ -147,6 +147,8 @@ class Staffer extends Polite {
     const wrap = t => ({ ...t, then: (ctx, me) => { if (me.session) { me.session.said = (me.session.said ?? 0) + 3; me.session.next = me.H.now + 30; } t.then?.(ctx, me); }, next: t.next?.map(x => ({ ...x })) });
     return this.topics([...three.map(wrap), quiet]);
   }
+  // She closed the card herself (the way out that every card has): a session or a tasting does not put it straight back
+  cardClosed() { const now = this.H.now; if (this.session) { this.session.quietUntil = now + 70; this.session.next = now + 30; } if (this.tasting) this.tasting.cardAt = now + 150; this.replyUntil = Math.min(this.replyUntil ?? 0, now); }
   dialogue() {
     const all = this.L.topics ?? [], n = all.length, k = (this.asked ?? 0) % Math.max(1, n);
     const list = n <= 4 ? all : [...all.slice(0, 2), ...[0, 1].map(i => all[2 + ((k + i) % (n - 2))])];
@@ -211,9 +213,11 @@ class Staffer extends Polite {
   // ---- a word with a colleague it meets ----------------------------------------------------------------------
   colleague() {
     const H = this.H; if (this.fixed || H.now - (H.lastChat ?? -40) < 45) return null;
-    const ok = o => o !== this && !o.fixed && !o.chatting && !o.sitting && !o.busyWithOrder() && o.taskName === 'day' && ['home', 'pause', 'fuss'].includes(o.state) && Math.abs(o.y - this.y) < 2 && Math.hypot(o.x - this.x, o.z - this.z) < 30 && this.plan.inBoxes(o.x, o.z) && H.talk.robot !== o && CHAT.some(c => (c[0] === this.id && c[1] === o.id));
+    const ok = o => o !== this && !o.fixed && !o.chatting && !o.sitting && !o.busyWithOrder() && o.taskName === 'day' && ['home', 'pause', 'fuss'].includes(o.state) && Math.abs(o.y - this.y) < 2 && Math.hypot(o.x - this.x, o.z - this.z) < 30 && this.plan.inBoxes(o.x, o.z) && this.inOwnRooms(o.x, o.z) && H.talk.robot !== o && CHAT.some(c => (c[0] === this.id && c[1] === o.id));
     return H.awake?.find(ok) ?? null;
   }
+  // (a word with a colleague is had in its own rooms: it does not cross the building for one, nor turn up at another's counter)
+  inOwnRooms(x, z) { const own = this.spec.own ?? [this.spec.room]; return this.H.ctx.house.rooms.some(r => own.includes(r.name) && Math.abs((r.floor ?? r.y0) - this.y) < 3 && x >= r.x0 && x <= r.x1 && z >= r.z0 && z <= r.z1); }
   *chatWith(o) {
     const H = this.H, W = this.W; H.lastChat = H.now;
     const lines = pick(CHAT.filter(c => c[0] === this.id && c[1] === o.id))[2];
@@ -456,6 +460,33 @@ class Staffer extends Polite {
         })(), true);
       }
     }
+    // The tasting (the Cave): she sits down at a table in its room, and it comes to her, says one thing, and then keeps a
+    // card open for her to choose a cheese or a wine; each is fetched from the racks and brought to her, and the card
+    // comes back when she has it, for the next, until she gets up or says she has had enough.
+    if (sp.tasting && !this.fixed) {
+      const sat = v.present && !!v.seated && inRoom;
+      if (sat && !this.tasting && !this.busyWithOrder() && !talking) {
+        this.tasting = { cardAt: 1e12 }; const me = this;
+        this.run('toTable', (function* () {
+          me.state = 'go'; const g = me.standNear(Math.max(3.6, me.keep + 1.4)); if (g) yield* me.travel(g.x, g.z, { patience: 20 });
+          yield* me.turn(Math.atan2(v.x - me.x, v.z - me.z), 0.7);
+          me.say(pick(me.L.tastingOffer ?? ['Would you care to taste?']), 'happy', 6); me.replyUntil = me.W.now + 4.5; if (me.tasting) me.tasting.cardAt = me.W.now + 4;
+          const t0 = me.W.now; while (me.tasting && me.W.visitor.seated && me.W.now - t0 < 900 && !me.queue.length) { me.m.v = 0; me.m.faceTo(v.x, v.z, me.W.dt * 1.5); me.state = 'home'; yield; }
+        })(), true);
+      }
+      if (this.tasting && sat && !H.talk.robot && !this.busyWithOrder() && !this.withdrawing && now > this.tasting.cardAt && now > (this.replyUntil ?? 0) + 1.5 && Math.hypot(v.x - this.x, v.z - this.z) < 11) { H.talk.open(this, this.topics(this.L.tasting ?? [])); this.tasting.cardAt = now + 10; }
+      if (this.tasting && !sat) { this.tasting = null; if (talking) H.talk.close(); }
+    }
+    // Towels: she comes out of the water (the warm pool, the edge pool, the tub) with this one about, and it offers a
+    // towel in a line of speech, not a card; T within half a minute and it brings her one.
+    if (sp.towels && !this.fixed) {
+      const lab = (() => { try { return H.ctx.walker?.seated?.label ?? ''; } catch { return ''; } })();
+      const wet = v.present && ((v.y < this.y - 1.2 && v.y > this.y - 7) || /tub|pool|soak|bath/i.test(lab));
+      if (!wet && this.wasWet && v.present && dv < 48 && this.plan.inBoxes(v.x, v.z) && !this.busyWithOrder() && now - (this.towelAt ?? -1e9) > 45) {
+        this.towelAt = now; this.towelOffer = now + 30; this.say(pick(this.L.towelOffer ?? ['Towel?']), 'happy', 7); this.nextIdle = now + 30; H.ctx.flash?.('T: yes, a towel');
+      }
+      this.wasWet = wet;
+    }
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
     const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7, far: 9, atAWalk: true });
     const errand = this.busyWithOrder() || this.withdrawing || (this.taskName === 'toCounter' && this.state === 'go');
@@ -486,7 +517,11 @@ class Staffer extends Polite {
     // behind its counter it floats higher, so that it is seen over it (cast.js `counter`)
     { const c = sp.counterW, inside = c && !seated && Math.hypot(m.x - c.x, m.z - c.z) < c.r; this.lift = (this.lift ?? 0) + ((inside ? Math.max(0, c.top - 0.2 - (b.hover + b.bottom)) : 0) - (this.lift ?? 0)) * Math.min(1, dt * 2.5); }
     const t = now + this.phase, moving = m.v > 0.25, speak = this.bubble.talking(now), act = talking || this.aside.phase || (hold && !seated) ? null : this.act;
-    b.root.position.set(m.x + (q ? (q.x - m.x) * sm : 0), m.y, m.z + (q ? (q.z - m.z) * sm : 0)); b.root.rotation.y = m.yaw;
+    // (the body is drawn a breath behind where it is: pressed by her, or nudged aside in small steps, it gives way in one
+    // smooth movement, not a shudder)
+    { const D = this.drawn ??= { x: m.x, z: m.z, yaw: m.yaw }, far = Math.hypot(m.x - D.x, m.z - D.z) > 2.5, kS = far ? 1 : 1 - Math.exp(-dt * 11);
+      D.x += (m.x - D.x) * kS; D.z += (m.z - D.z) * kS; let dy = m.yaw - D.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); D.yaw += dy * (far ? 1 : 1 - Math.exp(-dt * 14));
+      b.root.position.set(D.x + (q ? (q.x - D.x) * sm : 0), m.y, D.z + (q ? (q.z - D.z) * sm : 0)); b.root.rotation.y = D.yaw; }
     const P = act && act !== 'idle' ? pose(act, this.actT, b.D) : null, w = 1 - at.w * (at.yaw !== null ? 0.7 : 0.25);
     const head = hold && seated ? Math.max(-0.6, Math.min(0.6, at.rel)) : hold ? 0 : at.head;
     const Lf = this.life.step(now, dt, { w: at.w, eye: at.eye, work: P ? (P.ly ?? 0) : null, moveLook: moving && at.w < 0.5 && m.path?.[m.i] ? Math.atan2(Math.sin(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw), Math.cos(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw)) * 1.5 : null });
@@ -537,7 +572,7 @@ export function hireStaff(ctx, plans, ask = '1') {
     // Whoever brings things can follow her into any room on its own floor (its rounds keep to its own rooms: `roam` in
     // cast.js says where its posts may be; this only widens the floor it can walk)
     const floorOf = q => q.floor ?? q.y0, sameFloor = c.serve && !c.stays ? [...new Set(ctx.house.rooms.filter(q => q.site === r.world.site && Math.abs(floorOf(q) - floorOf(r.world)) < 1.5 && !/Stair|Laundry|Linen|Old Cave/.test(q.name)).map(q => q.name))] : [];
-    c = { ...c, roam: [...new Set([...(c.roam ?? []), ...sameFloor])].filter(n => n !== c.room) };
+    c = { ...c, own: [c.room, ...(c.roam ?? [])], roam: [...new Set([...(c.roam ?? []), ...sameFloor])].filter(n => n !== c.room) };      // (own: where it goes on its own account: its rounds, a word with a colleague)
     return { ...c, court, counterW, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
       posts: [...(c.posts ?? []), ...(c.outdoor ?? [])].filter(p => !p.room || P.rooms[p.room] || (console.warn(`staff: ${c.id} has a post in "${p.room}", which is not in the building`), false)).map(p => ({ ...p, at: xz(p.at), faces: p.faces ? xz(p.faces) : null })),
       serve: sv ? { ...sv, machine: sv.machine ? xz(sv.machine) : null, faces: sv.faces ? xz(sv.faces) : null, pickup: sv.pickup ? { xz: xz(sv.pickup), y: y + sv.pickup[2] } : null, menu: Object.fromEntries(Object.entries(sv.menu ?? {}).map(([k, it]) => [k, it.at ? { ...it, at: xz(it.at) } : it])) } : undefined };
@@ -589,6 +624,12 @@ export function hireStaff(ctx, plans, ask = '1') {
     const who = [H.staff.ding, H.staff.hush, ...staff.filter(s => s.spec.brings)].find(s => s && can(s));
     if (who && H.ring({ by: who.id, quiet: who.quiet })) ctx.flash?.(who.id === 'ding' ? 'You ring for Ding.' : `You ring. ${who.name} is coming.`);
     else ctx.flash?.('You ring. Nobody can get to you here.');
+  });
+  // T: yes to a towel just offered (Terry, as you come out of the water)
+  addEventListener('keydown', e => {
+    if (e.code !== 'KeyT' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || ctx.mode !== 'walk' || /INPUT|TEXTAREA/.test(document.activeElement?.tagName ?? '')) return;
+    const who = staff.find(s => s.spec.towels && (s.towelOffer ?? 0) > W.now && !s.busyWithOrder()); if (!who) return;
+    who.towelOffer = 0; who.say(pick(who.L.towelYes ?? ['Coming!']), 'happy'); who.queue.push({ kind: 'bring', name: 'towel' });
   });
   // the nail corner's bell-push (furnish/banya_nails_fx.js): Bijou calls it out, the runner brings it and sets it on the throne's table
   if (!lineup) import('./furnish/banya_nails_fx.js').then(({ NAILS }) => {

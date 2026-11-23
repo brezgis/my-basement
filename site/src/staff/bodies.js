@@ -279,5 +279,14 @@ export function buildCarried(kind) {
       ...[0, 1, 2, 3, 4, 5, 6].map(i => paint(T(sph(0.032, 8, 6), { p: [0.06 + (i % 3) * 0.055, 0.05 + (i > 4 ? 0.04 : 0), 0.1 + Math.floor(i / 3) * 0.05] }), i % 2 ? '#5a2440' : '#6d2c4c')),
       paint(T(box(0.012, 0.008, 0.2), { p: [-0.1, 0.03, 0.16], r: [0, 0.5, 0] }), STEEL)]);
   }
+  // one cheese on a small slate, for the tasting: a wedge of hard cheese, a piece of blue, a slice of a washed rind, a goat's round
+  else if (['comte', 'blue', 'washed', 'chevre'].includes(kind)) {
+    const plate = paint(T(cyl(0.2, 0.2, 0.02, 6), { p: [0, 0.01, 0] }), SLATE), knife = paint(T(box(0.012, 0.008, 0.17), { p: [0.13, 0.026, 0.02], r: [0, 0.5, 0] }), STEEL);
+    const piece = kind === 'comte' ? paint(T(new THREE.CylinderGeometry(0.2, 0.2, 0.085, 10, 1, false, 0, 0.75), { p: [-0.1, 0.064, -0.05] }), p => (Math.hypot(p.x + 0.1, p.z + 0.05) > 0.186 ? '#a8824a' : p.y > 0.1 ? '#f2dc8c' : '#ecd27e'))
+      : kind === 'blue' ? paint(T(slab(0.17, 0.09, 0.13), { p: [-0.02, 0.066, -0.01], r: [0, 0.4, 0] }), p => (Math.sin(p.x * 95) * Math.sin(p.z * 75 + p.y * 55) > 0.45 ? '#55788a' : '#f0ead8'))
+      : kind === 'washed' ? paint(T(new THREE.CylinderGeometry(0.13, 0.135, 0.06, 18, 1, false, 0.5, 5.0), { p: [-0.02, 0.051, 0] }), p => (Math.hypot(p.x + 0.02, p.z) > 0.118 || p.y > 0.079 ? '#d98a4a' : '#f3e2a8'))
+      : paint(T(cyl(0.075, 0.08, 0.07, 16), { p: [-0.02, 0.056, 0] }), p => (p.y > 0.088 ? '#f7f3e8' : Math.sin(p.x * 60 + p.z * 40) > 0.6 ? '#b9b4a6' : '#efeadc'));
+    add([plate, piece, knife]);
+  }
   return g;
 }

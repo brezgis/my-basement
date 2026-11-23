@@ -160,6 +160,13 @@ export default function (b) {
     // The bed ends at the lowest riser to avoid a coplanar sheet under the stairs.
     const bottom = coping.map((p, i) => row(p, brink[i], 0.5));
     flat(BASIN_TILE, [...brink, ...bottom.slice(1, -1).reverse()], bed); flat('water', basin, level);      // (the warm pool's water; its ripples are laid over it in grounds.js)
+    // In this water too you float, as in the warm pool indoors (below): its bed, for the walker only, rides up so that
+    // the eye is the same height over the water as there, and bobs.
+    b.later(ctx => { const pts = brink.map(([X, Y]) => b.world(X, Y, 0)), cps = coping.map(([X, Y]) => b.world(X, Y, 0)), all = [...pts, ...cps];
+      const x0 = Math.min(...all.map(q => q.x)) - 0.5, x1 = Math.max(...all.map(q => q.x)) + 0.5, z0 = Math.min(...all.map(q => q.z)) - 0.5, z1 = Math.max(...all.map(q => q.z)) + 0.5, yB = b.world(0, 0, bed).y, yW = b.world(0, 0, level).y;
+      const beds = (ctx.house?.surfaces ?? []).filter(q => !q.ramp && Math.abs(q.h - yB) < 0.06 && q.x0 < x1 && q.x1 > x0 && q.z0 < z1 && q.z1 > z0);
+      const rise = Math.max(0, (yW - yB) - 2.4);
+      ctx.animated.push(t => { const lift = rise + 0.13 * Math.sin(t * 1.5) + 0.05 * Math.sin(t * 2.7 + 1); for (const q of beds) q.h = yB + lift; }); });
     for (let i = 0; i < brink.length-1; i++) {
       const a = brink[i], d = brink[i+1], c = coping[i], e = coping[i+1];
       face('pool_glass', a, d, bed, parapetTop);
@@ -514,7 +521,7 @@ export default function (b) {
     // the basin's floor to just under the room's, so they stop someone in the water and nobody on the walkways
     for (const [a0, a1, c0, c1] of [[X0 - 0.6, X0 - 0.05, Y0 - 0.6, Y1 + 0.6], [X1 + 0.05, X1 + 0.6, Y0 - 0.6, Y1 + 0.6], [X0 - 0.6, X1 + 0.6, Y0 - 0.6, Y0 - 0.05], [X0 - 0.6, X1 + 0.6, Y1 + 0.05, Y1 + 0.6]]) b.block(a0, a1, c0, c1, hb - 1, F1 - 0.05);
     b.surface(X0 - 0.6, X1 + 0.6, Y0 - 0.6, Y1 + 0.6, hb - 0.02);
-    flat('water', rect(X0, X1, Y0, Y1), F1 - 0.45);
+    flat('water', rect(X0 - 0.06, X1 + 0.06, Y0 - 0.06, Y1 + 0.06), F1 - 0.45);      // (a little into the basin's walls: ending exactly on their faces, the water's edge flickered against the tile)
     // In the water you float: the basin's floor (for the walker only) rides nine inches up and bobs, so the eye is
     // just over the water and moves with it. And nobody leaves the water except up the steps: anyone below the room's
     // floor is kept inside the basin's rectangle, whatever they jumped at (from the steps one could slip sideways

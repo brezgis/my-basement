@@ -150,6 +150,27 @@ export const LINES = {
     waiting: ['*clears his throat, softly, so as not to disturb the %s*', 'The %s is at temperature now. In four minutes it will be an opinion.'],
     kept: ['*carries the %s back to the Cave, murmuring apologies to it*'],
     doing: { probe: ['*the iron goes in, turns, comes out; he reads it like a letter*'], taste: ['Blackcurrant. Pencil. A wet stone. Somebody else\'s garden.'], pour: ['*pours to the widest part of the glass and not a drop above*'] },
+    // she has sat down in the Cave: he comes to her table and says ONE of these; then the card below is hers
+    tastingOffer: ['*arrives at your table without a sound* You sat. Good. Would you care to taste? I have opened something, and cut something.',
+      '*quietly, at your elbow* A tasting? One cheese at a time, one glass at a time. Choose, and I bring it.',
+      '*sets a folded napkin by your hand* The table is yours. Shall we taste? Say what, and I fetch it from the racks.'],
+    tasting: [
+      { q: 'A cheese.', a: '*a small bow* Which? I will tell you nothing until you have tasted it.', expr: 'happy',
+        next: [
+          { q: 'The Comté.', a: '*whispers* Thirty months. I wake it gently. One moment.', bring: 'piece of Comté' },
+          { q: 'The blue.', a: 'The one that argues. Good. One moment.', bring: 'piece of the blue' },
+          { q: 'The washed rind.', a: '*lowers voice further* Bold. Breathe through the mouth until it is on the tongue.', bring: 'slice of the washed rind' },
+          { q: 'The goat.', a: 'The youngest in the room. It is still surprised to be cheese.', bring: 'round of goat cheese' },
+        ] },
+      { q: 'A wine.', a: 'Three are open. I keep to the Jura, where the Comté is from; they understand each other.', expr: 'happy',
+        next: [
+          { q: 'The red.', a: 'Poulsard. Pale as a rosé, and not to be underestimated. One moment.', bring: 'glass of the red' },
+          { q: 'The white.', a: 'Cold, bright, a little salt in it. One moment.', bring: 'glass of the white' },
+          { q: 'The vin jaune.', a: '*closes his eyes briefly* Yes. With the Comté, if you have any left. One moment.', bring: 'glass of vin jaune' },
+        ] },
+      { q: 'You choose for me.', a: 'Then the Comté, and the vin jaune beside it. They grew up on the same hills. Taste the cheese first, then the wine, then the cheese again; it will have changed.', expr: 'wink', bring: 'piece of Comté', then: (ctx, me) => me.queue.push({ kind: 'bring', name: 'glass of vin jaune' }) },
+      { q: 'Nothing more, thank you.', a: '*nods; withdraws a pace; remains available, like a good rind*', expr: 'neutral', then: (ctx, me) => { if (me.tasting) me.tasting.cardAt = me.H.now + 150; } },
+    ],
     booked: { tasting: ['*quietly* Cosima said you would come. I have opened something. Sit. We begin with the mild and end with the one that argues.', 'Ah. The tasting. I laid the table an hour ago and have been pretending not to wait.'] },
     topics: [
       { q: 'A tasting, please.', a: '*brightens, quietly* Sit, at the table for two. Three cheeses, mild to strong, and a glass that agrees with them. I will bring it. Do not help.', bring: 'cheese board', expr: 'happy' },
@@ -197,6 +218,9 @@ export const LINES = {
 
   // ---------------------------------------------------------------------------------------------------------------
   terry: {
+    // said (a bubble, not a card) as you come out of the water; T within half a minute and she brings one
+    towelOffer: ['Oh! You are dripping. Towel, darling? I have a warm one right here.', 'Out you come! Stay there, do not drip: shall I bring you a towel?', 'A wet guest! My favourite kind. Towel?', 'There you are. Warm towel? Say the word.'],
+    towelYes: ['YES. Coming, darling!', 'One warm towel! Do not move!', 'I knew it. I was already holding one.'],
     greet: ['Oh! You are dry. We can fix that. And then we can fix that!', 'Welcome to the water, darling! It is thirty-four degrees and it has been thinking about you.', 'Towel? Robe? Both? I have so many. It is honestly a problem.'],
     idle: ['*folds a towel in thirds, then in thirds again, then holds it up to be admired*', '*draws the net across the water after a single leaf, with enormous tenderness*', 'One leaf. ONE. I saw you.', '*squares the stack; steps back; squares it again*', 'The water is perfect. I asked it.'],
     bye: ['Do not drip on Cosima\'s floor! She can hear it!', 'Come back wet, darling! I will be ready!'],
@@ -353,7 +377,7 @@ for (const [id, moves] of Object.entries(BELONGS)) {
 
 // What the one who answers a bell says on the way, and on arriving with nothing ordered
 export const RANG = { coming: ['Ding! Coming!', 'DING! That was a bell! That was a REAL one!', 'Ding! Do not move!'], here: ['You rang! You actually rang! What can I bring?', 'Ding! Here! What do you need? Say anything!'],
-  order: ['Ding! One %s, coming! Seven minutes!', 'A %s! Rung for! Seven minutes!'], busy: ['Ding! One moment! I am carrying!'] };
+  order: ['Ding! One %s, coming! Seven minutes!', 'One %s! Rung for! Seven minutes!'], busy: ['Ding! One moment! I am carrying!'] };
 
 // What the concierge can arrange: who is ready for you when you get there, and in which room
 export const BOOKINGS = {

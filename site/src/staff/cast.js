@@ -53,6 +53,11 @@ const BAR = {
 const CELLAR = {
   'glass of the red': { vessel: 'wine', liquid: 0x5a1424, make: 'pour', note: 'It was opened an hour ago for exactly this.' },
   'glass of the white': { vessel: 'wine', liquid: 0xe9d98a, make: 'pour' },
+  'glass of vin jaune': { vessel: 'wine', liquid: 0xd9a520, make: 'pour', note: 'Six years under its veil of yeast in a Jura cellar. Walnuts, curry, patience.' },
+  'piece of Comté': { carried: 'comte', food: true, bites: 2, make: 'probe', note: 'Thirty months. Hay, hazelnut, a little crunch where the time went in.' },
+  'piece of the blue': { carried: 'blue', food: true, bites: 2, make: 'probe', note: 'Salt, cream, and a small argument at the end.' },
+  'slice of the washed rind': { carried: 'washed', food: true, bites: 2, make: 'probe', note: 'It smells of a barnyard and tastes of butter. Trust the taste.' },
+  'round of goat cheese': { carried: 'chevre', food: true, bites: 2, make: 'probe', note: 'Fresh, chalky at the heart, lemon at the edge.' },
   'cheese board': { carried: 'cheese', food: true, bites: 4, make: 'probe', note: 'The Comté was thirty months in the making. You took four minutes. Both are correct.' },
 };
 const SAMOVAR = {
@@ -83,7 +88,7 @@ export const CAST = [
   { id: 'cosima', name: 'Cosima', role: 'the concierge', rest: 'sass', speed: 1.9, chirp: [72, 76, 79],
     look: { shape: 'tall', scale: 1.06, hover: 3.5, colour: '#14433f', belly: CREAM, buttons: BRASS, collar: BRASS, chain: 'key', hat: 'pillbox', hatColour: '#14433f', hatTrim: BRASS,
       lashes: true, brows: -0.4, eyeW: 34, eyeH: 24, eyeR: 9, gap: 46, eye: '#ffe2b0', ring: 0xffd27a, tools: [['ledger'], ['handbell', 'flute', 'robe']], tray: 'brass' },
-    room: 'The Hall', roam: ['The Listening Room'], brings: true, counter: { at: [18.6, 38.0], r: 3.6, top: 3.55 },
+    room: 'The Hall', roam: [], brings: true, counter: { at: [18.6, 38.0], r: 3.6, top: 3.55 },      // (she keeps to the Hall on her own account: she follows a guest elsewhere only with something for her)
     home: [18.6, 38.0], faces: [18.6, 30], homeActs: ['ledger', 'ledger', 'straighten', 'polish', 'rest'],
     posts: [
       { at: [18.6, 38.4], faces: [18.6, 40.2], acts: ['restock', 'straighten'], w: 1 },        // the key niche
@@ -114,7 +119,7 @@ export const CAST = [
     look: { lathe: [[0, -0.38], [0.5, -0.38], [0.6, -0.32], [0.64, -0.18], [0.64, 0.2], [0.6, 0.33], [0.5, 0.4], [0, 0.4]], hover: 3.3, colour: '#d8c594', colour2: '#ece2c2', pattern: 'rind', shirt: false,
       faceY: 0.03, faceH: 0.19, faceW: 0.62, chain: 'tastevin', hat: 'beret', hatColour: '#1f1b1d', capColour: '#b9a36e', handY: -0.12,
       moustache: '#ffe9c0', eyeW: 26, eyeH: 26, eyeR: 13, gap: 50, eye: '#ffe9c0', ring: 0xfff1b8, glove: '#ece2c2', tools: [['wineglass'], ['iron', 'bottle']], tray: 'slate' },
-    room: 'The Cave', roam: ['The Listening Room'], brings: true,
+    room: 'The Cave', roam: ['The Listening Room'], brings: true, tasting: true,      // (sit down in the Cave and he comes to your table and offers a tasting)
     home: [8.5, 60.5], faces: [5, 61.5], homeActs: ['probe', 'taste', 'straighten', 'rest'],
     posts: [
       { at: [3.6, 59.5], faces: [3.6, 62], acts: ['probe', 'straighten'], w: 1.2 },             // the Comté rack
@@ -144,7 +149,7 @@ export const CAST = [
   { id: 'terry', name: 'Terry', role: 'the pool', rest: 'happy', speed: 1.9, chirp: [74, 77, 81],
     look: { shape: 'drop', hover: 3.4, colour: '#9cc5bd', belly: LINEN, scarf: LINEN, hat: 'turban', hatColour: LINEN, hatTrim: '#e2dccd', trim: '#d9cbb2',
       lashes: true, blush: true, eyeW: 38, eyeH: 44, gap: 44, eye: '#e8fbff', ring: 0x8fe3ff, tools: [[], ['towels', 'net', 'carafe', 'towel']], tray: 'oak' },
-    room: 'The Pool', roam: [], brings: true,
+    room: 'The Pool', roam: [], brings: true, towels: true,      // (when you come out of the warm pool, the edge pool or the tub and she is about, she offers a towel: T takes her up on it)
     home: [73.6, 69.2], faces: [76.7, 69.2], homeActs: ['fold', 'stack', 'roll', 'fold'],
     posts: [
       { at: [46.5, 69.0], faces: [44, 69.3], acts: ['water', 'straighten'], w: 0.9 },          // the robes' bench and the carafe

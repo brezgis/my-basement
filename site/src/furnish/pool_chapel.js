@@ -366,7 +366,7 @@ export default function (f) {
     const Wp = (X, Y, h) => f.world(X, Y, h);
     flames(ctx, Wp, poolFlames, Wp(60, 68, F + 5));
     flames(ctx, Wp, chapelFlames, Wp(OCULUS.X, OCULUS.Y, F + 6));
-    poolWater(ctx, Wp, [BASIN.X0, BASIN.X1, BASIN.Y0, BASIN.Y1], F - 0.42, poolLamps);
+    poolWater(ctx, Wp, [BASIN.X0 - 0.05, BASIN.X1 + 0.05, BASIN.Y0 - 0.05, BASIN.Y1 + 0.05], F - 0.42, poolLamps);      // (as the water under it: a little into the walls)
     steam(ctx, Wp, [BASIN.X0, BASIN.X1, BASIN.Y0, BASIN.Y1], F - 0.45, 480, { tall: [73.5, 90] });
     wash(ctx, Wp, poolWash, Wp(60, 68, F + 5)); wash(ctx, Wp, chapelWash, Wp(OCULUS.X, OCULUS.Y, F + 6));
     glassBoxes(ctx, Wp, panes, CH);

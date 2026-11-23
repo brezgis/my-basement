@@ -15,6 +15,8 @@ const CSS = `
   box-shadow: inset 0 1px 0 rgba(255, 240, 210, .22), inset 0 -2px 0 rgba(0, 0, 0, .45); }
 #staff-talk .opt.hi { opacity: 1; background: rgba(122, 75, 42, .12); }
 #staff-talk .opt .bar { position: absolute; left: 36px; right: 6px; bottom: 1px; height: 1.5px; background: var(--teak, #7a4b2a); transform-origin: left; transform: scaleX(0); }
+#staff-talk .opt.exit { opacity: .62; margin-top: 3px; border-top: 1px solid rgba(122, 75, 42, .18); padding-top: 6px; }
+#staff-talk .opt.exit b { top: 6px; }
 #staff-talk .hint { font-size: 12px; color: var(--ink-soft, #5b4636); margin-top: 5px; font-style: italic; }
 `;
 const PICK_AFTER = 1.3;          // seconds after the last E before the highlighted line is said
@@ -24,12 +26,13 @@ export function makeTalk(H, headless) {
   if (!headless && typeof document !== 'undefined') {
     const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
     el = document.createElement('div'); el.id = 'staff-talk'; document.body.appendChild(el);
-    el.addEventListener('click', e => { const o = e.target.closest('.opt'); if (o) choose(Number(o.dataset.i)); });
+    el.addEventListener('click', e => { const o = e.target.closest('.opt'); if (!o) return; if (o.dataset.i === 'x') leave(); else choose(Number(o.dataset.i)); });
     addEventListener('keydown', e => {
       if (!S.robot) return;
       const n = { Digit1: 0, Digit2: 1, Digit3: 2, Digit4: 3, Numpad1: 0, Numpad2: 1, Numpad3: 2, Numpad4: 3 }[e.code];
       if (n !== undefined && n < S.opts.length) { e.stopImmediatePropagation(); choose(n); }
-      if (e.code === 'Escape') close();
+      if (e.code === 'Digit0' || e.code === 'Numpad0' || e.code === 'KeyX') { e.stopImmediatePropagation(); leave(); }      // the way out, on every card
+      if (e.code === 'Escape') leave();
     }, true);
   }
   const S = { robot: null, opts: [], idx: 0, lastE: 0, pending: false, since: 0, drawn: '' };
@@ -41,13 +44,16 @@ export function makeTalk(H, headless) {
     if (key !== S.drawn) {
       S.drawn = key;
       el.innerHTML = `<div class="who">${S.robot.spec.name}${S.robot.spec.field ? ', ' + S.robot.spec.field : ''}</div>` + S.opts.map((o, i) => `<div class="opt${i === S.idx ? ' hi' : ''}" data-i="${i}"><b>${i + 1}</b>${o.text}<span class="bar"></span></div>`).join('') +
-        `<div class="hint">1–${S.opts.length} to choose · E for the next line</div>`;
+        `<div class="opt exit" data-i="x"><b>0</b><i>Nothing more.</i></div>` +
+        `<div class="hint">1–${S.opts.length} to choose · E for the next line · 0 to leave it</div>`;
     }
     el.classList.add('on');
     const bar = el.querySelector('.opt.hi .bar');
     if (bar) bar.style.transform = `scaleX(${S.pending ? Math.min(1, (H.now - S.lastE) / PICK_AFTER).toFixed(3) : 0})`;
   }
   function open(robot, opts) { S.robot = robot; S.opts = opts.slice(0, 4); S.idx = 0; S.pending = false; S.since = H.now; render(); }
+  // Every card has a way out (Anna): a last line, "Nothing more", which closes it and tells the robot she chose to
+  function leave() { const r = S.robot; close(); r?.cardClosed?.(); }
   function close() { S.robot = null; S.opts = []; S.pending = false; render(); }
   // E on a robot: open its card, or move down it
   function press(robot) {
