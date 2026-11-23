@@ -564,7 +564,12 @@ export default function (b) {
   b.wall({ ax: 'X', c: TW1 + 0.5, a: HATCH.X0 - 1, b: BX0, t: 1, h0: -1, h1: M - 0.02, fl: L1, neg: WALL, pos: WALL, base: false, wood: OAK, opens: [{ kind: 'door', lined: true, at: LAU.X0 + 5.2, w: 3, head: 7, hinge: 'b', swing: 'pos', style: 'half', case: 'plain', inside: true, threshold: OAK }] });      // (the laundry's door, off the first landing)
   b.wall({ ax: 'Y', c: HATCH.X0 - 0.5, a: TW0, b: TW1, t: 1, h0: L1, h1: M - 0.02, neg: ROCKM, pos: WALL, base: false });
   // The metal hatch and the boarded soffit meet at the same cross section.
-  { const X0 = HATCH.X0 - 1, X1 = HATCH.X1, hi = M + 6.2, lo = M + 0.5;
+  // THE SAME BULKHEAD AS AT THE HOUSE (my_house garden/cellar.js), seen from underneath: there the leaves are 5.9 ft
+  // long and 4.6 wide, low (0.75 ft over the lawn) at the end you step in by and rising to 3 ft at the house's wall,
+  // which you go down toward. So here: low over the head of the stair, rising eastward the way the stair descends,
+  // to the wall's line 5.45 ft on; beyond that the boarded soffit of the tunnel under the house. (It was 17 ft long,
+  // the full width of the tunnel, and sloped the other way: down with the stair.) `hi` is its height at X0, `lo` at X1.
+  { const X0 = xA0 - 0.2, X1 = xA0 + 5.25, hi = M + 0.75, lo = M + 3.0, HWD = 2.3;
     const left = TW0 - 0.36, right = TW1 + 0.36;
     const profile = [[X1, lo], [X1 + 7.7, L1 + HEAD], [xB0, L1 + HEAD],
       [xB1, L2 + HEAD], [xC0, L2 + HEAD], [BX0 + TO - 0.3, F1 + HEAD]];      // (stopped inside the hall's wall: ended on its face, the boards' end flickered against the stone over the hall's doorway)
@@ -589,7 +594,7 @@ export default function (b) {
     // An unbroken flashing behind the leaves seals the central joint and their four edges.
     plate(frame, X0 - 0.6, X1 + 0.05, TW0 - 1, TW1 + 1, 0.10, 0.5);
     for (const side of [-1, 1]) {
-      const outer = side < 0 ? TW0 : TW1, center = YC + side * 0.026;
+      const outer = YC + side * HWD, center = YC + side * 0.026;
       const edge = outer - side * 0.10, bounds = [edge, center].sort((a, b) => a - b);
       plate(sheet, X0 + 0.12, X1 - 0.12, ...bounds, 0, 0.10);
       for (const fraction of [0.20, 0.51, 0.82]) {
@@ -600,7 +605,7 @@ export default function (b) {
         for (const Y of [outer - side * 0.65, tip + side * 0.13])
           b.cyl(hardware, X, Y, height(X) - 0.087, height(X) - 0.054, 0.043, 0.045, 6);
       }
-      const x = X0 + 6.7, y = YC + side * 0.48;
+      const x = X0 + 2.3, y = YC + side * 0.48;
       for (const end of [x, x + 0.68]) {
         plate(frame, end - 0.1, end + 0.1, y - 0.12, y + 0.12, -0.055, 0);
         rod(end, y, -0.055, end, y, -0.29, 0.043);
@@ -609,24 +614,20 @@ export default function (b) {
     }
     // Return the oak lining directly to the masonry and close the end above the existing wall.
     const masonryTop = M - 0.02;
-    const [nextX, nextHeight] = profile[1];
-    const cheekEnd = X1 + (nextX - X1) * (lo + 0.17 - masonryTop) / (lo - nextHeight);
-    const cheek = [[X0, masonryTop], [cheekEnd, masonryTop], [X1, lo + 0.17], [X0, hi + 0.17]];
-    // (the stair's own stone carried up to the steel, the full thickness of the wall: the boarded cheeks read as a
-    // plywood box round the hatch, and their thin edges let the light in along the frame)
-    const cheekUp = [[X0, masonryTop], [cheekEnd, masonryTop], [X1, lo + 0.3], [X0, hi + 0.3]];
+    const [nextX, nextHeight] = profile[1], soffitAtM = X1 + (nextX - X1) * (lo - masonryTop) / (lo - nextHeight);      // where the soffit comes down to the top of the stair's walls
+    const cheekUp = [[X0, masonryTop], [soffitAtM, masonryTop], [X1, lo + 0.3], [X0, hi + 0.3]];
     b.prism('coursed', cheekUp, -TW0, -(TW0 - 1));
     b.prism('coursed', cheekUp, -(TW1 + 1), -TW1);
-    for (const Y of [TW0, TW1]) plate(frame, X0, X1, Y - 0.075, Y + 0.075, -0.082, 0.145);
-    for (const X of [HATCH.X0, X1 - 0.15]) plate(frame, X, X + 0.15, TW0, TW1, -0.09, 0.125);
-    const endX = HATCH.X0;
+    for (const Y of [TW0, TW1, YC - HWD, YC + HWD]) plate(frame, X0, X1, Y - 0.075, Y + 0.075, -0.082, 0.145);
+    for (const X of [X0, X1 - 0.15]) plate(frame, X, X + 0.15, TW0, TW1, -0.09, 0.125);
+    const endX = X0 + 0.02;
     b.box('coursed', X0 - 0.6, endX, TW0 - 1, TW1 + 1, masonryTop, height(endX) + 0.3);      // (a box, not a prism: its courses lie level)
     for (const Y of [TW0, TW1]) {
       b.box(frame, endX, endX + 0.095, Y - 0.07, Y + 0.07, masonryTop, height(endX + 0.095));
     }
-    b.block(X0 - 1, HATCH.X0 + 5.6, TW0, TW1, M - 6, M + 8);                         // the top few steps are under the low end of the leaves: nobody goes up into them
+    b.block(HATCH.X0 - 2, xA0 + 3.6, TW0, TW1, M - 6, M + 8);                         // the top few steps are under the low end of the leaves: nobody goes up into them
     b.later(ctx => {
-      const p = b.world(HATCH.X0 + 4.5, YC, M + 3.4);
+      const p = b.world(xA0 + 3.0, YC, M + 1.6);
       let leaving = false;
       ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 9, label: () => 'go up to the house', act: async () => {
         if (leaving) return;
