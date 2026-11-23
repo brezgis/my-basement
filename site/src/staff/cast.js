@@ -102,11 +102,11 @@ export const CAST = [
     room: 'The Listening Room', roam: [], counter: { at: [17.5, 64.3], r: 4.6, top: 3.45 },
     home: [17.5, 64.6], faces: [24, 64.6], homeActs: ['polish', 'wipe', 'polish', 'listen', 'straighten'],
     posts: [
-      { at: [17.6, 62.85], faces: [15.5, 62.85], acts: ['tamp', 'pull', 'wipe'], w: 1.2 },      // the copper machine
+      { at: [17.6, 66.35], faces: [19.6, 66.35], acts: ['tamp', 'pull', 'wipe'], w: 1.2 },      // the copper machine
       { at: [16.75, 65], faces: [13.5, 67.5], acts: ['restock', 'straighten'], w: 1 },          // the back counter, the grinder
       { at: [20.1, 44.4], faces: [20.1, 40.8], acts: ['listen', 'straighten'], w: 0.5, when: 'empty' },      // the turntable
     ],
-    serve: { machine: [17.6, 62.85], pickup: [21.0, 64.9, 3.45], menu: BAR } },
+    serve: { machine: [17.6, 66.35], pickup: [21.0, 64.6, 3.45], menu: BAR } },
 
   // ---- TOMME, the affineur and sommelier of the Cave. A wheel of cheese: a low, wide drum with a washed rind, a
   // black beret, a tastevin on a chain. Speaks low, because the cheese is asleep.

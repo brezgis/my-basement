@@ -66,7 +66,8 @@ kbd, #prompt b { font-variant-numeric: lining-nums; }
 .threshold { display: flex; flex-direction: column; align-items: center; text-align: center; width: min(420px, 100%); }
 /* the cellar doors in silhouette (index.html): the house's lantern and the town's shopfront, in this place's own
    colour, the green of the pool. The leaves fill with light from the sill up; lit, the whole mark glows. */
-.threshold .lamp { width: 74px; height: 104px; color: #b9c9bf; filter: drop-shadow(0 0 0 rgba(127, 208, 189, 0)); transition: filter .6s ease; }
+.threshold .lamp { width: 74px; height: 104px; color: #9fb1a8; filter: drop-shadow(0 0 0 rgba(127, 208, 189, 0)); transition: filter .6s ease; }
+.threshold .lamp #glassFill { filter: drop-shadow(0 0 2.5px rgba(160, 240, 220, .95)); }
 #loading.lit .lamp { filter: drop-shadow(0 0 18px rgba(127, 208, 189, .6)); }
 .threshold .lines { position: relative; height: 3.2em; width: 100%; margin-top: 22px; font-style: italic; font-size: 17px; line-height: 1.45; color: rgba(240, 229, 207, .82); }
 .threshold .lines span { position: absolute; inset: 0; opacity: 0; animation: line 30s linear infinite; animation-delay: calc(var(--i) * 5s - .2s); }

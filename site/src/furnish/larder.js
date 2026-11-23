@@ -23,8 +23,8 @@
 // STAFF POSTS (plan X, Y; floor h 0.4 in both rooms):
 //   The Listening Room, behind the bar: home [17.5, 64.6], faces [24, 64.6] (east, across the counter to the stools).
 //     The aisle behind the counter is 4 ft (X 15.5 to 19.5), open at its south end (Y 60.5).
-//     serve: { machine: [17.6, 62.85] (behind the copper machine), pickup: [21.0, 64.9, 3.85] (the counter's top,
-//     between the shaker and the pastry dome) }. Drinks: 'brown sugar shaken espresso': { vessel: 'highball',
+//     serve: { machine: [17.6, 66.35] (behind the copper machine, now at the counter's north end), pickup: [21.0, 64.6, 3.85]
+//     (the counter's top, kept clear before the barman: 3.45 above the room's floor) }. Drinks: 'brown sugar shaken espresso': { vessel: 'highball',
 //     liquid: 0x8a5a33 }, 'espresso': demitasse, 'cortado' and 'flat white': latte, 'filter': mug, 'hot chocolate': mug.
 //     A second post at the back counter's grinder [16.0, 67.5].
 //   The Listening Room, at the banquette's tables (the tasting is served there): home [35.0, 53.0], faces [39.4, 53.0]
@@ -304,10 +304,10 @@ export default function (f) {
     Cn.bev('marble', -h - 0.22, h + 0.22, -0.08, 2.73, 3.19, TOP, 0.052);      // honed stone, eased on all four edges
     hcyl(Cn, BRASS, 'x', 0, 3.1, 0.6, 2 * h, 0.04, 0.04, 10); for (const x of [-h + 0.3, 0, h - 0.3]) tube(Cn, BRASS, [[x, 2.52, 0.6], [x, 3.1, 0.6]], 0.03, 5);      // the foot rail
     Cn.block(-h - 0.2, h + 0.2, -0.05, 2.8, 0, TOP);
-    // the machine: a two-group lever machine, after the house's (my_house coffee_bar.js), its groups toward the robot:
+    // the machine, at the north end (the right, from the stools: Anna asked for it there): a two-group lever machine, after the house's (my_house coffee_bar.js), its groups toward the robot:
     // a chrome base on a drip tray with a grate, a copper boiler banded in brass with a domed top and a finial, a gauge,
     // two lever groups with portafilters locked in, a steam wand and a hot-water tap with black knobs, cups warming on top
-    { const e = Cn.sub(1.75, 1.0, TOP, 2), CHR = C.CHROME, STL = 'c#9a9a96/0.25/1', BLK = C.BLACK;
+    { const e = Cn.sub(-1.75, 1.0, TOP, 2), CHR = C.CHROME, STL = 'c#9a9a96/0.25/1', BLK = C.BLACK;
       e.soft(CHR, -1.05, 1.05, -0.62, 0.55, 0, 0.42, 0.06); e.box(BRASS, -1.06, 1.06, -0.63, 0.56, 0.36, 0.4);
       e.box(STL, -0.98, 0.98, 0.55, 0.95, 0.06, 0.14); for (let i = 0; i < 13; i++) e.box('c#b9bab4/0.25/1', -0.92 + i * 0.152, -0.89 + i * 0.152, 0.58, 0.92, 0.14, 0.16); e.box(BRASS, -0.98, 0.98, 0.94, 0.97, 0.06, 0.14);
       ves(e, COPPER, 0, -0.08, 0.4, [[0, 0], [0.5, 0], [0.5, 1.12], [0.47, 1.2], [0.42, 1.2], [0.42, 1.25], [0.38, 1.5], [0.24, 1.7], [0.1, 1.78], [0, 1.8]], 24);
@@ -325,39 +325,38 @@ export default function (f) {
       { const r0 = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * TAU; r0.push([Math.cos(a) * 0.62, Math.sin(a) * 0.62 - 0.08, 2.0]); } }
       const [sx, sz] = K.world(e, 0.74, 0.34); K.steam.push({ x: sx, y: e.h + 0.4, z: sz });
     }
-    // on the robot's side: the knock box, the tamper on its mat, milk jugs, saucers stacked, the sugar
-    { const z = TOP; Cn.bev(WALD, 0.0, 0.42, 0.1, 0.5, z, z + 0.35, 0.02); Cn.box('c#2a2622/0.6', 0.05, 0.37, 0.15, 0.45, z + 0.34, z + 0.36); hcyl(Cn, BLACK0, 'y', 0.21, 0.3, z + 0.36, 0.4, 0.025, 0.025, 6);
-      Cn.box('c#2a2622/0.8', -0.6, -0.25, 0.1, 0.45, z, z + 0.015); ves(Cn, WAL, -0.42, 0.28, z + 0.015, [[0, 0], [0.12, 0], [0.12, 0.08], [0.04, 0.12], [0.05, 0.32], [0, 0.34]], 12);
-      for (const [x, yy, s2] of [[3.1, 1.45, 1], [3.25, 1.82, 0.8]]) { ves(Cn, 'c#c6c2ba/0.2/1', x, yy, z, [[0, 0], [0.13 * s2, 0], [0.14 * s2, 0.25 * s2], [0.12 * s2, 0.4 * s2], [0, 0.4 * s2]], 12); tube(Cn, 'c#c6c2ba/0.2/1', [[x + 0.12 * s2, yy, z + 0.35 * s2], [x + 0.22 * s2, yy, z + 0.3 * s2], [x + 0.13 * s2, yy, z + 0.1 * s2]], 0.015, 4); }
-      ves(Cn, C.PORC, -1.0, 0.35, z, [[0, 0], [0.16, 0], [0.19, 0.03], [0.19, 0.22], [0, 0.22]], 12); }
-    { const x = 3.1, y = 0.7, z = TOP; Cn.box('c#2a2622/0.4', x - 0.22, x + 0.22, y - 0.28, y + 0.28, z, z + 0.95); ves(Cn, 'glass', x, y, z + 0.95, [[0.08, 0], [0.2, 0.4], [0.21, 0.46], [0, 0.46]], 10); ves(Cn, 'c#3a2214/0.9', x, y, z + 0.99, [[0.08, 0], [0.16, 0.28], [0, 0.3]], 8); }
-    // the shaker station: brown sugar syrup, a Boston shaker, ice, highballs
-    { const z = TOP, y = 0.6;
-      bottle(Cn, 0.1, y, z, { r: 0.1, h: 0.85, col: 'c#5a2a10/0.2', label: 'c#e8dcc4/0.8', cap: BRASS });
-      ves(Cn, C.CHROME, -0.35, y, z, [[0, 0], [0.12, 0], [0.16, 0.6], [0.155, 0.6], [0, 0.04]], 12); ves(Cn, 'glass', -0.35, y + 0.4, z + 0.006, [[0, 0], [0.1, 0], [0.14, 0.45], [0.13, 0.45], [0, 0.03]], 10);
-      ves(Cn, C.CHROME, -1.15, y + 0.15, z, [[0, 0], [0.05, 0], [0.025, 0.07], [0.045, 0.14], [0, 0.14]], 10); ves(Cn, C.CHROME, -1.15, y + 0.45, z, [[0, 0], [0.12, 0], [0.12, 0.01], [0, 0.012]], 12);
-      for (const [dx, dy] of [[-0.95, 0.75], [-0.78, 0.6]]) ves(Cn, 'c#e8c73a/0.5', dx, y + dy, z, [[0, 0], [0.08, 0.03], [0.1, 0.09], [0.095, 0.1], [0, 0.1]], 10);
-      ves(Cn, C.CHROME, -0.75, y + 0.25, z, [[0, 0], [0.2, 0], [0.23, 0.35], [0.21, 0.35], [0, 0.03]], 12); for (let i = 0; i < 5; i++) ball(Cn, 'c#e6eef0/0.05', -0.75 + (i % 3 - 1) * 0.08, y + 0.25 + (i % 2 - 0.5) * 0.08, z + 0.26, 0.05, 5);
+    // by the machine, at the counter's north end: two milk jugs (the knock box, tamper and saucers went: the top is kept light)
+    { const z = TOP;
+      for (const [x, yy, s2] of [[-3.1, 1.45, 1], [-3.25, 1.82, 0.8]]) { ves(Cn, 'c#c6c2ba/0.2/1', x, yy, z, [[0, 0], [0.13 * s2, 0], [0.14 * s2, 0.25 * s2], [0.12 * s2, 0.4 * s2], [0, 0.4 * s2]], 12); tube(Cn, 'c#c6c2ba/0.2/1', [[x + 0.12 * s2, yy, z + 0.35 * s2], [x + 0.22 * s2, yy, z + 0.3 * s2], [x + 0.13 * s2, yy, z + 0.1 * s2]], 0.015, 4); }
     }
-    // the pastry: croissants under a glass dome
-    { const x = -1.9, y = 1.55, z = TOP;
-      ves(Cn, WAL, x, y, z, [[0, 0], [0.62, 0], [0.64, 0.06], [0, 0.07]], 18);
-      for (const [dx, dy, t] of [[-0.18, -0.1, 0.4], [0.2, 0.08, 2.2]]) f.model('croissant', Cn, x + dx, y + dy, z + 0.07, 0, { turn: t });
-      ves(Cn, 'glass', x, y, z + 0.07, [[0.6, 0], [0.6, 0.48], [0.5, 0.74], [0.28, 0.88], [0.08, 0.92], [0.05, 1.0], [0, 1.02]], 16);
-      help(Cn, x, y, z + 0.3, { name: 'croissant', model: 'croissant', bites: 3, note: 'You finish the croissant. The flakes are everywhere, which is correct.' });
+    { const x = -3.1, y = 0.7, z = TOP; Cn.box('c#2a2622/0.4', x - 0.22, x + 0.22, y - 0.28, y + 0.28, z, z + 0.95); ves(Cn, 'glass', x, y, z + 0.95, [[0.08, 0], [0.2, 0.4], [0.21, 0.46], [0, 0.46]], 10); ves(Cn, 'c#3a2214/0.9', x, y, z + 0.99, [[0.08, 0], [0.16, 0.28], [0, 0.3]], 8); }
+    // the shaker station at the south end (the left, from the stools): brown sugar syrup, a Boston shaker, ice; the cut lemons on their board
+    { const z = TOP;
+      bottle(Cn, 1.5, 0.5, z, { r: 0.1, h: 0.85, col: 'c#5a2a10/0.2', label: 'c#e8dcc4/0.8', cap: BRASS });
+      ves(Cn, C.CHROME, 1.12, 0.45, z, [[0, 0], [0.12, 0], [0.16, 0.6], [0.155, 0.6], [0, 0.04]], 12);
+      ves(Cn, C.CHROME, 1.3, 0.95, z, [[0, 0], [0.2, 0], [0.23, 0.35], [0.21, 0.35], [0, 0.03]], 12); for (let i = 0; i < 5; i++) ball(Cn, 'c#e6eef0/0.05', 1.3 + (i % 3 - 1) * 0.08, 0.95 + (i % 2 - 0.5) * 0.08, z + 0.26, 0.05, 5);
+      Cn.bev(OAK, 1.95, 3.0, 0.14, 0.64, z, z + 0.06, 0.015); for (const [dx, dy] of [[0.15, 0.08], [0.4, 0.05]]) ves(Cn, 'c#e8c73a/0.5', 2.1 + dx, 0.36 + dy, z + 0.06, [[0, 0], [0.09, 0.03], [0.11, 0.08], [0.1, 0.09], [0, 0.09]], 10);
+      tube(Cn, 'c#c6c2ba/0.2/1', [[2.6, 0.32, z + 0.08], [2.9, 0.27, z + 0.08]], 0.016, 4); tube(Cn, OAKD, [[2.4, 0.37, z + 0.08], [2.6, 0.32, z + 0.08]], 0.025, 5);
     }
-    // filter coffee for anyone who will not wait, at the guests' edge; and the menu card
-    { const x = 0.2, y = 1.45, z = TOP;
-      ves(Cn, 'glass', x, y, z + 0.006, [[0, 0], [0.2, 0], [0.24, 0.2], [0.1, 0.42], [0.1, 0.5], [0.2, 0.72], [0, 0.72]], 12); ves(Cn, 'c#2e1a0e/0.2', x, y, z + 0.02, [[0, 0], [0.19, 0], [0.22, 0.18], [0.12, 0.34], [0, 0.34]], 10);
-      Cn.cyl(WAL, x, y, z + 0.42, z + 0.52, 0.12, 0.12, 10); 
-      help(Cn, x, y, z + 0.5, { name: 'cup of filter coffee', drink: { vessel: 'demitasse', liquid: 0x2e1a0e }, note: 'You finish the coffee. Clean, bright, and a little pleased with itself.' }); }
+    // the pastry and the filter coffee stand on the back bar's working top now (Anna: the bar was cluttered): croissants under
+    // a glass dome, the carafe; the fries and an espresso martini from the banquette's tables wait there too (walk round by the
+    // counter's south end for those). The croissant's and the coffee's reach is longer, so both can still be taken from the
+    // guests' side of the counter, by looking at them.
+    { const Bb = fr(13.5, 64.4, 3), z = 3.08;
+      { const x = 0.6, y = 1.25;      // (between the hutch's uprights at -1.3 and 1.3, clear of the fruit bowl)
+        ves(Bb, WAL, x, y, z, [[0, 0], [0.62, 0], [0.64, 0.06], [0, 0.07]], 18);
+        for (const [dx, dy, t] of [[-0.18, -0.1, 0.4], [0.2, 0.08, 2.2]]) f.model('croissant', Bb, x + dx, y + dy, z + 0.07, 0, { turn: t });
+        ves(Bb, 'glass', x, y, z + 0.07, [[0.6, 0], [0.6, 0.48], [0.5, 0.74], [0.28, 0.88], [0.08, 0.92], [0.05, 1.0], [0, 1.02]], 16);
+        help(Bb, x, y, z + 0.3, { name: 'croissant', model: 'croissant', bites: 3, reach: 9.5, note: 'You finish the croissant. The flakes are everywhere, which is correct.' }); }
+      { const x = -2.9, y = 0.7;
+        ves(Bb, 'glass', x, y, z + 0.006, [[0, 0], [0.2, 0], [0.24, 0.2], [0.1, 0.42], [0.1, 0.5], [0.2, 0.72], [0, 0.72]], 12); ves(Bb, 'c#2e1a0e/0.2', x, y, z + 0.02, [[0, 0], [0.19, 0], [0.22, 0.18], [0.12, 0.34], [0, 0.34]], 10);
+        Bb.cyl(WAL, x, y, z + 0.42, z + 0.52, 0.12, 0.12, 10);
+        help(Bb, x, y, z + 0.5, { name: 'cup of filter coffee', reach: 9.5, drink: { vessel: 'demitasse', liquid: 0x2e1a0e }, note: 'You finish the coffee. Clean, bright, and a little pleased with itself.' }); }
+      G.fries(Bb, -2.35, 1.35, z); help(Bb, -2.35, 1.35, z + 0.25, { name: 'handful of truffle fries', build: EAT.fries, bites: 4, plural: true, note: 'You finish the fries. Parmesan, truffle, salt, and the aioli was the point.' });
+      G.martini(Bb, 1.45, 1.8, z); help(Bb, 1.45, 1.8, z + 0.45, { name: 'espresso martini', build: EAT.martini, bites: 3, note: 'You finish the espresso martini: cold, bitter, sweet, awake. The beans are for luck.' });
+    }
     pillarLit(Cn, 1.72, 2.3, TOP, 0.4, 0.11);      // one candle, between the first two stools
-    // the top is kept bare in front of each stool (stools at x 2.6, 0.85, -0.9, -2.65)
-    { const z = TOP;      // the mixing glass and its spoon with the shaker; the cut lemons on their board; one drink made, waiting
-      ves(Cn, 'glass', -0.5, 1.5, z + 0.006, [[0, 0], [0.14, 0], [0.16, 0.5], [0.15, 0.5], [0, 0.03]], 12); tube(Cn, 'c#c6c2ba/0.2/1', [[-0.55, 1.5, z + 0.1], [-0.43, 1.47, z + 0.75]], 0.008, 3);
-      Cn.bev(OAK, -2.7, -1.6, 0.12, 0.62, z, z + 0.06, 0.015); for (const [dx, dy] of [[0.15, 0.08], [0.4, 0.05]]) ves(Cn, 'c#e8c73a/0.5', -2.5 + dx, 0.35 + dy, z + 0.06, [[0, 0], [0.09, 0.03], [0.11, 0.08], [0.1, 0.09], [0, 0.09]], 10);
-      tube(Cn, 'c#c6c2ba/0.2/1', [[-2.0, 0.3, z + 0.08], [-1.7, 0.25, z + 0.08]], 0.016, 4); tube(Cn, OAKD, [[-1.7, 0.25, z + 0.08], [-1.5, 0.22, z + 0.08]], 0.025, 5);
-      G.coupe(Cn, -0.05, 2.1, z, 'c#c97a3a/0.25'); }
+    // the top is kept bare in front of each stool (stools at x 2.6, 0.85, -0.9, -2.65) and for a foot and a half before the barman (x 0)
     for (const x of [-1.6, 1.6]) tube(Cn, BRASS, [[x, 2.62, TOP - 0.3], [x, 2.75, TOP - 0.32], [x, 2.78, TOP - 0.5], [x, 2.7, TOP - 0.55]], 0.015, 4);      // purse hooks under the top
 
   }
@@ -401,20 +400,39 @@ export default function (f) {
       cabinet(BRASS,K.geom.bev(0.28,0.43,0.529,0.54,0.49,0.53,0.004));
       S.block(x-0.65,x+0.65,0.42,1.61,0,2.53);
     }
-    // (Anna did not care for the bears: Levitan's Golden Autumn, which she named among her favourites, and a smaller
-    // picture over each speaker so the corner is not one frame on a bare wall)
+    // (Anna did not care for the bears: Levitan's Golden Autumn, which she named among her favourites. Then: "perhaps the wall
+    // can, instead of the lights, be like a grid of framed record covers (find real ones)": a collector's hang, six sleeves
+    // either side of the painting, two wide and three high, each a true twelve inches in a thin frame of the room's walnut,
+    // the middle row level with the painting's middle. All twelve are in the public domain in the United States: see
+    // assets/credits/larder.md for each one's source and why.)
     f.framed(S, 0, 5.54, 3.3, 2.15, 'golden_autumn', { frame: WALD, mat: 0.12, border: 0.085,
       title: 'Golden Autumn', kicker: 'Isaac Levitan, 1895',
       text: 'Birches turned yellow along a small river under a clear cold sky.', foot: 'Public domain. Image via Wikimedia Commons.' });
-    f.framed(S, -4.15, 4.55, 1.36, 1.38, 'klimt_poppy_field', { frame: WALD, mat: 0.08, border: 0.07,
-      title: 'Poppy Field', kicker: 'Gustav Klimt, 1907', text: 'A meadow so full of poppies that the trees have to stand at the top of the picture to be seen.', foot: 'Public domain. Image via Wikimedia Commons.' });
-    f.framed(S, 4.15, 4.6, 1.18, 1.5, 'sunflowers', { frame: WALD, mat: 0.08, border: 0.07,
-      title: 'Sunflowers', kicker: 'Vincent van Gogh, 1888', text: 'Fourteen sunflowers in a yellow jar against a yellow wall.', foot: 'Public domain. Image via Wikimedia Commons.' });
+    { const PD = 'Public domain in the United States. Image via Wikimedia Commons.', COLS = [-4.25, -2.9, 2.9, 4.25], ROWS = [6.89, 5.54, 4.19];
+      const sleeves = [      // row by row from the top, west to east
+        ['lp_giant_steps', 'Giant Steps', 'John Coltrane, 1960', 'Atlantic 1311. Marvin Israel\'s design round Lee Friedlander\'s photograph: the record that made every saxophonist go home and practise.'],
+        ['lp_gershwin_songs', 'George Gershwin Songs, Vol. 1', 'Bing Crosby and others, 1939', 'A Decca album of 78s, made two years after Gershwin died: the discs bound in a book, which is why a record is still called an album.'],
+        ['lp_black_brown_beige', 'Black, Brown and Beige', 'Duke Ellington, 1946', 'RCA Victor. Ellington at the piano before Carnegie Hall, where the suite was first played in 1943.'],
+        ['lp_elvis_presley', 'Elvis Presley', 'Elvis Presley, 1956', 'RCA Victor LPM-1254. Pink and green letters down the side and along the foot: half the sleeves made since have borrowed them.'],
+        ['lp_soultrane', 'Soultrane', 'John Coltrane, 1958', 'Prestige 7142. A square of blue, a corner of a face, and nothing else: Esmond Edwards\'s sleeve.'],
+        ['lp_blue_train', 'Blue Train', 'John Coltrane, 1958', 'Blue Note 1577. Francis Wolff\'s photograph, taken at the session; Reid Miles made it blue.'],
+        ['lp_takin_off', 'Takin\' Off', 'Herbie Hancock, 1962', 'Blue Note 84109. His first record, at twenty-two, with Watermelon Man on it.'],
+        ['lp_bossa_nova_pops', 'Fly Me to the Moon and the Bossa Nova Pops', 'Joe Harnell, 1963', 'Kapp KS-3318. A patchwork moon for the year America discovered the bossa nova.'],
+        ['lp_hip_harp', 'Hip Harp', 'Dorothy Ashby with Frank Wess, 1958', 'Prestige 7140. A concert harp in a jazz quartet, and it swings.'],
+        ['lp_cole_porter_songs', 'Bing Crosby Sings Cole Porter Songs', 'Bing Crosby, 1949', 'Decca. Begin the Beguine, Easy to Love, I Love You.'],
+        ['lp_bing_in_paris', 'Bing in Paris', 'Bing Crosby, 1958', 'Decca DL 8780. Bing Crosby sings the French hits, in a straw hat, with Paris behind him.'],
+        ['lp_ed_higgins_trio', 'The Ed Higgins Trio', 'Eddie Higgins, 1957', 'Replica. A Chicago piano trio at work, in the dark, under three yellow diamonds.'],
+      ];
+      sleeves.forEach(([slug, title, kicker, text], i) => f.framed(S, COLS[i % 4], ROWS[Math.floor(i / 4)], 1.08, 1.08, slug, { frame: WALD, mat: 0, border: 0.06, title, kicker, text, foot: PD })); }
+    // the lanterns are gone from this wall: a walnut pelmet over the whole hang hides a wash that grazes down the stone
+    // (the wash glows; one unseen lamp before the pelmet does the lighting)
+    S.bev(WAL, -5.15, 5.15, 0.0, 0.42, 7.98, 8.07, 0.015); S.bev(WAL, -5.15, 5.15, 0.36, 0.42, 7.84, 8.0, 0.012);
+    wash(S, -5.0, 5.0, 0.1, 0.3, 7.955, 7.98);
+    K.lampAt(S, 0, 1.7, 7.6, 0.75);      // (one, in the middle and a little out from the wall: two close in made a hot spot each)
     // on the console: tulips in a jar at the left end, and three books lying on the receiver
-    K.posy(S, -2.62, 1.05, top, ['c#e0a23a/0.55', 'c#d9694a/0.55', 'c#f4ddae/0.6'], { kinds: ['tulip'], jar: 'c#ded6c4/0.35', scale: 1.5 });
+    K.posy(S, -2.74, 0.7, top, ['c#e0a23a/0.55', 'c#d9694a/0.55', 'c#f4ddae/0.6'], { kinds: ['tulip'], jar: 'c#ded6c4/0.35', scale: 1.2 });      // (smaller and nearer the wall than they were, to stand under the sleeves and not across them)
     [['c#7a2f2a/0.7', 0.62, 0.9, 0.05], ['c#2f4a44/0.7', 0.56, 0.84, 0.07], ['c#c9a45c/0.6', 0.5, 0.74, -0.04]].forEach(([mat, w, d, turn], i) =>
       K.put(S, mat, K.geom.bev(-w / 2, w / 2, -d / 2, d / 2, 0, 0.11, 0.012).rotateZ(turn), { at: [1.05, 1.0, top + 0.38 + i * 0.112] }));
-    for (const x of [-2.66, 2.66]) K.sconce(S, x, 5.53, { kind: 'lantern', metal: 'c#5e4a36/0.36/1', size: 1.14, lit: true, power: 0.37 });
   }
 
   prof('shelf wall');
@@ -455,12 +473,8 @@ export default function (f) {
       A.bev(OAKT, -tw, tw, -td, td, h - 0.12, h, 0.03); A.block(-tw, tw, -td, td, 0, h); }
     const z = 1.3 + 0.002;
     G.booksFlat(A, -0.95, 0.15, z, 3, ['c#e8e0cc/0.6', 'c#26364f/0.6', 'c#c9a46a/0.6']);       // art books
-    G.coupe(A, 1.05, 0.55, z, 'c#2a160c/0.2');      // someone's martini, half drunk
+    pillarLit(A, 0.9, 0.2, z, 0.4, 0.12);      // (Anna: the tables lighter: the art books, one candle, and a hot chocolate someone has just been brought)
     G.hotChoc(A, -0.6, -0.5, z); help(A, -0.6, -0.5, z + 0.5, { name: 'hot chocolate with whipped cream', build: EAT.hotchoc, bites: 4, note: 'You finish the hot chocolate. Thick, dark, and there is cream on your nose.' });
-    A.bev(OAK, 0.2, 1.3, -0.45, 0.3, z, z + 0.04, 0.01); G.coupe(A, 0.45, -0.2, z + 0.04, 'c#e8d8a0/0.3'); G.coupe(A, 0.85, -0.15, z + 0.04, 'c#c97a5a/0.3');      // a tray of drinks made up
-    ves(A, 'glass', 1.1, 0.05, z + 0.046, [[0, 0], [0.12, 0], [0.16, 0.18], [0.07, 0.42], [0.06, 0.5], [0.08, 0.52], [0, 0.53]], 12); ves(A, 'c#8a4a1a/0.2', 1.1, 0.05, z + 0.06, [[0, 0], [0.11, 0], [0.14, 0.16], [0.09, 0.28], [0, 0.28]], 10); teaLight(A, 0.55, -0.25, z); teaLight(A, 0.8, 0.05, z); pillarLit(A, -0.75, 0.25, z, 0.4, 0.12);
-    for (let i = 0; i < 2; i++) cupSaucer(A, -0.35 + i * 0.45, -0.2, z, i ? C.PORC : 'c#3a3632/0.3', 'c#3b2416/0.2');
-    for (let i = 0; i < 3; i++) A.box(pick(['c#e8e0cc/0.8', 'c#b5853a/0.7', 'c#26364f/0.7']), -0.6 + i * 0.03, 0.43 + i * 0.03, 0.05 + i * 0.02, 0.6 + i * 0.02, z + 0.08 + i * 0.012, z + 0.09 + i * 0.012, { rot: [0, 0, 0.12 * i] });      // sleeves on the tray
     // a side table at the sofa's east end with a candle lantern on it
 
   }
@@ -495,29 +509,30 @@ export default function (f) {
     if (i) G.tableLampB(T, 0.45, -0.45, 2.3, i === 1 ? 1.15 : 0.95); if (i === 1) K.lampAt(T, 0.45, -0.45, 3.2, 1.0);
   }
   { const z = 2.3, A = fr(39.4, 49.3, 1), B = fr(39.4, 53.0, 1), Cq = fr(39.4, 57.4, 1);
-    // table A: the cheese board on wax paper, a knife, Comté with its stamped rind, Fourme d'Ambert, figs and grapes
-    { const x = -0.15, y = 0.1; A.box('c#efe8d8/0.9', x - 0.62, x + 0.5, y - 0.4, y + 0.38, z, z + 0.008); A.bev(OAK, x - 0.55, x + 0.55, y - 0.32, y + 0.32, z + 0.008, z + 0.08, 0.02); const zz = z + 0.08;
-      P.cheeseWedge(A, x - 0.4, y - 0.18, zz, 0.6, 0.3, 0.1, 0.7, 'comte');
-      { const g = x + 0.3, h = y - 0.05; ves(A, 'c#8a7a5a/0.9', g, h, zz, [[0, 0], [0.16, 0], [0.16, 0.3], [0, 0.3]], 12); P.blueTop(A, g, h, zz + 0.3, 0.16); }
-      grapes(A, x + 0.05, y + 0.18, zz, 'c#4a2a48/0.35', 10); for (let k = 0; k < 2; k++) fruit(A, 'fig', x - 0.15 + k * 0.17, y + 0.2, zz, 0.9);
-      tube(A, 'c#c6c2ba/0.2/1', [[x + 0.2, y - 0.3, zz + 0.02], [x + 0.55, y - 0.36, zz + 0.02]], 0.02, 4); tube(A, OAKD, [[x + 0.55, y - 0.36, zz + 0.02], [x + 0.78, y - 0.4, zz + 0.02]], 0.03, 5);
-      help(A, x - 0.3, y - 0.1, zz + 0.35, { name: 'piece of Comté', build: EAT.comte, bites: 2, note: 'You finish the Comté: hazelnut, brown butter, a crunch of crystals. Twenty-four months on spruce.' });
-      help(A, x + 0.3, y - 0.05, zz + 0.4, { name: "crumb of Fourme d'Ambert", build: EAT.blue, bites: 2, note: 'You finish the blue. Mild, creamy, and blue only where it matters.' });
-      help(A, x + 0.05, y + 0.18, zz + 0.15, { name: 'bunch of grapes', build: EAT.grapes, bites: 4, note: 'You finish the grapes. Muscat: they taste of flowers.' });
-      help(A, x - 0.1, y + 0.2, zz + 0.2, { name: 'fig', build: EAT.fig, bites: 2, note: 'You finish the fig. Jammy, and full of seeds.' }); }
+    // (Anna: "tables are a bit cluttered too, there should mostly be only what you ordered there": each table is bare but
+    //  for its lamp or candle; the middle one keeps the Poulsard and a glass, as if someone had just been there. The cheese,
+    //  the bread and the pears went to the shelf wall, the fries and the martini to the back bar: all still to be taken.)
     pillarLit(A, -0.55, -0.45, z, 0.3, 0.09);
-    // table B: the bread on its board, a bowl of pears, the Poulsard and two glasses
-    { const x = -0.2, y = 0.15; B.bev(OAK, x - 0.45, x + 0.45, y - 0.25, y + 0.25, z, z + 0.06, 0.02); loaf(B, x, y, z + 0.06, 0.72, 0.21);
-      help(B, x, y, z + 0.3, { name: 'heel of sourdough', build: EAT.bread, bites: 3, note: 'You finish the bread. A good crust is half the cheese.' }); }
-    { const x = 0.4, y = 0.35; bowl(B, x, y, z, 0.3, 0.18, 'c#e8dcc4/0.35', 12); for (const [dx, dy] of [[-0.08, 0], [0.1, 0.05], [0, -0.1]]) fruit(B, 'pear', x + dx, y + dy, z + 0.08);
-      help(B, x, y, z + 0.4, { name: 'pear', build: EAT.pear, bites: 3, note: 'You finish the pear. A Comice, ripe to the minute.' }); }
     G.bottle(B, 'burgundy', -0.5, -0.3, z, 'c#2a3a1a/0.15', { foil: 'c#6a1622/0.4', label: 'c#efe6d2/0.8' });
     help(B, -0.5, -0.3, z + 0.8, { name: 'glass of Poulsard', drink: { vessel: 'wine', liquid: 0x8a2230 }, note: 'You finish the Poulsard: pale, red-currant, a little wild. Jura, like the Comté.' });
-    wineGlass(B, -0.1, -0.55, z + 0.006, 'c#6a1622/0.2'); wineGlass(B, 0.2, 0.7, z + 0.006, null);
-    // table C: an espresso martini and truffle fries, a candle: the table under the picture, the one a guest photographs
-    G.fries(Cq, -0.2, 0.3, z); G.martini(Cq, 0.38, 0.32, z); G.martini(Cq, 0.05, -0.2, z); pillarLit(Cq, -0.55, -0.4, z, 0.4, 0.1); pillarLit(Cq, -0.4, -0.62, z, 0.26, 0.08);
-    help(Cq, 0.38, 0.32, z + 0.45, { name: 'espresso martini', build: EAT.martini, bites: 3, note: 'You finish the espresso martini: cold, bitter, sweet, awake. The beans are for luck.' });
-    help(Cq, -0.2, 0.3, z + 0.25, { name: 'handful of truffle fries', build: EAT.fries, bites: 4, plural: true, note: 'You finish the fries. Parmesan, truffle, salt, and the aioli was the point.' });
+    wineGlass(B, -0.1, -0.55, z + 0.006, 'c#6a1622/0.2');
+  }
+  // on the shelf wall, within reach: the cheese board on wax paper (Comté with its stamped rind, Fourme d'Ambert, figs and
+  // grapes, a knife), the bread on its board, a bowl of pears
+  { const Pq = fr(13.5, 48.4, 3), z = 3.22;
+    { const x = -1.2, y = 0.52; Pq.box('c#efe8d8/0.9', x - 0.62, x + 0.5, y - 0.4, y + 0.38, z, z + 0.008); Pq.bev(OAK, x - 0.55, x + 0.55, y - 0.32, y + 0.32, z + 0.008, z + 0.08, 0.02); const zz = z + 0.08;
+      P.cheeseWedge(Pq, x - 0.4, y - 0.18, zz, 0.6, 0.3, 0.1, 0.7, 'comte');
+      { const g = x + 0.3, h = y - 0.05; ves(Pq, 'c#8a7a5a/0.9', g, h, zz, [[0, 0], [0.16, 0], [0.16, 0.3], [0, 0.3]], 12); P.blueTop(Pq, g, h, zz + 0.3, 0.16); }
+      grapes(Pq, x + 0.05, y + 0.18, zz, 'c#4a2a48/0.35', 10); for (let k = 0; k < 2; k++) fruit(Pq, 'fig', x - 0.15 + k * 0.17, y + 0.2, zz, 0.9);
+      tube(Pq, 'c#c6c2ba/0.2/1', [[x + 0.2, y - 0.3, zz + 0.02], [x + 0.55, y - 0.36, zz + 0.02]], 0.02, 4); tube(Pq, OAKD, [[x + 0.55, y - 0.36, zz + 0.02], [x + 0.78, y - 0.4, zz + 0.02]], 0.03, 5);
+      help(Pq, x - 0.3, y - 0.1, zz + 0.35, { name: 'piece of Comté', build: EAT.comte, bites: 2, note: 'You finish the Comté: hazelnut, brown butter, a crunch of crystals. Twenty-four months on spruce.' });
+      help(Pq, x + 0.3, y - 0.05, zz + 0.4, { name: "crumb of Fourme d'Ambert", build: EAT.blue, bites: 2, note: 'You finish the blue. Mild, creamy, and blue only where it matters.' });
+      help(Pq, x + 0.05, y + 0.18, zz + 0.15, { name: 'bunch of grapes', build: EAT.grapes, bites: 4, note: 'You finish the grapes. Muscat: they taste of flowers.' });
+      help(Pq, x - 0.1, y + 0.2, zz + 0.2, { name: 'fig', build: EAT.fig, bites: 2, note: 'You finish the fig. Jammy, and full of seeds.' }); }
+    { const x = 1.9, y = 0.52; Pq.bev(OAK, x - 0.45, x + 0.45, y - 0.25, y + 0.25, z, z + 0.06, 0.02); loaf(Pq, x, y, z + 0.06, 0.72, 0.21);
+      help(Pq, x, y, z + 0.3, { name: 'heel of sourdough', build: EAT.bread, bites: 3, note: 'You finish the bread. A good crust is half the cheese.' }); }
+    { const x = 3.65, y = 0.52, z1 = 1.96; bowl(Pq, x, y, z1, 0.3, 0.18, 'c#e8dcc4/0.35', 12); for (const [dx, dy] of [[-0.08, 0], [0.1, 0.05], [0, -0.1]]) fruit(Pq, 'pear', x + dx, y + dy, z1 + 0.08);
+      help(Pq, x, y, z1 + 0.4, { name: 'pear', build: EAT.pear, bites: 3, note: 'You finish the pear. A Comice, ripe to the minute.' }); }
   }
   function C0b(T, x, y, z) {
     T.box('c#efe8d8/0.9', x - 0.55, x + 0.45, y - 0.42, y + 0.36, z, z + 0.008); T.bev(OAK, x - 0.5, x + 0.5, y - 0.32, y + 0.32, z + 0.008, z + 0.08, 0.02); const zz = z + 0.08;

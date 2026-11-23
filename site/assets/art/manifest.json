@@ -350,5 +350,125 @@
     "height_px": 1024,
     "source_url": "https://commons.wikimedia.org/wiki/File:Gustav_Klimt_-_Bl%C3%BChender_Mohn_-_5166_-_%C3%96sterreichische_Galerie_Belvedere.jpg",
     "licence": "Public domain (Wikimedia Commons; Österreichische Galerie Belvedere)"
+  },
+  {
+    "slug": "lp_giant_steps",
+    "title": "Giant Steps (Atlantic 1311), LP cover",
+    "artist": "John Coltrane; design Marvin Israel, photograph Lee Friedlander",
+    "year": "1960",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Coltrane_Giant_Steps.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1960, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_blue_train",
+    "title": "Blue Train (Blue Note 1577), LP cover",
+    "artist": "John Coltrane; design Reid Miles, photograph Francis Wolff",
+    "year": "1958",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:John_Coltrane_-_Blue_Train.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1958, copyright in the cover not renewed). The one renewal found, RE0000232299, is for the composition, not the cover: see the file page"
+  },
+  {
+    "slug": "lp_soultrane",
+    "title": "Soultrane (Prestige 7142), LP cover",
+    "artist": "John Coltrane; design Esmond Edwards",
+    "year": "1958",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Coltrane_Soultrane.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1958, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_takin_off",
+    "title": "Takin' Off (Blue Note 84109), LP cover",
+    "artist": "Herbie Hancock; Blue Note Records",
+    "year": "1962",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Takin%27_Off_(1962),_by_Herbie_Hancock.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1962, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_hip_harp",
+    "title": "Hip Harp (Prestige 7140), LP cover",
+    "artist": "Dorothy Ashby with Frank Wess; Prestige Records",
+    "year": "1958",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Hip_Harp.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1958, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_black_brown_beige",
+    "title": "Black, Brown and Beige (RCA Victor), album cover",
+    "artist": "Duke Ellington; RCA Victor",
+    "year": "1946",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Ellington-Black-Brown-Beige-78.png",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1946, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_bossa_nova_pops",
+    "title": "Fly Me to the Moon and the Bossa Nova Pops (Kapp KS-3318), LP cover",
+    "artist": "Joe Harnell, his piano and orchestra; Kapp Records",
+    "year": "1963",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Joe_Harnell_Fly_Me_To_The_Moon_Kapp_KS3318_Front_Cover_1_April_2014_5942_800.JPG",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-no-notice: published 1963 without a copyright notice; the uploader photographed both sides of the sleeve)"
+  },
+  {
+    "slug": "lp_gershwin_songs",
+    "title": "George Gershwin Songs, Vol. 1 (Decca album 96), album cover",
+    "artist": "Bing Crosby, Shirley Ross, Anne Jamison and others; Decca Records",
+    "year": "1939",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:George_Gershwin_Songs,_Vol._1_1939.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1939, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_cole_porter_songs",
+    "title": "Bing Crosby Sings Cole Porter Songs (Decca), album cover",
+    "artist": "Bing Crosby; Decca Records",
+    "year": "1949",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Bing_Crosby_Sings_Cole_Porter_Songs_1949.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1949, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_bing_in_paris",
+    "title": "Bing in Paris: Bing Crosby Sings the French Hits (Decca DL 8780), LP cover",
+    "artist": "Bing Crosby; Decca Records",
+    "year": "1958",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Bing_in_Paris_1958.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1958, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_ed_higgins_trio",
+    "title": "The Ed Higgins Trio (Replica), LP cover",
+    "artist": "Eddie Higgins; design Arvid Casler, photograph Serge Seymour",
+    "year": "1957",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:The_Ed_Higgins_Trio.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-not-renewed: published 1957, copyright in the cover not renewed)"
+  },
+  {
+    "slug": "lp_elvis_presley",
+    "title": "Elvis Presley (RCA Victor LPM-1254), LP cover",
+    "artist": "Elvis Presley; RCA Victor; photograph William V. Robertson",
+    "year": "1956",
+    "width_px": 512,
+    "height_px": 512,
+    "source_url": "https://commons.wikimedia.org/wiki/File:Elvis_Presley_-_Elvis_Presley_album_cover.jpg",
+    "licence": "Public domain in the United States (Wikimedia Commons: PD-US-no-notice: published 1956 without a copyright notice; lettering PD-textlogo)"
   }
 ]

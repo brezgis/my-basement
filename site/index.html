@@ -97,10 +97,12 @@
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
     <symbol id="doors" viewBox="0 0 40 56">
+      <!-- the cellar doors, shut: a head rail, two plain leaves with a handle each, the meeting crack between them, a sill -->
       <rect x="9.6" y="8.4" width="20.8" height="2.6" fill="currentColor"/>
-      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="currentColor" style="fill-opacity: var(--leaf, .42)"/>
-      <path class="glass" d="M18 11h4v32h-4Z" style="fill: var(--glass, #e2a647)"/>
-      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z M9.6 19H18 M7.8 27H18 M6 35H18 M22 19H30.4 M22 27H32.2 M22 35H34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M11.4 11H19V43H4.2Z M21 11H28.6L35.8 43H21Z" fill="currentColor" style="fill-opacity: var(--leaf, .42)"/>
+      <path class="glass" d="M19 11h2v32h-2Z" style="fill: var(--glass, #e2a647)"/>
+      <path d="M11.4 11H19V43H4.2Z M21 11H28.6L35.8 43H21Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M15.6 25.5v6 M24.4 25.5v6" fill="none" stroke="var(--handle, currentColor)" stroke-width="1.7" stroke-linecap="round"/>
       <rect x="2" y="43" width="36" height="2.8" fill="currentColor"/>
       <rect x="0" y="48.2" width="40" height="1.5" fill="currentColor"/>
     </symbol>
@@ -118,11 +120,12 @@
   <div class="threshold">
     <!-- the cellar doors in silhouette, as the house's lantern and the town's shopfront: the two leaves fill with light from the sill up -->
     <svg class="lamp" viewBox="0 0 40 56" aria-hidden="true">
-      <defs><clipPath id="glassClip"><path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z"/></clipPath>
-        <linearGradient id="glassGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#3f9c8c"/><stop offset="1" stop-color="#bff0e2"/></linearGradient></defs>
-      <path d="M11.4 11H18V43H4.2Z M22 11H28.6L35.8 43H22Z" fill="#17302d"/>
-      <rect id="glassFill" clip-path="url(#glassClip)" x="4" y="43" width="32" height="0" fill="url(#glassGrad)" data-foot="43" data-rise="32"/>
-      <use href="#doors" style="--glass: #0d1b19; --leaf: 0"/>
+      <!-- the light comes up the crack where the two leaves meet, from the sill; lit, the whole mark glows -->
+      <defs><clipPath id="glassClip"><path d="M18.4 11h3.2v32h-3.2Z"/></clipPath>
+        <linearGradient id="glassGrad" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#6fd0bb"/><stop offset="1" stop-color="#e6fff6"/></linearGradient></defs>
+      <path d="M18.4 11h3.2v32h-3.2Z" fill="#0a1513"/>
+      <rect id="glassFill" clip-path="url(#glassClip)" x="18" y="43" width="4" height="0" fill="url(#glassGrad)" data-foot="43" data-rise="32"/>
+      <use href="#doors" style="--glass: transparent; --leaf: .88; --handle: #16302c"/>
     </svg>
     <p class="name">Anna’s Basement</p>
     <svg class="rule" viewBox="0 0 240 12" aria-hidden="true">
