@@ -57,6 +57,13 @@ const draw = () => (post ? post.render(scene, camera) : renderer.render(scene, c
 const setRatio = r => (post ? post.setScale(r) : renderer.setPixelRatio(r));
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.shadowMap.enabled = true;
+// Solid things are drawn nearest first. (three's own order is by material and only then by distance, which saves a
+// few changes of state and shades a wall in full before the furniture in front of it is drawn over it: nearest first,
+// what is hidden is thrown out by the depth test before it is shaded. A fifth to a quarter less time on the graphics
+// card in the Hall and the Pool on a desktop card, nothing either way in the courtyard; the same picture. But it costs
+// a little more processor time in changes of state, and a laptop's tiled graphics chip discards hidden surfaces by
+// itself: so it is only for trying, ?sort=1.)
+if (Q.get('sort') === '1') renderer.setOpaqueSort((a, b) => (a.groupOrder !== b.groupOrder ? a.groupOrder - b.groupOrder : a.renderOrder !== b.renderOrder ? a.renderOrder - b.renderOrder : a.z !== b.z ? a.z - b.z : a.id - b.id));
 renderer.shadowMap.type = QUALITY.softShadow ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
 document.body.prepend(renderer.domElement);
 
@@ -328,14 +335,24 @@ renderer.setAnimationLoop(() => {
   // A change of drawing resolution is made here, before the frame is drawn. (Made after drawing, it
   // emptied the canvas, and the page's dark background showed for a frame: a full-screen blink.)
   if (nextRatio !== null) { ratio = nextRatio; nextRatio = null; setRatio(ratio); }
-  let where = 'out';
+  let where = 'out', eyeWhere = 'out';
   if (mode === 'walk') {
     walker.update(dt);
     const p = walker.pos;
-    const r = rooms.find(r => p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1 && p.y >= r.y0 && p.y <= r.y1);
+    // In the thickness of a wall between two rooms the feet are in neither room's box: that used to count as out of
+    // doors, and every cased opening dimmed the picture by a fifth and brought it back (the eye, the window glow and
+    // the sound all followed it). Whoever is in no box but in a doorway with no outdoors on either side (visibility.js,
+    // as of the last frame) is still in the room they were in.
+    const hereNow = vis.state.here, doorOut = hereNow.includes('out');
+    const r = rooms.find(r => p.x >= r.x0 && p.x <= r.x1 && p.z >= r.z0 && p.z <= r.z1 && p.y >= r.y0 && p.y <= r.y1) ?? (!doorOut && hereNow.length ? ctx.room ?? rooms.find(q => 'r:' + q.name === hereNow[0]) ?? null : null);
     const name = r ? r.name : placeName(p.x, p.z);
     if (name !== caption && !fpsBox) { caption = name; $('room').textContent = name; }
     where = r ? 'in' : 'out';
+    // ...and in an outside doorway the eye is half way between the two (lighting.js has a level for it), so going
+    // out or in is two smaller changes, each eased, not one
+    // (a doorway only: standing at a window is standing in the room)
+    const inDoor = doorOut && hereNow.length > 1 && vis.portals.some(q => q.kind !== 'win' && (q.a === 'out' || q.b === 'out') && q.box.distanceToPoint(camera.position) < 0.9);
+    eyeWhere = perf.frames && inDoor ? 'half' : where;
     ctx.room = r ?? null;
     aimed = life.target(camera); if (walker.seated && aimed?.seat) aimed = null;      // (no hopping from seat to seat)
     const hint = ctx.hint?.();                                     // a game in progress says what to do (chess.js)
@@ -343,7 +360,7 @@ renderer.setAnimationLoop(() => {
     if (text !== shown) { shown = text; $('prompt').innerHTML = text ? (hint ? text : `<b>E</b>${text}`) : ''; $('prompt').classList.toggle('on', !!text); }
   } else { if (swaying && mode === 'orbit') { const az = SWAY.mid + SWAY.half * Math.sin((performance.now() / 1000) * (Math.PI * 2 / SWAY.period)), d = Math.hypot(ABOVE[0] - ABOVE_AT[0], ABOVE[2] - ABOVE_AT[2]); camera.position.set(ABOVE_AT[0] + Math.sin(az) * d, ABOVE[1], ABOVE_AT[2] + Math.cos(az) * d); } orbit.update(); }
   // Eyes adjust: rooms are far dimmer than the garden, and night dimmer still (lighting.js).
-  exposure.update(renderer, where, day, dt, Q.has('view'));
+  exposure.update(renderer, mode === 'walk' ? eyeWhere : where, day, dt, Q.has('view'));
   lampPool.update(camera.position, Q.has('view') ? 1 : dt, t);
   winGlow.update(day.night, where === 'out', 1 - THREE.MathUtils.smoothstep(day.light, 0.42, 0.97));      // third: how far the lamps are on (as lighting.js lampOn)
   vignette.set(day.night);

@@ -153,8 +153,13 @@ export function makeVisibility({ rooms, portals, footprints = [], quality = {} }
     for (const z of here) { const o = AHEAD ? z === 'out' : !inside; seen.set(z, { rect: FULL, level: 2, inside: !o }); queue.push([z, FULL, 0, 2, o]); }
     for (const z of beside) { seen.set(z, { rect: FULL, level: 2, inside: true }); queue.push([z, FULL, 0, 2, false]); }
     while (queue.length) {
-      const [z, rect, d, level, o] = queue.shift();
-      if (d >= MAXD || (z === 'out' && !o)) continue;      // from indoors, the garden is the end of the line
+      let [z, rect, d, level, o] = queue.shift();
+      if (d >= MAXD) continue;
+      // From indoors the garden was the end of the line: and the rooms across the courtyard, plainly seen through
+      // this room's glass and theirs, stood empty until the eye was a foot from the door, when their furniture, doors
+      // and stoves all came at once. The courtyard seen from a room is now looked across as from the courtyard itself
+      // (the same reach, and only through the part of the screen this room's opening shows it in). ?ahead=0: as it was.
+      if (z === 'out' && !o) { if (!AHEAD) continue; o = true; }
       if (o && z !== 'out' && (level < 2 || d >= 2)) continue;   // from outdoors: rooms seen from afar, or two rooms deep, go no further
       for (const p of adj.get(z) ?? []) {
         const other = p.a === z ? p.b : p.a;

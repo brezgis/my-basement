@@ -390,13 +390,17 @@ export function makeWindowGlow({ scene, materials, windows, rooms, groundY = 0.5
   // shader's own boxes as well as the eye's place: seen from a room at a glancing angle beside its frames, four feet
   // past the pane can still be within the room's box, and a clouded pane there showed the night sky's reflection as
   // a strip of bright blue down the jambs and along the sill.)
+  // (It was 'never while the eye is indoors', and every window round the courtyard went from dark glass to lit cream
+  // in one frame on the step out of a door, a sixth brighter over the whole picture, and back on the step in. Now a
+  // pane glows when the eye is on its outdoor side: four feet back toward the eye from the pane is not in a room. The
+  // windows across the courtyard are lit from the Hall as they are from the lawn; a room's own panes stay clear.)
   if (!LIGHT_OLD) {
     glass.emissive = new THREE.Color(0xffb15e); glass.emissiveIntensity = 0;
     const prev = glass.onBeforeCompile;
     glass.onBeforeCompile = (sh, r) => { prev?.call(glass, sh, r);
-      sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n\t{ vec3 wp = cameraPosition + ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz; float g = houseInside( wp + normalize( wp - cameraPosition ) * 4.0 ) * ( 1.0 - houseInside( cameraPosition ) ); totalEmissiveRadiance *= g; diffuseColor.a = mix( diffuseColor.a, ${f(GLASS_A)}, g * clamp( emissive.r / ${f(GLASS_GLOW)}, 0.0, 1.0 ) ); }`); };
+      sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>\n\t{ vec3 wp = cameraPosition + ( vec4( - vViewPosition, 0.0 ) * viewMatrix ).xyz; vec3 gd = wp - cameraPosition; float gl = length( gd ); gd /= max( gl, 0.001 ); float g = houseInside( wp + gd * 4.0 ) * ( 1.0 - houseInside( wp - gd * min( 4.0, gl * 0.9 ) ) ); totalEmissiveRadiance *= g; diffuseColor.a = mix( diffuseColor.a, ${f(GLASS_A)}, g * clamp( emissive.r / ${f(GLASS_GLOW)}, 0.0, 1.0 ) ); }`); };
     const key = glass.customProgramCacheKey?.bind(glass);
-    glass.customProgramCacheKey = () => (key ? key() : '') + '|lit';
+    glass.customProgramCacheKey = () => (key ? key() : '') + '|lit2';
   }
   // cards on the ground below the ground-floor windows (one draw)
   const tex = (() => {
@@ -428,7 +432,7 @@ export function makeWindowGlow({ scene, materials, windows, rooms, groundY = 0.5
       glint.value = QS.get('glint') === '1' ? 1 : 1 - Math.min(1, Number(glowsOn) || 0);      // (?glint=1: as it was)
       const k = Math.max(smooth(night, 0.25, 0.9), 0.6 * (Number(glowsOn) || 0));      // the windows begin to glow as the lamps come on at dusk
       spillMat.opacity = 0.3 * k; spill.visible = k > 0.01;
-      if (!LIGHT_OLD) glass.emissiveIntensity = outside ? GLASS_GLOW * k : 0;
+      if (!LIGHT_OLD) glass.emissiveIntensity = GLASS_GLOW * k;      // (whichever side the eye is on: the shader looks, pane by pane)
     },
   };
 }
@@ -465,6 +469,24 @@ export function makeLampPool({ scene, lamps, vis, size, day, camera }) {
   let nowT = 0;
   const seen = l => { if (zoneOf(l) === 'o:' ? vis.state.out : vis.state.seen.has(l.zone)) l.seenAt = nowT; return nowT - (l.seenAt ?? -1e9) < 6; };
   const here = l => vis.state.here.includes(zoneOf(l));
+  // How near the eye is to a doorway into each room next door (0 at APPROACH feet from it, 1 in it), found once a
+  // frame. A room's lamps used to be preferred only once the eye was in its doorway, and then hurried on: by lamplight
+  // the room ahead came up by two fifths in a fifth of a second, on the threshold, in front of you. Now its lamps rise
+  // in the score as the door comes nearer, and those of the room behind fall off the same way as you walk on, so the
+  // ordinary slow change of lamps does the handing over, across a dozen feet of floor.
+  const APPROACH = 14, ahead = new Map();
+  function findAhead(eye) {
+    ahead.clear();
+    const H = vis.state.here;
+    for (const p of vis.portals) {
+      if (p.kind === 'win' || p.kind === 'stair') continue;
+      const a = H.includes(p.a), b = H.includes(p.b);
+      if (a === b) continue;
+      const d = p.box.distanceToPoint(eye); if (d >= APPROACH) continue;
+      const z = a ? p.b : p.a, k = smooth(1 - d / APPROACH, 0, 1);
+      if (k > (ahead.get(z) ?? 0)) ahead.set(z, k);
+    }
+  }
   // Smaller is better: distance (height counts triple, floors apart), less for strong lamps,
   // much less for the room you are in, more for lamps behind walls, and a little stickiness.
   function score(l, eye, held) {
@@ -472,10 +494,11 @@ export function makeLampPool({ scene, lamps, vis, size, day, camera }) {
     if (s <= 0.01) return Infinity;
     const d = Math.hypot(l.x - eye.x, l.z - eye.z) + Math.abs(l.y - eye.y) * 3;
     const outside = vis.state.here.includes('out'), indoorLamp = zoneOf(l) !== 'o:';
-    return d / (0.4 + s) * (here(l) ? 0.55 : seen(l) ? 1 : 2.2) * (held ? 0.62 : 1)
+    const mine = here(l), near = mine ? 1 : ahead.get(l.zone) ?? 0;      // (near: how close its room's door is, findAhead)
+    return d / (0.4 + s) * (mine ? 0.55 : lerp(seen(l) ? 1 : 2.2, 0.55, near)) * (held ? 0.62 : 1)
       * (l.kind === 'fire' ? 0.5 : 1)                    // a lit fire is always worth one of the four
-      * (outside && indoorLamp ? 1.8 : 1)                // from the garden, rooms glow by themselves (lighting.js); light the garden
-      * (!outside && !indoorLamp && !LIGHT_OLD ? 2.2 : 1); // and from indoors a street lamp beyond the glass lights little of the room
+      * (outside && indoorLamp ? lerp(1.8, 1, near) : 1) // from the garden, rooms glow by themselves (lighting.js); light the garden
+      * (!outside && !indoorLamp && !LIGHT_OLD ? lerp(2.2, 1, near) : 1); // and from indoors a street lamp beyond the glass lights little of the room
   }
   let lantern = null;                                    // { pos: Vector3 } when carried
   const heldLights = new Set();
@@ -503,7 +526,7 @@ export function makeLampPool({ scene, lamps, vis, size, day, camera }) {
   function update(eye, dt, t) {
     nowT = t;
     const n = size - (lantern ? 1 : 0);
-    heldLights.clear();
+    heldLights.clear(); findAhead(eye);
     for (const slot of pool) if (slot.lamp) heldLights.add(slot.lamp);
     const near = choose(eye, n, heldLights);
     const slots = lantern ? pool.slice(0, n) : pool;
@@ -517,16 +540,20 @@ export function makeLampPool({ scene, lamps, vis, size, day, camera }) {
     for (const s of slots) {
       if (s.lamp === 'lantern') { s.lamp = null; s.level = 0; }
       const wanted = s.lamp && near.includes(s.lamp), mine = s.lamp && here(s.lamp), hurry = urgent && s.lamp && !wanted && !mine;
-      if (hurry && !inSight(s.lamp)) s.level = 0;
-      s.level += ((wanted ? 1 : 0) - s.level) * Math.min(1, dt * (wanted ? (mine ? 10 : 5.5) : hurry ? 14 : 2.4));      // otherwise slow, so a change of lamp is a drift, not a blink
-      if (!wanted && s.level < (hurry ? 0.06 : 0.02)) {
+      // (A lamp out of sight was put out at a stroke when hurried: but its light came through the doorway all the same,
+      // and the picture dropped by a twentieth in one frame. It goes quickly now, and nothing goes at once. The rates
+      // are gentler too, about half a second for a lamp of your own room to come up, since its turn now comes before
+      // you are in the room (findAhead); and the light follows the level by a smooth step, so it neither starts nor
+      // lands with a jolt.)
+      s.level += ((wanted ? 1 : 0) - s.level) * Math.min(1, dt * (wanted ? (mine ? 5 : 3.2) : hurry ? (inSight(s.lamp) ? 6 : 9) : 2.4));      // otherwise slow, so a change of lamp is a drift, not a blink
+      if (!wanted && s.level < (hurry ? 0.1 : 0.05)) {      // (by the smooth step, under a hundredth of its light)
         const free = near.find(l => !pool.some(o => o.lamp === l));
         s.lamp = free ?? null; s.level = free ? s.level : 0;
         if (free) { s.light.position.set(free.x, free.y - (DROP[free.kind] ?? 0), free.z); s.light.color.set(TINT[free.kind]); [s.light.distance, s.light.decay] = SHAPE[free.kind]; }
       }
       const live = s.lamp && (s.lamp.kind === 'fire' || s.lamp.kind === 'candle' || s.lamp.kind === 'corona');
       const flicker = live ? 1 + 0.1 * Math.sin(t * 9.1 + s.lamp.x) + 0.07 * Math.sin(t * 23.7 + s.lamp.z) + 0.04 * Math.sin(t * 41.3) : 1;
-      s.light.intensity = s.lamp ? LAMP * strength(s.lamp) * s.level * flicker * poolShare(s.lamp) : 0;
+      s.light.intensity = s.lamp ? LAMP * strength(s.lamp) * (EASE ? s.level * s.level * (3 - 2 * s.level) : s.level) * flicker * poolShare(s.lamp) : 0;
     }
     if (lantern) {
       const s = pool[size - 1];

@@ -124,24 +124,41 @@ export function creatureKit(ctx, land = {}) {
   const glows = [];
   const glow = (o, k = 0.4, color = 0x6a6258) => { o.traverse(n => { if (!n.isMesh || n.userData.glows) return; n.userData.glows = true; const m = n.material = n.material.clone(); m.emissive = new THREE.Color(color); if (m.map) m.emissiveMap = m.map; m.emissiveIntensity = k * (day.night ?? 0); glows.push([m, k]); }); return o; };
   let next = 0;
+  // An animal is first made when the visitor steps out of doors, and its shaders were compiled on the frame it was
+  // first drawn: by day six new ones (instanced wings, a model's own material) on the two steps through a garden
+  // door, a stall of most of a second. Now a new arrival stays hidden until the graphics card has its shaders ready
+  // (compiled in the background where the browser can: KHR_parallel_shader_compile), and only then joins the crew.
+  let warming = null;
+  const warm = () => (warming ??= Promise.resolve().then(() => {
+    warming = null;
+    const r = ctx.renderer; if (!r?.compileAsync) return null;
+    let root = scene; while (root.parent) root = root.parent;
+    return r.compileAsync(scene, ctx.camera, root).catch(() => null);
+  }));
   const all = new URLSearchParams(location.search).has('allcreatures');      // tests: load and run everything, everywhere
   animated.push((t, dt) => {
-    if (!all && (ctx.room || scene.visible === false)) return;                // indoors, or the grounds are out of sight: nothing runs
+    // Indoors, or with the grounds out of sight, nothing runs: but the animals within reach are still made ready, one
+    // at a time, so that the work (a model to read, a shader or two for the graphics card) is done in the first seconds
+    // of a visit, a little at once, and not all together on the step out of a garden door.
+    const away = !all && (ctx.room || scene.visible === false);
     dt = Math.min(dt, 0.1);
     if (t >= next || t < next - 1) {
       next = t + 0.25;
-      for (let i = 0; i < glows.length; i++) glows[i][0].emissiveIntensity = glows[i][1] * (day.night ?? 0);
+      if (!away) for (let i = 0; i < glows.length; i++) glows[i][0].emissiveIntensity = glows[i][1] * (day.night ?? 0);
+      let busy = away && crew.some(c => c.loading);
       for (let i = 0; i < crew.length; i++) {
         const c = crew[i], d = camDist(c.x, c.z), want = c.when ? c.when() : true;
-        if (!c.loaded && !c.loading && !c.failed && (all || (want && d < (c.load ?? 150)))) {
-          c.loading = true;
-          c.init().then(() => { c.loaded = true; c.loading = false; c.show?.(false); }).catch(e => { c.failed = true; c.loading = false; console.warn('creature', c.name, e?.message ?? e); });
+        if (!c.loaded && !c.loading && !c.failed && !busy && (all || (want && d < (c.load ?? 150)))) {
+          c.loading = true; busy = away;
+          Promise.resolve().then(() => c.init()).then(() => { c.show?.(false); return warm(); }).then(() => { c.loaded = true; c.loading = false; c.show?.(false); }).catch(e => { c.failed = true; c.loading = false; console.warn('creature', c.name, e?.message ?? e); });
         }
+        if (away) continue;
         const on = c.loaded && want && (all || d < (c.live ?? 110));
         if (on !== c.on) { c.on = on; c.show?.(on); }
         if (on) c.think?.(t, d);
       }
     }
+    if (away) return;
     for (let i = 0; i < crew.length; i++) if (crew[i].on) crew[i].tick?.(t, dt);
   });
 
