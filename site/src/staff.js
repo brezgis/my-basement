@@ -288,7 +288,7 @@ class Staffer extends Polite {
           if (c < 0) return;
           const order = { kind: 'make', name: o.name, item: it, ready: false };
           this.counter = c >= 0 ? { x: p.cx(c), z: p.cz(c) } : null;
-          this.state = 'go'; if (!(yield* this.travel(this.counter.x, this.counter.z, { must: true, patience: 40 }))) return;
+          this.state = 'go'; if (!(yield* this.travel(this.counter.x, this.counter.z, { must: true, patience: 40, speed: this.spec.runner ? 1.4 : 1 }))) return;
           maker.queue.push(order);
           const t0 = W.now; while (!order.ready && !order.done && W.now - t0 < 45) { this.m.v = 0; this.m.faceTo(maker.x, maker.z, W.dt * 2); this.state = 'make'; yield; }
           this.counter = null;
@@ -351,7 +351,7 @@ class Staffer extends Polite {
         if (!reach && !still) {
           this.offered = false; this.state = 'carry';
           if (W.now > replan || !goal || Math.hypot(goal.x - v.x, goal.z - v.z) > stop + 2.5) { replan = W.now + 1.5; goal = this.standNear(stop); if (!goal || !m.goTo(goal.x, goal.z)) { m.goTo(v.x, v.z); goal = null; } }
-          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? 1.1 : 0.85);
+          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? (this.spec.runner ? 1.45 : 1.1) : 0.85);
           if (st === 'failed' && fail && Math.hypot(fail.x - this.x, fail.z - this.z) < 1 && this.nudge()) { fail = null; replan = W.now + 1.6; }      // twice in one place: out to roomier floor first
           else if (st === 'failed') { fail = { x: this.x, z: this.z }; replan = 0; } else if (st === 'idle' || st === 'arrived') replan = 0;
           stuck = Math.hypot(this.x - x0, this.z - z0) < W.dt * 0.2 ? stuck + W.dt : 0;
