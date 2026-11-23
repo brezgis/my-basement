@@ -114,7 +114,7 @@ export const LINES = {
 
   // ---------------------------------------------------------------------------------------------------------------
   saz: {
-    greet: ['Evening, darling. It is always evening at a good bar.', 'Sit anywhere. The stools have been waiting for somebody with your posture.', 'There she is. I have a glass with your name on it. Not literally. We are not that kind of place.'],
+    greet: ['Evening, darling. It is always evening at a good bar.', 'Sit anywhere. The stools have been waiting for somebody with your posture.', 'There you are. I have a glass with your name on it. Not literally. We are not that kind of place.'],
     idle: ['*holds a coupe to the light, finds a fingerprint, takes it personally*', 'This record. Listen to that. They recorded it in one take and then all went to lunch.', '*wipes the counter in slow circles, in time with the bass*', 'Ice is an ingredient. I will not be taking questions.', '*adjusts the cherry on its head by one degree*'],
     bye: ['Go well, darling. Your tab is imaginary.', 'Come back for the B side.'],
     walkedOff: ['Mid-sentence. A bold exit. I respect it.'],
@@ -224,7 +224,7 @@ export const LINES = {
     greet: ['Oh! You are dry. We can fix that. And then we can fix that!', 'Welcome to the water, darling! It is thirty-four degrees and it has been thinking about you.', 'Towel? Robe? Both? I have so many. It is honestly a problem.'],
     idle: ['*folds a towel in thirds, then in thirds again, then holds it up to be admired*', '*draws the net across the water after a single leaf, with enormous tenderness*', 'One leaf. ONE. I saw you.', '*squares the stack; steps back; squares it again*', 'The water is perfect. I asked it.'],
     bye: ['Do not drip on Cosima\'s floor! She can hear it!', 'Come back wet, darling! I will be ready!'],
-    walkedOff: ['Oh! Off she goes. I will warm one for when she is back.'],
+    walkedOff: ['Oh! Off you go. I will warm one for when you are back.'],
     ready: ['A %s, on the shelf, just here! Fresh. I have been saving it.'],
     served: ['Warm, isn\'t it? I keep them over the pipes. Trade secret. I tell everyone.'],
     deliver: ['%s! Warm! I ran! Well. Floated briskly.', 'Here, darling: one %s, straight off the warm shelf.'],
@@ -247,7 +247,7 @@ export const LINES = {
 
   // ---------------------------------------------------------------------------------------------------------------
   bijou: {
-    greet: ['Honey! Sit, sit, sit. Feet in the water. Tell me everything. I will start.', 'There she is! Honey, those cuticles have been through something. You are safe now.', 'Honey. HONEY. Sit down, I have news and you have nails.'],
+    greet: ['Honey! Sit, sit, sit. Feet in the water. Tell me everything. I will start.', 'There you are! Honey, those cuticles have been through something. You are safe now.', 'Honey. HONEY. Sit down, I have news and you have nails.'],
     idle: ['So I said to Terry, honey, nobody needs that many towels. And do you know what Terry said? Nothing. Folded one AT me.', '*files, blows, files, holds it up to the cloud window*', 'Honey, between us: Saz irons that moustache. I have seen the little iron.', 'Cosima and the ledger. That is all I am saying. I am saying nothing. It has a LOCK, honey.', '*admires her own manicure at arm\'s length, finds it flawless, checks again*', 'Tomme sings to the cheese, honey. Lullabies. I went past at midnight. In French.'],
     bye: ['Do not touch anything for ten minutes, honey! Not a door! Ring for Ding!', 'Bye, honey! Come back and tell me how it went. I will already know.'],
     walkedOff: ['Honey! I was getting to the good part!'],
@@ -411,7 +411,7 @@ export const CHAT = [
   ['ding', 'saz', ['Is it ready is it ready is it ready?', 'Art is not rushed. Also: yes, it has been ready since before you asked.', 'DING!']],
   ['saz', 'ding', ['You carried the last one level. I watched the crema.', 'I held my breath the WHOLE way!', 'You do not breathe, Ding.', 'I held it anyway!']],
   ['saz', 'tomme', ['You could come out and hear this record properly.', '*quietly* The door stays shut. The washed rinds do not care for jazz.', 'They told you this.', '*a dignified silence*']],
-  ['tomme', 'saz', ['*low* The red is open. An hour.', 'An hour. Good. I will send her your way after the second coffee.', '*nods* After the second. Before the third.']],
+  ['tomme', 'saz', ['*low* The red is open. An hour.', 'An hour. Good. I will send them your way after the second coffee.', '*nods* After the second. Before the third.']],
   ['cosima', 'saz', ['Somebody will want champagne at four.', 'Somebody always wants champagne at four.', 'Then be surprised by it beautifully.']],
   ['pasha', 'ding', ['Little bell! You have never steamed!', 'I would tarnish! Cosima says!', 'Tarnish is character! ... No, she is right. Stay out.']],
   ['ding', 'pasha', ['Is the samovar... is it well?', 'The samovar is a samovar, little bell.', 'Tell it I said hello. If it comes up.']],

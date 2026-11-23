@@ -600,25 +600,37 @@ export default function (b) {
     }
     // An unbroken flashing behind the leaves seals the central joint and their four edges.
     plate(frame, X0 - 0.6, X1 + 0.05, TW0 - 1, TW1 + 1, 0.10, 0.5);
-    for (const side of [-1, 1]) {
-      const outer = YC + side * HWD, center = YC + side * 0.026;
-      const edge = outer - side * 0.10, bounds = [edge, center].sort((a, b) => a - b);
-      plate(sheet, X0 + 0.12, X1 - 0.12, ...bounds, 0, 0.10);
-      for (const fraction of [0.20, 0.51, 0.82]) {
-        const X = X0 + (X1 - X0) * fraction, hinge = outer - side * 0.16;
-        const tip = YC + side * 0.48;
-        plate(frame, X - 0.12, X + 0.12, Math.min(hinge, tip), Math.max(hinge, tip), -0.058, 0);
-        rod(X - 0.28, hinge, -0.055, X + 0.28, hinge, -0.055, 0.063);
-        for (const Y of [outer - side * 0.65, tip + side * 0.13])
-          b.cyl(hardware, X, Y, height(X) - 0.087, height(X) - 0.054, 0.043, 0.045, 6);
+    // The two leaves are made when the place is running (below, in later()), each a piece of its own about its hinge:
+    // they open. From the stair you look up at them from underneath, so a leaf swinging up and out is seen as a leaf
+    // growing narrower toward its hinge, and the day comes in white between the two.
+    const leaves = [], doors = { k: 0, to: 0 };
+    b.later(ctx => {
+      const V = (X, Y, h) => { const q = b.world(X, Y, h); return new THREE.Vector3(q.x, q.y, q.z); }, mk = n => ctx.materials.make(n);
+      const mSheet = mk(sheet), mFrame = mk(frame), mIron = mk(hardware), xa = X0 + 0.12, xb = X1 - 0.12;
+      for (const side of [-1, 1]) {
+        const edge = YC + side * (HWD - 0.10), center = YC + side * 0.026;
+        const O = V(xa, edge, height(xa)), u = V(xb, edge, height(xb)).sub(O), L = u.length(), w = V(xa, center, height(xa)).sub(O), Wd = w.length(); u.normalize(); w.normalize();
+        const v = new THREE.Vector3().crossVectors(w, u); if (v.y < 0) v.negate();
+        const g = new THREE.Group(); g.name = 'cellar leaf'; g.matrixAutoUpdate = false; g.userData.base = new THREE.Matrix4().makeBasis(u, v, w).setPosition(O); g.matrix.copy(g.userData.base);
+        const box = (m, u0, u1, v0, v1, w0, w1) => { const q = new THREE.Mesh(new THREE.BoxGeometry(u1 - u0, v1 - v0, w1 - w0), m); q.position.set((u0 + u1) / 2, (v0 + v1) / 2, (w0 + w1) / 2); q.castShadow = false; g.add(q); };
+        box(mSheet, 0, L, 0, 0.085, 0, Wd);                                                               // the boards
+        const tip = Wd - 0.454;
+        for (const f of [0.20, 0.51, 0.82]) { const c = L * f; box(mFrame, c - 0.12, c + 0.12, -0.058, 0, 0.06, tip); box(mIron, c - 0.28, c + 0.28, -0.115, -0.005, 0.01, 0.12);      // a ledge, its hinge knuckle
+          for (const q of [0.55, tip - 0.13]) box(mIron, c - 0.04, c + 0.04, -0.087, -0.054, q - 0.04, q + 0.04); }                                                                // and two bolts
+        const hx = L * 0.42;                                                                              // the pull: two posts and a bar
+        for (const e of [hx, hx + 0.68]) { box(mFrame, e - 0.1, e + 0.1, -0.055, 0, tip - 0.12, tip + 0.12); box(mIron, e - 0.04, e + 0.04, -0.29, -0.055, tip - 0.04, tip + 0.04); }
+        box(mIron, hx - 0.03, hx + 0.71, -0.335, -0.245, tip - 0.045, tip + 0.045);
+        ctx.scene.add(g); leaves.push(g);
       }
-      const x = X0 + 2.3, y = YC + side * 0.48;
-      for (const end of [x, x + 0.68]) {
-        plate(frame, end - 0.1, end + 0.1, y - 0.12, y + 0.12, -0.055, 0);
-        rod(end, y, -0.055, end, y, -0.29, 0.043);
-      }
-      rod(x - 0.03, y, -0.29, x + 0.71, y, -0.29, 0.051);
-    }
+      // the day beyond them: white, and only there while they are open
+      const P = [V(xa, YC - HWD, height(xa) + 0.09), V(xb, YC - HWD, height(xb) + 0.09), V(xb, YC + HWD, height(xb) + 0.09), V(xa, YC + HWD, height(xa) + 0.09)], dg = new THREE.BufferGeometry();
+      dg.setAttribute('position', new THREE.Float32BufferAttribute(P.flatMap(q => [q.x, q.y, q.z]), 3)); dg.setIndex([0, 1, 2, 0, 2, 3]);
+      const day = new THREE.Mesh(dg, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, toneMapped: false, fog: false })); day.name = 'cellar daylight'; day.visible = false; ctx.scene.add(day);
+      let last = 0;
+      ctx.animated.push(t => { const dt = Math.min(0.05, Math.max(0, t - last)); last = t; if (doors.k === doors.to) return;
+        doors.k += Math.sign(doors.to - doors.k) * Math.min(Math.abs(doors.to - doors.k), dt / 1.5); const e = doors.k * doors.k * (3 - 2 * doors.k), c = Math.cos(e * 1.36);
+        for (const g of leaves) g.matrix.copy(g.userData.base).multiply(new THREE.Matrix4().makeScale(1, 1, c)); day.visible = doors.k > 0.001; });
+    });
     // Return the oak lining directly to the masonry and close the end above the existing wall.
     const masonryTop = M - 0.02;
     const [nextX, nextHeight] = profile[1], soffitAtM = X1 + (nextX - X1) * (lo - masonryTop) / (lo - nextHeight);      // where the soffit comes down to the top of the stair's walls
@@ -655,13 +667,15 @@ export default function (b) {
         };
         start();
       }
-      ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 9, label: () => 'go up to the house', act: async () => {
-        if (leaving) return;
+      // E opens the doors (the day comes in white between them); E again goes up into it, to the house.
+      ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 9, label: () => (doors.to ? 'go up to the house' : 'open the doors'), act: async () => {
+        if (!doors.to) { doors.to = 1; ctx.sound?.note?.(45, 0, 0.3, 0.05); return; }
+        if (leaving || doors.k < 0.9) return;
         leaving = true;
         const veil = document.createElement('div');
         veil.style.cssText = 'position:fixed;inset:0;z-index:1000;background:white;pointer-events:auto;';
         document.body.appendChild(veil);
-        addEventListener('pageshow', () => { veil.remove(); leaving = false; }, { once: true });
+        addEventListener('pageshow', () => { veil.remove(); leaving = false; doors.to = 0; }, { once: true });
         const duration = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 900;
         await veil.animate([{ opacity: 0 }, { opacity: 1 }], { duration, fill: 'forwards' }).finished;
         location.assign(houseAddress() + '?from=spanya');

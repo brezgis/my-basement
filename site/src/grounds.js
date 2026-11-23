@@ -21,6 +21,7 @@
 // The pool attendant's outdoor posts on the coping and beside the tub stairs are in staff/cast.js.
 // The two lounge chairs and their drinks table are furnished by furnish/pool_chapel.js.
 
+import { layMonogram } from './furnish/monogram.js';
 import { makeFlames } from './flame.js';
 import { burningLogs } from './kit/firewood.js';
 import * as THREE from 'three';
@@ -224,6 +225,8 @@ function edgePoolWater(ctx) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   const lamps = [{ x: 21.3, y: 2.3, z: 71.1, k: 1 }];      // (the paper lantern by the loungers: grounds_court.js)
   waterSheet(ctx, g, lamps, new THREE.Vector3(COURT.Y - COURT.r + 5, h + 1, COURT.X));
+  // the house's A on its bed, in the same tesserae as the warm pool's (furnish/monogram.js), its head to the clouds
+  { const a = brink[4], c = coping[4]; layMonogram(ctx, a[0] + (c[0] - a[0]) * 0.19, a[1] + (c[1] - a[1]) * 0.19, EDGE_POOL.bed, 2.6, [a[0] - c[0], a[1] - c[1]], 'edge pool monogram'); }
 }
 // The water falling from the edge pool's rim down the cliff: a thin, broken, translucent sheet hung just outside the rim
 // along its bearings, streaks sliding down it at two speeds, brightest at the lip, thinning and fading out over some 28 ft,

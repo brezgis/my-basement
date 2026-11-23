@@ -37,6 +37,7 @@
 import { MAT, leaves, pot, palm, fern, pillar, taper, candleCluster, lounger, drumTable, carafeTray, robes, towelShelves, lantern, stoneBench, poolRail, archOutline, zafu, plankBench, lectern, roll } from './pool_chapel_parts.js';
 import { flames, poolWater, steam, wash, glassBoxes, oculus, bowl } from './pool_chapel_fx.js';
 import * as THREE from 'three';
+import { layMonogram, layFrieze, layLife } from './monogram.js';
 
 export default function (f) {
   const K = f.kit, D = f.draw;
@@ -165,12 +166,8 @@ export default function (f) {
     const tW = wW(79.25, WL2), tE = wE(79.25, WR2);
     bench(tW, 0.25, 5.0);  planter(tW, -5.0, -0.3, -2.6);            // west: the bench Y 74.25..79, the planter Y 79.55..84.25
     planter(tE, -5.0, -0.25, -2.4); bench(tE, 0.3, 5.0, { c1: 'linen#3f5a44', c2: 'linen#ddd2bb' });      // east: the planter to the south, the bench by the north wall
-    f.framed(tW.sub(0, 0.10), 0, 8.05, 8.15, 5.45, 'nile_boat_mosaic', {
-      frame: CAP, mat: 0, border: 0.11, label: 'look at the mosaic', reach: 13,
-      title: 'A boat on the Nile', kicker: 'Roman mosaic · National Museum Cardiff',
-      text: 'A crew works beneath the mast. Beyond the boat, the river is filled with birds, buildings and a crocodile.',
-      foot: 'Photographed by Wolfgang Sauber. Wikimedia Commons · CC BY-SA 3.0.'
-    });
+    // (A Roman mosaic of a boat on the Nile hung here, and a Hiroshige over the west lounger. Anna: they go against the
+    // room. The walls carry the house's A instead, in the frieze: monogram.js, laid in setup below.)
     // the north wall, either side of the chapel's doors: lit shelves above head height with jars, a fern in a vase, rolled towels
     for (const [x0, x1] of [[46.4, 55.4], [64.6, 73.6]]) {
       const zs = F + 6.3, sh2 = 'tile_hex#e7e1d3';
@@ -192,9 +189,6 @@ export default function (f) {
     poolWash.push([WL2 + 0.07, YN - 0.1, WL2 + 0.07, 74.1, topH, -7.5, 0, 1.0], [WR2 - 0.07, 74.1, WR2 - 0.07, YN - 0.1, topH, -7.5, 0, 1.0], [WR2 - 0.1, YN - 0.07, WL2 + 0.1, YN - 0.07, topH, -7.5, 0, 1.0]);
     for (const [x0, x1, y0, y1] of [[WL2 + 0.05, WL2 + 0.25, 74.1, YN - 0.1], [WR2 - 0.25, WR2 - 0.05, 74.1, YN - 0.1], [WL2 + 0.25, WR2 - 0.25, YN - 0.25, YN - 0.05]]) f.box('e#ffb060/1.4', x0, x1, y0, y1, topH + 0.02, topH + 0.06);
     for (const c of poolFlames.slice(0, 4)) poolLamps.push({ X: c.X, Y: c.Y, h: c.h + 0.1, k: 0.35 });
-    // one picture, over the west lounger: morning mist
-    f.framed(wW(56.7).sub(0, 0.0), 0, 5.6, 3.4, 2.18, 'hiroshige_mishima_mist', { frame: 'oak_light#5a4532', title: 'Mishima: Morning Mist', kicker: 'Utagawa Hiroshige, c. 1833/34',
-      text: 'From the Fifty-three Stations of the Tokaido: travellers going out of Mishima into the mist, the shrine gate behind them. A woodblock print.', foot: 'Art Institute of Chicago (CC0).' });
     // the chapel's doors are lit by what can be seen: a bronze lantern either side of them (there was one lamp here with
     // no fitting, high in front of the doors: a bright patch on the oak from nowhere)
     for (const X of [56.75, 63.25]) K.sconce(f.fr(X, YN - 0.03, F, 2), 0, 6.1, { kind: 'lantern', lit: true, size: 1.35, metal: MAT.BRONZE, power: 0.26 });
@@ -366,6 +360,12 @@ export default function (f) {
     const Wp = (X, Y, h) => f.world(X, Y, h);
     flames(ctx, Wp, poolFlames, Wp(60, 68, F + 5));
     flames(ctx, Wp, chapelFlames, Wp(OCULUS.X, OCULUS.Y, F + 6));
+    // The house's A, in the pool's own tile (monogram.js): on the bed, read coming down the steps; set in the paving at
+    // the head of the steps; and running round the tall part as the frieze. And Conway's game in a few odd tiles.
+    { const WL2 = 43.75, WR2 = 76.25, YN = 84.5, FZ = F + 13.4, bedH = F - BASIN.deep;
+      layMonogram(ctx, 63.2, 68.75, bedH, 7.2, [1, 0], 'pool bed monogram'); layMonogram(ctx, 46.85, 68.75, F, 2.8, [1, 0], 'pool paving monogram');
+      layFrieze(ctx, WL2 + 0.085, YN - 0.05, WL2 + 0.085, 74.05, FZ); layFrieze(ctx, WR2 - 0.085, 74.05, WR2 - 0.085, YN - 0.05, FZ); layFrieze(ctx, WL2 + 0.08, YN - 0.085, WR2 - 0.08, YN - 0.085, FZ);
+      layLife(ctx, 'glider', 72.6, 62.3, F, 0.1, 0); layLife(ctx, 'glider', 66.4, 61.2, bedH, 0.14, 1); layLife(ctx, 'glider', 46.2, 80.6, F, 0.1, 2); layLife(ctx, 'pulsar', 60, 81.6, F, 0.085, 0); }
     poolWater(ctx, Wp, [BASIN.X0 - 0.05, BASIN.X1 + 0.05, BASIN.Y0 - 0.05, BASIN.Y1 + 0.05], F - 0.42, poolLamps);      // (as the water under it: a little into the walls)
     steam(ctx, Wp, [BASIN.X0, BASIN.X1, BASIN.Y0, BASIN.Y1], F - 0.45, 480, { tall: [73.5, 90] });
     wash(ctx, Wp, poolWash, Wp(60, 68, F + 5)); wash(ctx, Wp, chapelWash, Wp(OCULUS.X, OCULUS.Y, F + 6));

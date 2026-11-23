@@ -55,10 +55,12 @@ export default function (f) {
   // a seat at plan (X, Y), the seat top h above the floor, facing plan angle a
   const seatAt = (X, Y, h, a, label) => { const [x, z] = K.world(G, X, Y); K.seats.push({ x, y: F + h + 2.45, z, yaw: Math.atan2(-Math.cos(a), Math.sin(a)), label }); };
   // lying down: the eye at plan (X, Y, h above the floor) looking toward (TX, TY), tipped up by pitch (E, as chess.js sits)
-  const lie = (X, Y, h, TX, TY, pitch, label) => later.push(ctx => {
+  const lie = (X, Y, h, TX, TY, pitch, label, more = []) => later.push(ctx => {      // (more: other places [X, Y] on the piece that can be looked at to lie down)
     const p = f.world(X, Y, F + h), q = f.world(TX, TY, F + h);
     const seat = { x: p.x, y: p.y, z: p.z, yaw: Math.atan2(-(q.x - p.x), -(q.z - p.z)), label };
-    ctx.interact.push({ x: p.x, y: p.y - 0.7, z: p.z, reach: 6, size: 1.9, label: () => label, act: () => { ctx.walker.sit(seat); ctx.walker.pitch = pitch; } });
+    const act = () => { ctx.walker.sit(seat); ctx.walker.pitch = pitch; };
+    ctx.interact.push({ x: p.x, y: p.y - 0.7, z: p.z, reach: 6, size: 1.9, label: () => label, act });
+    for (const [MX, MY] of more) { const m = f.world(MX, MY, F + h); ctx.interact.push({ x: m.x, y: m.y - 0.7, z: m.z, reach: 6, size: 1.9, label: () => label, act }); }
   });
   // a model turned to face plan point (TX, TY) from (X, Y)
   const modelFacing = (id, X, Y, TX, TY, o = {}) => { const face = Math.atan2(TY - Y, TX - X); f.model(id, f.fr(X, Y, F, 0), 0, 0, 0, 0, { ...o, turn: Math.atan2(Math.cos(face), -Math.sin(face)) - Math.PI }); };
@@ -121,7 +123,7 @@ export default function (f) {
     K.cushion(Cf, 2.72, 1.3, mz + 0.16, 1.25, 1.0, M.GREEN, { tilt: 0.55, turn: -Math.PI / 2 });      // (laid back on the bolster, behind the head of whoever lies down: propped upright at 2.35 it stood where their face is)
     later.push(ctx => drapeRug(ctx, Cf, { x0: -3.15, x1: 1.9, y0: 0.12, yEdge: 2.52, drop: 0.95, z: mz + 0.05, seed: 23 }));
     // (no label for the rug here: it took E from lying down, and the rug can be read about in the Hall. Here it is just a couch.)
-    { const [X, Y] = Cf.map(1.85, 1.3); lie(X, Y, mz + 0.62, 41.3, 42.9, 0.45, 'lie on the couch'); }      // (toward the courtyard window in the south-east corner)
+    { const [X, Y] = Cf.map(1.85, 1.3); lie(X, Y, mz + 0.62, 41.3, 42.9, 0.45, 'lie on the couch', [Cf.map(0.2, 1.3), Cf.map(-1.5, 1.3), Cf.map(-2.8, 1.3), Cf.map(-0.6, 2.3)]); }      /* (anywhere along it, and on the rug over its edge: only its head end could be chosen) */      // (toward the courtyard window in the south-east corner)
     f.rug(26.0, 39.6, 46.4, 52.9, F, 'tabriz');      // (it holds the group: couch, chair, the two little tables)
 
     // ---- the analyst's chair, behind the head; the clock only it can read, on a little table at its elbow; the lamp
