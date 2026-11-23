@@ -17,6 +17,8 @@
 //   room, roam           its own room, and the rooms on its floor it may go into
 //   home, faces          where it stands when it has nothing else to do, and what it looks at
 //   homeActs             what its hands do there (acts.js)
+//   keepsDesk            it stays at home, behind its desk, until the guest has come into its room and left it for the
+//                        first time (the concierge: she is there to greet whoever comes down the stair)
 //   counter              { at: [X, Y], r, top }: within r feet of there it is behind a counter of that height, and floats
 //                        higher to be seen over it
 //   seat                 { at: [X, Y], top, faces, when }: it SITS when at home (its body is drawn on the seat; it stands
@@ -88,7 +90,7 @@ export const CAST = [
   { id: 'cosima', name: 'Cosima', role: 'the concierge', rest: 'sass', speed: 1.9, chirp: [72, 76, 79],
     look: { shape: 'tall', scale: 1.06, hover: 3.5, colour: '#14433f', belly: CREAM, buttons: BRASS, collar: BRASS, chain: 'key', hat: 'pillbox', hatColour: '#14433f', hatTrim: BRASS,
       lashes: true, brows: -0.4, eyeW: 34, eyeH: 24, eyeR: 9, gap: 46, eye: '#ffe2b0', ring: 0xffd27a, tools: [['ledger'], ['handbell', 'flute', 'robe']], tray: 'brass' },
-    room: 'The Hall', roam: [], brings: true, counter: { at: [18.6, 38.0], r: 3.6, top: 3.55 },      // (she keeps to the Hall on her own account: she follows a guest elsewhere only with something for her)
+    room: 'The Hall', roam: [], brings: true, keepsDesk: true, counter: { at: [18.6, 38.0], r: 3.6, top: 3.55 },      // (she keeps to the Hall on her own account: she follows a guest elsewhere only with something for her)
     home: [18.6, 38.0], faces: [18.6, 30], homeActs: ['ledger', 'ledger', 'straighten', 'polish', 'rest'],
     posts: [
       { at: [18.6, 38.4], faces: [18.6, 40.2], acts: ['restock', 'straighten'], w: 1 },        // the key niche

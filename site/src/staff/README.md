@@ -2,7 +2,7 @@
 
 Ten robots work the house by default. Press E near one to speak or take a delivery. For an empty house, add `?staff=0`.
 
-    ?at=court&staff=lineup            all nine in a row in the courtyard, going through their gestures (E talks to them)
+    ?at=court&staff=lineup            all ten in a row in the courtyard, going through their gestures (E talks to them)
     ?staff=lineup:ding,saz&staffr=6   only those, six feet off
     ?room=The%20Hall&staff=1          everyone at their posts, living their day (any ?room= will do)
     ?staff=cosima,ding,saz            only those, at their posts
