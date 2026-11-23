@@ -636,36 +636,20 @@ export default function (b) {
     b.later(ctx => {
       const p = b.world(xA0 + 3.0, YC, M + 1.6);
       let leaving = false;
-      // The doors themselves are part of the stair's stone and steel and do not move. What moves, in the two moments
-      // of passing through them only, is the daylight: a bright sheet just under the leaves, the width of the open
-      // doorway, which narrows from both sides to a line at the meeting edge and goes out as they shut over you
-      // (arriving from the house), and opens from that line as they are pushed up (leaving). Arriving, you stand
-      // turned back to watch them close, and are then turned to the stair; touching anything gives you the view back.
-      const sheet = (() => {
-        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(12), 3)); g.setIndex([0, 1, 2, 0, 2, 3, 0, 2, 1, 0, 3, 2]);
-        const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color: 0xfff3dc, toneMapped: false, transparent: true, opacity: 0, depthWrite: false })); m.frustumCulled = false; m.visible = false; m.renderOrder = 6; ctx.scene.add(m);
-        const lamp = new THREE.PointLight(0xfff0d6, 0, 26, 1.6); { const q = b.world((X0 + X1) / 2, YC, (hi + lo) / 2 - 1.2); lamp.position.set(q.x, q.y, q.z); } ctx.scene.add(lamp);
-        const set = k => {      // k: 1 wide open, 0 shut
-          m.visible = k > 0.002; lamp.intensity = 60 * k; if (!m.visible) return;
-          const w = HWD * Math.max(0.012, k), P = g.attributes.position, c = [[X0 + 0.15, YC - w, hi - 0.14], [X1 - 0.15, YC - w, lo - 0.14], [X1 - 0.15, YC + w, lo - 0.14], [X0 + 0.15, YC + w, hi - 0.14]];
-          c.forEach(([X, Y, h], i) => { const q = b.world(X, Y, h); P.setXYZ(i, q.x, q.y, q.z); }); P.needsUpdate = true; m.material.opacity = Math.min(1, 0.25 + k * 1.2);
-        };
-        return { set };
-      })();
+      // Arriving from the house you open on the cellar doors, shut, seen from ten feet down the stair; after a moment you are
+      // turned to the way down (touching anything gives you the view back at once). The doors do not move, so no daylight
+      // is shown opening or closing between them (there was a sheet of light that narrowed and went out: without leaves
+      // that swing it made no sense).
       const ease = x => x * x * (3 - 2 * x), wait = ms => new Promise(r => setTimeout(r, ms));
       const run = (secs, f) => new Promise(done => { const t0 = performance.now(); const step = () => { const k = Math.min(1, (performance.now() - t0) / (secs * 1000)); f(k); if (k < 1) requestAnimationFrame(step); else done(); }; step(); });
       if (new URLSearchParams(location.search).get('from') === 'house' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        sheet.set(1);
         const start = () => { let w = null; try { w = ctx.walker; } catch { /* not made yet */ } if (!w || !document.body.classList.contains('walking') || window.__ready !== true || document.getElementById('loading')) return void requestAnimationFrame(start);      // (not until the threshold has lifted and she can see it)
           { const q = b.world(xA0 + 10, YC, M - 10 * (M - L1) / 15); w.place(q.x, q.y, q.z, w.yaw, -0.2); }      // (ten feet down the first flight: far enough to see the doors whole)
           const yaw1 = w.yaw, pitch1 = w.pitch, yaw0 = yaw1 + Math.PI, pitch0 = 0.42; let mine = true;
           const stop = () => { mine = false; }; for (const ev of ['keydown', 'mousedown', 'mousemove', 'touchstart']) addEventListener(ev, stop, { once: true });
           w.yaw = yaw0; w.pitch = pitch0;
           (async () => {
-            await wait(900);
-            await run(1.9, k => sheet.set(1 - ease(k)));                              // the leaves come down: the light narrows to a line, and is gone
-            ctx.sound?.note?.(38, 0, 0.5, 0.07); ctx.sound?.note?.(45, 0.05, 0.3, 0.04);     // and they meet
-            await wait(350);
+            await wait(1900);
             await run(1.5, k => { if (mine) { w.yaw = yaw0 + (yaw1 - yaw0) * ease(k); w.pitch = pitch0 + (pitch1 - pitch0) * ease(k); } });      // and round to the stair
           })();
         };
@@ -674,7 +658,6 @@ export default function (b) {
       ctx.interact.push({ x: p.x, y: p.y, z: p.z, reach: 9, label: () => 'go up to the house', act: async () => {
         if (leaving) return;
         leaving = true;
-        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { ctx.sound?.note?.(45, 0, 0.3, 0.05); await run(1.1, k => sheet.set(ease(k))); }      // the leaves are pushed up: daylight opens from the meeting edge
         const veil = document.createElement('div');
         veil.style.cssText = 'position:fixed;inset:0;z-index:1000;background:white;pointer-events:auto;';
         document.body.appendChild(veil);
