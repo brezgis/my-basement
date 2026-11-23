@@ -85,6 +85,112 @@ export function layFrieze(ctx, X0, Y0, X1, Y1, h, tall = 0.6) {
   return add(ctx, quad([(Y0 + Y1) / 2, h + tall / 2, (X0 + X1) / 2], [(Y1 - Y0) / 2, 0, (X1 - X0) / 2], [0, tall / 2, 0]), tileMat(t), 'A frieze');
 }
 
+// ---- mosaic from a cartoon -----------------------------------------------------------------------------------------
+// As a mosaicist works: the design is painted first, flat (the cartoon), and then set in tesserae, each taking the
+// colour under its middle. Here the tesserae lie in a square grid, or (polar: a part of the radius) in a grid at the
+// centre and in concentric rings outside that, which is how a round emblem's borders are laid. Clear where the cartoon is.
+function mosaic(cartoon, px, o = {}) {
+  const W = cartoon.width, H = cartoon.height, src = cartoon.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, W, H).data;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), r = rng(o.seed ?? 5), gap = px * 0.085;
+  const at = (x, y) => { const i = ((y | 0) * W + (x | 0)) * 4; return x < 0 || y < 0 || x >= W || y >= H || src[i + 3] < 128 ? null : [src[i], src[i + 1], src[i + 2]]; };
+  const tess = (x, y, rot, w, h) => { const col = at(x, y); if (!col) return; const k = 0.88 + r() * 0.24;
+    g.save(); g.translate(x + (r() - 0.5) * px * 0.05, y + (r() - 0.5) * px * 0.05); g.rotate(rot + (r() - 0.5) * 0.05);
+    g.fillStyle = GROUT; g.fillRect(-w / 2 - 0.5, -h / 2 - 0.5, w + 1, h + 1); g.fillStyle = shade(col, k); g.fillRect(-w / 2 + gap, -h / 2 + gap, w - 2 * gap, h - 2 * gap);
+    g.fillStyle = 'rgba(255,255,255,0.09)'; g.fillRect(-w / 2 + gap, -h / 2 + gap, w - 2 * gap, (h - 2 * gap) * 0.3); g.restore(); };
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2, pol = o.polar ? o.polar * R : Infinity;
+  for (let j = 0; j < H / px; j++) for (let i = 0; i < W / px; i++) { const x = (i + 0.5) * px, y = (j + 0.5) * px; if (Math.hypot(x - cx, y - cy) < pol - px * 0.35) tess(x, y, 0, px, px); }
+  if (o.polar) for (let rad = pol + px * 0.5; rad < R; rad += px) { const m = Math.round(2 * Math.PI * rad / px), w = 2 * Math.PI * rad / m; for (let k = 0; k < m; k++) { const a = (k + (Math.round(rad / px) % 2) * 0.5) / m * Math.PI * 2; tess(cx + Math.cos(a) * rad, cy + Math.sin(a) * rad, a + Math.PI / 2, w, px); } }
+  return c;
+}
+const rgb = c => `rgb(${c.join(',')})`, SAGE = [150, 185, 140], LEAF = [60, 120, 96], CHAR = [44, 52, 62], TERRA = [196, 120, 84], PALE = [196, 222, 212];
+const ell = (g, x, y, rx, ry, rot, col) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 7); g.fillStyle = rgb(col); g.fill(); };
+const tri = (g, pts, col) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = rgb(col); g.fill(); };
+// a leaf on a stem: from (x, y), pointing along angle a, length l
+const leafAt = (g, x, y, a, l, col = LEAF, vein = SAGE) => { g.save(); g.translate(x, y); g.rotate(a); g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(l * 0.5, -l * 0.42, l, 0); g.quadraticCurveTo(l * 0.5, l * 0.42, 0, 0); g.fillStyle = rgb(col); g.fill(); g.strokeStyle = rgb(vein); g.lineWidth = l * 0.07; g.beginPath(); g.moveTo(l * 0.1, 0); g.lineTo(l * 0.85, 0); g.stroke(); g.restore(); };
+// The four creatures of the house's medallion (the front walk's round of tile: a moth, a bee, a starling, a kitten),
+// drawn plainly enough to be set in tesserae. (x, y) is the middle, s a size in px.
+const CREATURE = {
+  starling(g, x, y, s) { tri(g, [[x - 0.7 * s, y + 0.05 * s], [x - 1.5 * s, y + 0.5 * s], [x - 0.6 * s, y + 0.4 * s]], CHAR); ell(g, x, y, 0.95 * s, 0.55 * s, -0.3, CHAR); ell(g, x - 0.12 * s, y + 0.06 * s, 0.6 * s, 0.3 * s, -0.12, [52, 84, 96]);
+    ell(g, x + 0.72 * s, y - 0.5 * s, 0.34 * s, 0.32 * s, 0, CHAR); tri(g, [[x + 0.98 * s, y - 0.62 * s], [x + 1.55 * s, y - 0.42 * s], [x + 0.98 * s, y - 0.36 * s]], OCHRE); ell(g, x + 0.8 * s, y - 0.56 * s, 0.07 * s, 0.07 * s, 0, CREAM);
+    for (const [dx, dy] of [[-0.3, -0.2], [0.1, -0.28], [0.35, 0.05], [-0.05, 0.25], [-0.5, 0.12], [0.5, -0.2], [0.2, 0.3], [-0.2, 0.02]]) ell(g, x + dx * s, y + dy * s, 0.055 * s, 0.055 * s, 0, CREAM);
+    g.strokeStyle = rgb(OCHRE); g.lineWidth = 0.09 * s; for (const dx of [0.0, 0.3]) { g.beginPath(); g.moveTo(x + dx * s, y + 0.45 * s); g.lineTo(x + (dx + 0.05) * s, y + 0.95 * s); g.stroke(); } },
+  bee(g, x, y, s) { for (const sx of [-1, 1]) { ell(g, x + sx * 0.15 * s, y - 0.62 * s, 0.62 * s, 0.32 * s, sx * 0.55 - 0.2, CREAM); ell(g, x + sx * 0.15 * s, y - 0.62 * s, 0.4 * s, 0.17 * s, sx * 0.55 - 0.2, PALE); }
+    g.save(); g.beginPath(); g.ellipse(x - 0.35 * s, y, 0.75 * s, 0.48 * s, 0.12, 0, 7); g.clip(); g.fillStyle = rgb(OCHRE); g.fillRect(x - 1.3 * s, y - s, 2.6 * s, 2 * s); g.fillStyle = rgb(CHAR); for (const k of [-0.85, -0.42, 0.0]) g.fillRect(x + k * s, y - s, 0.2 * s, 2 * s); g.restore();
+    ell(g, x + 0.5 * s, y - 0.08 * s, 0.36 * s, 0.34 * s, 0, CHAR); ell(g, x + 0.95 * s, y - 0.1 * s, 0.24 * s, 0.24 * s, 0, CHAR); ell(g, x + 1.02 * s, y - 0.16 * s, 0.06 * s, 0.06 * s, 0, CREAM);
+    g.strokeStyle = rgb(CHAR); g.lineWidth = 0.06 * s; for (const d of [-1, 1]) { g.beginPath(); g.moveTo(x + 1.05 * s, y - 0.28 * s); g.quadraticCurveTo(x + 1.3 * s, y - (0.6 + d * 0.12) * s, x + 1.5 * s, y - (0.5 + d * 0.15) * s); g.stroke(); } },
+  moth(g, x, y, s) { for (const sx of [-1, 1]) { tri(g, [[x, y - 0.25 * s], [x + sx * 1.35 * s, y - 0.85 * s], [x + sx * 1.0 * s, y + 0.15 * s], [x, y + 0.1 * s]], SAGE); tri(g, [[x, y + 0.05 * s], [x + sx * 0.95 * s, y + 0.2 * s], [x + sx * 0.6 * s, y + 0.8 * s], [x + sx * 0.5 * s, y + 1.35 * s], [x + sx * 0.25 * s, y + 0.7 * s]], [176, 205, 160]);
+      g.strokeStyle = rgb(TERRA); g.lineWidth = 0.1 * s; g.beginPath(); g.moveTo(x, y - 0.27 * s); g.lineTo(x + sx * 1.35 * s, y - 0.87 * s); g.stroke(); ell(g, x + sx * 0.7 * s, y - 0.32 * s, 0.14 * s, 0.14 * s, 0, OCHRE); ell(g, x + sx * 0.7 * s, y - 0.32 * s, 0.06 * s, 0.06 * s, 0, CHAR); ell(g, x + sx * 0.5 * s, y + 0.5 * s, 0.09 * s, 0.09 * s, 0, OCHRE);
+      g.strokeStyle = rgb(CREAM); g.lineWidth = 0.06 * s; g.beginPath(); g.moveTo(x + sx * 0.06 * s, y - 0.5 * s); g.quadraticCurveTo(x + sx * 0.3 * s, y - 0.95 * s, x + sx * 0.55 * s, y - 0.9 * s); g.stroke(); }
+    ell(g, x, y, 0.15 * s, 0.55 * s, 0, CREAM); },
+  kitten(g, x, y, s) { const FUR = [214, 150, 96], DARK = [170, 104, 62];
+    g.strokeStyle = rgb(FUR); g.lineWidth = 0.22 * s; g.lineCap = 'round'; g.beginPath(); g.moveTo(x - 0.45 * s, y + 0.75 * s); g.quadraticCurveTo(x - 1.3 * s, y + 0.9 * s, x - 1.15 * s, y + 0.1 * s); g.stroke(); g.lineCap = 'butt';
+    ell(g, x, y + 0.3 * s, 0.62 * s, 0.72 * s, 0, FUR); ell(g, x + 0.1 * s, y - 0.55 * s, 0.5 * s, 0.44 * s, 0, FUR);
+    for (const sx of [-1, 1]) { tri(g, [[x + 0.1 * s + sx * 0.45 * s, y - 0.75 * s], [x + 0.1 * s + sx * 0.42 * s, y - 1.25 * s], [x + 0.1 * s + sx * 0.08 * s, y - 0.92 * s]], FUR); ell(g, x + 0.1 * s + sx * 0.2 * s, y - 0.58 * s, 0.065 * s, 0.085 * s, 0, CHAR); ell(g, x + sx * 0.25 * s, y + 0.95 * s, 0.2 * s, 0.12 * s, 0, CREAM); }
+    ell(g, x + 0.1 * s, y - 0.42 * s, 0.06 * s, 0.045 * s, 0, TERRA); ell(g, x + 0.02 * s, y + 0.3 * s, 0.3 * s, 0.42 * s, 0, CREAM);
+    g.strokeStyle = rgb(DARK); g.lineWidth = 0.08 * s; for (const k of [-0.1, 0.15, 0.4]) { g.beginPath(); g.moveTo(x - 0.6 * s, y + k * s); g.lineTo(x - 0.33 * s, y + (k + 0.06) * s); g.stroke(); } },
+};
+
+// The emblem on the warm pool's bed: the A in a laurel wreath; a wave band; a band of running vine; the rim.
+export function drawEmblem(N = 2048, n = 124) {
+  const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), R = N / 2, C = N / 2;
+  const disc = (rad, col) => { g.beginPath(); g.arc(C, C, rad * R, 0, 7); g.fillStyle = rgb(col); g.fill(); };
+  disc(0.995, OCHRE); disc(0.965, DEEP);
+  // the vine band (0.80 to 0.965): a stem that wanders between its edges, a leaf at every turn, a berry in every hollow
+  disc(0.945, CELADON); { const T = 14, mid = 0.872, amp = 0.034; g.strokeStyle = rgb(LEAF); g.lineWidth = 0.02 * R; g.beginPath();
+    for (let k = 0; k <= 720; k++) { const a = k / 720 * Math.PI * 2, rr = (mid + amp * Math.sin(a * T)) * R; k ? g.lineTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr) : g.moveTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr); } g.closePath(); g.stroke();
+    for (let i = 0; i < T * 2; i++) { const a = (i + 0.5) / (T * 2) * Math.PI * 2, out = i % 2 ? 1 : -1, rr = (mid + amp * out) * R, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr; leafAt(g, x, y, a + (out > 0 ? 0.35 : Math.PI - 0.35) + Math.PI / 2 * 0, 0.085 * R, i % 4 < 2 ? LEAF : [84, 150, 118]);
+      const rb = (mid - amp * out * 0.75) * R; ell(g, C + Math.cos(a) * rb, C + Math.sin(a) * rb, 0.016 * R, 0.016 * R, 0, i % 3 ? OCHRE : TERRA); } }
+  disc(0.80, OCHRE); disc(0.782, DEEP);
+  // the wave band (0.62 to 0.78): cream water under a breaking deep-green crest, sixteen times round
+  { const T = 16; g.beginPath(); for (let k = 0; k <= 960; k++) { const a = k / 960 * Math.PI * 2, ph = a * T, rr = (0.70 + 0.05 * Math.sin(ph + 0.9 * Math.sin(ph))) * R; k ? g.lineTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr) : g.moveTo(C + Math.cos(a) * rr, C + Math.sin(a) * rr); } g.closePath(); g.fillStyle = rgb(CREAM); g.fill();
+    for (let i = 0; i < T; i++) { const a = (i + 0.37) / T * Math.PI * 2; ell(g, C + Math.cos(a) * 0.722 * R, C + Math.sin(a) * 0.722 * R, 0.017 * R, 0.017 * R, 0, DEEP); } }
+  disc(0.632, OCHRE); disc(0.612, DEEP); disc(0.595, CELADON);
+  // the laurel: two sprays from the foot, meeting at the head, the leaves in pairs
+  for (const sx of [-1, 1]) for (let i = 0; i < 11; i++) { const a = Math.PI / 2 + sx * (0.2 + i * 0.262), rr = 0.5 * R, x = C + Math.cos(a) * rr, y = C + Math.sin(a) * rr, t = a + sx * Math.PI / 2;
+    leafAt(g, x, y, t - sx * 0.55, 0.11 * R, LEAF); leafAt(g, x, y, t + sx * 0.5, 0.1 * R, [84, 150, 118]); if (i % 3 === 1) ell(g, C + Math.cos(a) * 0.5 * R, C + Math.sin(a) * 0.5 * R, 0.017 * R, 0.017 * R, 0, OCHRE); }
+  ell(g, C, C + 0.5 * R, 0.03 * R, 0.022 * R, 0, OCHRE);                                               // the tie at the foot
+  // the letter, with a cream line round it, and a small leaf where the bar meets the stem
+  g.fillStyle = rgb(CREAM); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]]) { g.save(); g.translate(dx * 0.014 * R, dy * 0.014 * R); letterA(g, C, C - 0.01 * R, 0.66 * R); g.restore(); }
+  g.fillStyle = rgb(DEEP); letterA(g, C, C - 0.01 * R, 0.66 * R);
+  g.fillStyle = rgb(OCHRE); g.fillRect(C - 0.17 * R, C + 0.108 * R, 0.3 * R, 0.014 * R);                 // a line of gold along the bar
+  return mosaic(c, N / n, { polar: 0.612, seed: 71 });
+}
+// A small round with one of the creatures in it, for paving
+export function drawCreatureRound(kind, N = 1024, n = 52) {
+  const c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d'), R = N / 2;
+  for (const [rad, col] of [[0.995, DEEP], [0.93, OCHRE], [0.885, DEEP], [0.84, PALE]]) { g.beginPath(); g.arc(R, R, rad * R, 0, 7); g.fillStyle = rgb(col); g.fill(); }
+  CREATURE[kind](g, R - 0.04 * R, R + 0.08 * R, 0.36 * R);
+  return mosaic(c, N / n, { polar: 0.84, seed: 19 });
+}
+// A panel for a wall: the vine running its length, and two of the creatures on it. `w` by `h` feet, tesserae `t` feet.
+export function drawPanel(kinds, w, h, t = 0.055) {
+  const px = 16, W = Math.round(w / t) * px, H = Math.round(h / t) * px, c = document.createElement('canvas'); c.width = W; c.height = H; const g = c.getContext('2d'), u = px / t, r = rng(kinds.join('').length * 7 + 3);
+  g.fillStyle = rgb(DEEP); g.fillRect(0, 0, W, H); g.fillStyle = rgb(OCHRE); g.fillRect(px * 3, px * 3, W - px * 6, H - px * 6); g.fillStyle = rgb(PALE); g.fillRect(px * 4, px * 4, W - px * 8, H - px * 8);
+  // the vine: one long stem in slow curves, side shoots, leaves, berries
+  const y0 = H * 0.6, A = H * 0.12, K = Math.PI * 2 / (W * 0.4), stem = x => y0 + A * Math.sin(x * K + 0.6) + 0.04 * H * Math.sin(x * K * 2.3);
+  g.strokeStyle = rgb(LEAF); g.lineWidth = 0.1 * u; g.beginPath(); for (let x = px * 5; x <= W - px * 5; x += 4) (x === px * 5 ? g.moveTo(x, stem(x)) : g.lineTo(x, stem(x))); g.stroke();
+  for (let x = px * 8; x < W - px * 8; x += 0.36 * u) { const y = stem(x), sl = Math.atan2(stem(x + 4) - stem(x - 4), 8), side = (Math.round(x / (0.36 * u)) % 2 ? 1 : -1);
+    leafAt(g, x, y, sl - side * 1.05, (0.5 + r() * 0.16) * u, r() < 0.5 ? LEAF : [84, 150, 118]);
+    if (r() < 0.45) { const bx = x + Math.cos(sl + side * 1.2) * 0.22 * u, by = y + Math.sin(sl + side * 1.2) * 0.22 * u; ell(g, bx, by, 0.06 * u, 0.06 * u, 0, r() < 0.6 ? OCHRE : TERRA); } }
+  // the creatures: the first on the stem (or under it), the second in the air
+  const xa = W * 0.3, xb = W * 0.72, s = 0.72 * u;
+  if (kinds[0] === 'starling') CREATURE.starling(g, xa, stem(xa) - 0.95 * s, s); else CREATURE.kitten(g, xa, H - px * 5 - 1.05 * s, s);
+  CREATURE[kinds[1]](g, xb, H * 0.3, kinds[1] === 'bee' ? s * 0.55 : s * 0.62);
+  return mosaic(c, px, { seed: kinds[0].length });
+}
+const made = {};
+// The warm pool's emblem, or a creature's round, laid flat as layMonogram's
+export function layRound(ctx, what, X, Y, h, size, top = [1, 0]) {
+  const t = made[what] ??= tex(what === 'emblem' ? drawEmblem() : drawCreatureRound(what));
+  const k = size / 2 / Math.hypot(top[0], top[1]), vX = top[0] * k, vY = top[1] * k;
+  return add(ctx, quad([Y, h + 0.012, X], [-vX, 0, vY], [vY, 0, vX]), tileMat(t, { clear: true }), 'tile round: ' + what);
+}
+// A panel on a wall that runs along plan Y at plan X = `X` (its face toward +X if face > 0): centre Y, centre height
+export function layPanel(ctx, kinds, X, Y, face, hc, w, h) {
+  const t = tex(drawPanel(kinds, w, h));
+  return add(ctx, quad([Y, hc, X], [-face * w / 2, 0, 0], [0, h / 2, 0]), tileMat(t), 'tile panel: ' + kinds.join(' and '));      // (u: the picture's right is the viewer's right as she faces the wall)
+}
+
 // Conway's game, in a handful of tiles.
 const GLIDER = ['.#.', '..#', '###'];
 const PULSAR = ['..###...###..', '.............', '#....#.#....#', '#....#.#....#', '#....#.#....#', '..###...###..', '.............', '..###...###..', '#....#.#....#', '#....#.#....#', '#....#.#....#', '.............', '..###...###..'];

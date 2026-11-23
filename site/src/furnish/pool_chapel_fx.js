@@ -11,7 +11,6 @@
 //                Street's: pool_chapel_glass.js), and their colour thrown on the floor in front of each
 //   oculus()     daylight down the shaft: a pool of it on the floor and the table, a faint beam, dust turning in it
 //   bowl()       the water in the bowl under the shaft: touch it and rings go out; and the singing bowl beside it
-import { drawChapelRing, INNER, CAPTION2 } from './chapel_ring.js';
 import * as THREE from 'three';
 import { drawSkylightGlass, EYE, CAPTION } from './skylight_glass.js';
 import { NOISE } from '../flame.js';
@@ -398,12 +397,6 @@ void main() { vec3 V = normalize(cameraPosition - vW); float f = abs(dot(normali
   const glassRing = new THREE.Mesh(new THREE.RingGeometry(o.r * EYE - 0.01, o.r * 1.02, 96, 1).rotateX(-Math.PI / 2), glassMat);
   { const p = W(o.X, o.Y, o.top + 0.22); glassRing.position.set(p.x, p.y, p.z); glassRing.rotation.y = Math.PI / 2; glassRing.name = 'chapel oculus glass';
     const uv = glassRing.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); }      // (turned over, so that from underneath its lettering reads the right way)
-  // And round the shaft, set in the ceiling and lit from behind as the chapel's other windows are, the glass goes on
-  // outward: a second ring that the first would sit inside (chapel_ring.js: the other unities, and the threads between).
-  const ring2Mat = new THREE.MeshBasicMaterial({ map: (() => { const t = new THREE.CanvasTexture(drawChapelRing(1536)); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t; })(), transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, fog: false });
-  const R2 = o.r * 1.22 / INNER, ring2 = new THREE.Mesh(new THREE.RingGeometry(o.r * 1.22, R2, 128, 1).rotateX(Math.PI / 2), ring2Mat);
-  { const p = W(o.X, o.Y, o.top - 0.09); ring2.position.set(p.x, p.y, p.z); ring2.name = 'chapel outer ring'; const uv = ring2.geometry.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); }
-  { const rim = new THREE.Mesh(new THREE.TorusGeometry(R2 + 0.04, 0.07, 6, 96).rotateX(Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x6a5536, roughness: 0.45, metalness: 0.8 })); ring2.add(rim); }      // a bronze came round it
   // On the floor it is light, not a picture: the blurred copy, squared as the other windows' spill is, its colours
   // swimming a little, fading at its rim; the white of the eye is the pool's own.
   const haloMat = new THREE.ShaderMaterial({
@@ -417,7 +410,6 @@ void main() { vec2 p = (vUv - 0.5) * 1.5; p += (vec2(noise(vUv * 7.0 + uT * 0.11
   gl_FragColor = vec4(c * c * 1.7 * uCol * uK * f * (0.82 + 0.36 * noise(vUv * 11.0 - uT * 0.07)), 1.0); }`,
   });
   const halo = new THREE.Mesh(new THREE.CircleGeometry(o.r * 1.7, 72).rotateX(-Math.PI / 2), haloMat); halo.position.set(c0.x, c0.y + 0.024, c0.z); halo.renderOrder = 2; halo.name = 'chapel oculus halo';
-  { const q = W(o.X - o.r * 1.75, o.Y, o.top - 0.5); ctx.interact?.push({ x: q.x, y: q.y, z: q.z, reach: 26, size: 2.6, label: () => 'look at the outer ring', act: () => import('../card.js').then(m => m.showCard(CAPTION2)).catch(() => ctx.flash?.(`${CAPTION2.title}. ${CAPTION2.kicker}.`)) }); }
   ctx.interact?.push({ x: c0.x, y: c0.y + 10.5, z: c0.z, reach: 20, size: 3.4, label: () => 'look up at the glass', act: () => import('../card.js').then(m => m.showCard(CAPTION)).catch(() => ctx.flash?.(`${CAPTION.title}. ${CAPTION.kicker}.`)) });
   const N = 320, pos = new Float32Array(N * 3), sd = new Float32Array(N);
   let k = 3; const rnd = () => ((k = (k * 16807) % 2147483647) / 2147483647);
@@ -434,7 +426,7 @@ void main() { vec3 p = position; float t = uT * (0.04 + 0.05 * aS) + aS * 40.0;
   }));
   motes.position.set(c0.x, c0.y, c0.z); motes.name = 'chapel motes';
   const at = W(o.X, o.Y, o.floor + 6);
-  for (const m of [beam, core, floorPool, tablePool, motes, glassRing, ring2, halo]) if (m) addTracked(ctx, m, at, 1);
+  for (const m of [beam, core, floorPool, tablePool, motes, glassRing, halo]) if (m) addTracked(ctx, m, at, 1);
   const warm = new THREE.Color(1.0, 0.6, 0.32), gold = new THREE.Color(1.0, 0.9, 0.7), moon = new THREE.Color(0.62, 0.74, 1.0), dir = new THREE.Vector3();
   ctx.animated.push(t => {
     U.uT.value = t; const day = ctx.day ?? {}, L = day.light ?? 1, sd2 = day.sunDir ?? new THREE.Vector3(0, 1, 0);
