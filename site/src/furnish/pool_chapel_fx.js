@@ -137,7 +137,7 @@ export function steam(ctx, W, rect, h, n = 480, o = {}) {
   for (let i = 0; i < n; i++) {
     const Y = Y0 + 0.4 + rnd() * (Y1 - Y0 - 0.8), p = W(X0 + 0.4 + rnd() * (X1 - X0 - 0.8), Y, h + 0.2), tall = o.tall && Y > o.tall[0];
     const up = 0.8 + 1.6 * rnd() + (rnd() < 0.12 ? (tall ? 9 : 5.5) * rnd() : 0);      // most stay low; one in eight rises
-    aB.set([p.x, p.y, p.z, rnd()], i * 4); aC.set([0.012 + rnd() * 0.012, rnd() * 6.28, 0.7 + rnd() * 0.9, up], i * 4);
+    aB.set([p.x, p.y, p.z, rnd()], i * 4); aC.set([0.028 + rnd() * 0.026, rnd() * 6.28, 0.7 + rnd() * 0.9, up], i * 4);      // (a wisp lives 20 to 35 seconds: at 40 to 80 the steam looked still)
   }
   geo.setAttribute('aB', new THREE.InstancedBufferAttribute(aB, 4)); geo.setAttribute('aC', new THREE.InstancedBufferAttribute(aC, 4)); geo.instanceCount = n;
   const U = { uT: { value: 0 }, uCol: { value: new THREE.Color(0.8, 0.76, 0.7) }, uA: { value: 0.03 } };
@@ -147,7 +147,7 @@ export function steam(ctx, W, rect, h, n = 480, o = {}) {
 void main() {
   float u = fract(uT * aC.x + aB.w);
   float rise = aC.w * u;
-  vec3 c = aB.xyz + vec3(1.4 * u * sin(aC.y) + 0.3 * sin(uT * 0.09 + aC.y), rise, 1.4 * u * cos(aC.y) + 0.3 * cos(uT * 0.07 + aC.y * 1.7));
+  vec3 c = aB.xyz + vec3(1.4 * u * sin(aC.y) + 0.35 * sin(uT * 0.31 + aC.y), rise, 1.4 * u * cos(aC.y) + 0.35 * cos(uT * 0.26 + aC.y * 1.7));
   float s = aC.z * (0.5 + 0.9 * u) * (1.0 + 0.08 * rise);
   vec4 mv = viewMatrix * vec4(c, 1.0);
   vUv = uv * 2.0 - 1.0; vS = aC.y;

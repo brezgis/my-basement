@@ -225,6 +225,18 @@ function edgePoolWater(ctx) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   const lamps = [{ x: 21.3, y: 2.3, z: 71.1, k: 1 }];      // (the paper lantern by the loungers: grounds_court.js)
   waterSheet(ctx, g, lamps, new THREE.Vector3(COURT.Y - COURT.r + 5, h + 1, COURT.X));
+  // Light from inside the water (Anna: "needs some light from inside it"): three small lamps set in the bed along the
+  // glass, each a warm disc with a pool of light on the tile round it; faint by day, the pool's own glow after dark.
+  { const c = document.createElement('canvas'); c.width = c.height = 128; const g2 = c.getContext('2d'), gr = g2.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,238,200,1)'); gr.addColorStop(0.12, 'rgba(255,225,170,.75)'); gr.addColorStop(0.45, 'rgba(170,225,215,.28)'); gr.addColorStop(1, 'rgba(150,220,210,0)'); g2.fillStyle = gr; g2.fillRect(0, 0, 128, 128);
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const halo = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -8 });
+    const lens = new THREE.MeshBasicMaterial({ color: 0xffe9c0, toneMapped: false, fog: false }), bed = EDGE_POOL.bed;
+    for (const i of [1.5, 4, 6.5]) { const a = brink[Math.floor(i)], b2 = brink[Math.ceil(i)], k = i % 1, bx = a[0] + (b2[0] - a[0]) * k, by = a[1] + (b2[1] - a[1]) * k, cp = coping[Math.round(i)], d = Math.hypot(cp[0] - bx, cp[1] - by) || 1, X = bx + (cp[0] - bx) / d * 0.55, Y = by + (cp[1] - by) / d * 0.55;
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(0.17, 16).rotateX(-Math.PI / 2), lens); disc.position.set(Y, bed + 0.03, X); disc.name = 'edge pool lamp'; ctx.scene.add(disc);
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(7, 7).rotateX(-Math.PI / 2), halo); pool.position.set(Y, bed + 0.035, X); pool.renderOrder = 2; ctx.scene.add(pool);
+      const glow = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), halo); glow.position.set(Y, h + 0.045, X); glow.renderOrder = 5; ctx.scene.add(glow); }      // (and its light coming up through the surface)
+    ctx.animated.push(t => { const nt = ctx.day?.night ?? 0; halo.opacity = (0.16 + 0.5 * nt) * (0.94 + 0.06 * Math.sin(t * 0.8)); const v = 0.55 + 0.45 * nt; lens.color.setRGB(v, v * 0.92, v * 0.76); }); }
   // the house's A on its bed, in the same tesserae as the warm pool's (furnish/monogram.js), its head to the clouds
   { const a = brink[4], c = coping[4]; layMonogram(ctx, a[0] + (c[0] - a[0]) * 0.19, a[1] + (c[1] - a[1]) * 0.19, EDGE_POOL.bed, 2.6, [a[0] - c[0], a[1] - c[1]], 'edge pool monogram'); }
 }
