@@ -11,14 +11,17 @@
 //
 //   id, name, role       role is shown after the name on the card of things to say
 //   rest                 the expression at rest; speed (feet a second); chirp (the notes of its voice)
-//   look                 bodies.js (hover: they float with their faces about level with hers, 5 ft: Anna asked to be face to
-//                        face with them, the small ones too)
+//   look                 bodies.js (hover: they float with their faces a little below hers: Anna asked to be nearly face to
+//                        face with them, the small ones too, then found them a touch tall; behind a counter they
+//                        rise only as far as it takes to be seen over it)
 //   room, roam           its own room, and the rooms on its floor it may go into
 //   home, faces          where it stands when it has nothing else to do, and what it looks at
 //   homeActs             what its hands do there (acts.js)
 //   counter              { at: [X, Y], r, top }: within r feet of there it is behind a counter of that height, and floats
 //                        higher to be seen over it
-//   seat                 { at: [X, Y], top, faces }: it SITS when at home (its body is drawn on the seat; it stands beside it)
+//   seat                 { at: [X, Y], top, faces, when }: it SITS when at home (its body is drawn on the seat; it stands
+//                        beside it). when: only while the visitor is in the seat of that label (the analyst sits when she
+//                        lies on the couch, talks to her there, and rises when she gets up)
 //   posts                [{ at: [X, Y], faces: [X, Y], acts: [...], secs, w (how often), when: 'empty' (only while the
 //                        guest is not in that room) }]: the rounds
 //   serve                { machine: [X, Y], pickup: [X, Y, h above the room's floor], from: id, menu: { name: { vessel, liquid,
@@ -64,24 +67,21 @@ export const MENUS = { COFFEE, BAR, CELLAR, SAMOVAR, QUIET };
 export const CAST = [
   // ---- WINNICBOTT, the analyst. A soft tall pear in tweed and an open cardigan, round spectacles, a watch chain
   // it consults and never mentions. Sits behind the head of the couch, facing past the patient, never at them.
-  { id: 'winnicbott', name: 'Winnicbott', role: 'the analyst', rest: 'neutral', speed: 1.9, chirp: [57, 60],
-    look: { shape: 'pear', hover: 4.2, colour: '#8a7460', colour2: '#75614f', pattern: 'tweed', belly: '#ece3d0', cardigan: '#4f5d4a', cardiganRib: '#414d3d', bowtie: '#7a2f2a', chain: 'watch',
+  { id: 'winnicbott', name: 'Winnicbott', role: 'the analyst', rest: 'neutral', speed: 1.4, chirp: [57, 60],
+    look: { shape: 'pear', hover: 3.75, colour: '#8a7460', colour2: '#75614f', pattern: 'tweed', belly: '#ece3d0', cardigan: '#4f5d4a', cardiganRib: '#414d3d', bowtie: '#7a2f2a', chain: 'watch',
       specs: 'rgba(255,236,200,.7)', brows: 0.35, eyeW: 22, eyeH: 26, eyeR: 11, gap: 44, eye: '#ffe9c8', ring: 0xffd9a0, glove: '#ece3d0', tools: [['notebook'], ['pen']], tray: 'oak' },
     room: 'The Consulting Room', roam: [],
-    home: [28.7, 48], faces: [34.5, 46.5], seat: { at: [27.8, 51.2], top: 1.45, faces: [34.5, 46.5] }, homeActs: ['note', 'ponder', 'readNotes', 'note', 'rest'],
-    posts: [
-      // (it leaves its chair for these only while nobody is in the room: with a patient in, it sits)
-      { at: [30.6, 43.3], faces: [30.6, 40.8], acts: ['restock', 'read'], w: 1, when: 'empty' },            // the bookcase
-      { at: [38.6, 44.6], faces: [42, 42], acts: ['ponder', 'breathe'], w: 1, when: 'empty' },                // the window
-      { at: [40.2, 49.4], faces: [42.7, 49.4], acts: ['straighten', 'readNotes'], w: 0.6, when: 'empty' },    // the low case
-    ],
+    home: [28.7, 48], faces: [34.5, 46.5], seat: { at: [27.8, 51.2], top: 1.45, faces: [34.5, 46.5], when: 'lie on the couch' }, homeActs: ['note', 'ponder', 'readNotes', 'note', 'rest'],
+    // (it keeps to its place by the chair: the room is too small to walk about in with a patient in it, and stepping
+    // aside for her only took it out of the door)
+    stays: true, posts: [],
     serve: { machine: [28.7, 48], faces: [31.5, 49.4], pickup: [31.5, 49.4, 1.5], menu: { 'glass of water': { vessel: 'tumbler', liquid: 0xdfeff2, id: 'sparkling', make: 'water' } } } },
 
   // ---- COSIMA, the concierge. Tall, lacquered the dark green of a good hotel's door, brass buttons and epaulettes,
   // a pillbox cap cocked over one eye, the key to everything on a chain. She runs the place and has never once
   // pretended otherwise.
-  { id: 'cosima', name: 'Cosima', role: 'the concierge', rest: 'sass', speed: 2.5, chirp: [72, 76, 79],
-    look: { shape: 'tall', scale: 1.06, hover: 4.55, colour: '#14433f', belly: CREAM, buttons: BRASS, collar: BRASS, chain: 'key', hat: 'pillbox', hatColour: '#14433f', hatTrim: BRASS,
+  { id: 'cosima', name: 'Cosima', role: 'the concierge', rest: 'sass', speed: 1.9, chirp: [72, 76, 79],
+    look: { shape: 'tall', scale: 1.06, hover: 4.1, colour: '#14433f', belly: CREAM, buttons: BRASS, collar: BRASS, chain: 'key', hat: 'pillbox', hatColour: '#14433f', hatTrim: BRASS,
       lashes: true, brows: -0.4, eyeW: 34, eyeH: 24, eyeR: 9, gap: 46, eye: '#ffe2b0', ring: 0xffd27a, tools: [['ledger'], ['handbell', 'flute', 'robe']], tray: 'brass' },
     room: 'The Hall', roam: ['The Listening Room'], brings: true, counter: { at: [18.6, 38.0], r: 3.6, top: 3.55 },
     home: [18.6, 38.0], faces: [18.6, 30], homeActs: ['ledger', 'ledger', 'straighten', 'polish', 'rest'],
@@ -96,8 +96,8 @@ export const CAST = [
 
   // ---- SAZ (Sazerac), behind the bar. A cushion in a black waistcoat over a cream shirt front, a waxed moustache,
   // copper headphones for the records, a cocktail cherry on a pick where another robot would have an antenna.
-  { id: 'saz', name: 'Saz', role: 'the bar', rest: 'happy', speed: 2.6, chirp: [62, 65, 69],
-    look: { shape: 'cushion', scale: 1.0, hover: 4.4, colour: '#2a2226', belly: CREAM, pattern: 'vest', bowtie: '#b3202e', belt: '#c0703a', headphones: '#c0703a', top: 'cherry', trim: '#c0703a',
+  { id: 'saz', name: 'Saz', role: 'the bar', rest: 'happy', speed: 2.0, chirp: [62, 65, 69],
+    look: { shape: 'cushion', scale: 1.0, hover: 3.95, colour: '#2a2226', belly: CREAM, pattern: 'vest', bowtie: '#b3202e', belt: '#c0703a', headphones: '#c0703a', top: 'cherry', trim: '#c0703a',
       moustache: '#ffe2b0', brows: -0.2, eyeW: 30, eyeH: 34, gap: 48, eye: '#ffe2b0', ring: 0xff9a6a, tools: [['coupe'], ['cloth', 'shaker', 'bottle']], tray: 'brass' },
     room: 'The Listening Room', roam: [], counter: { at: [17.5, 64.3], r: 4.6, top: 3.45 },
     home: [17.5, 64.6], faces: [24, 64.6], homeActs: ['polish', 'wipe', 'polish', 'listen', 'straighten'],
@@ -110,8 +110,8 @@ export const CAST = [
 
   // ---- TOMME, the affineur and sommelier of the Cave. A wheel of cheese: a low, wide drum with a washed rind, a
   // black beret, a tastevin on a chain. Speaks low, because the cheese is asleep.
-  { id: 'tomme', name: 'Tomme', role: 'the cave', rest: 'sleepy', speed: 1.8, chirp: [50, 53],
-    look: { lathe: [[0, -0.38], [0.5, -0.38], [0.6, -0.32], [0.64, -0.18], [0.64, 0.2], [0.6, 0.33], [0.5, 0.4], [0, 0.4]], hover: 4.45, colour: '#d8c594', colour2: '#ece2c2', pattern: 'rind', shirt: false,
+  { id: 'tomme', name: 'Tomme', role: 'the cave', rest: 'sleepy', speed: 1.4, chirp: [50, 53],
+    look: { lathe: [[0, -0.38], [0.5, -0.38], [0.6, -0.32], [0.64, -0.18], [0.64, 0.2], [0.6, 0.33], [0.5, 0.4], [0, 0.4]], hover: 4.0, colour: '#d8c594', colour2: '#ece2c2', pattern: 'rind', shirt: false,
       faceY: 0.03, faceH: 0.19, faceW: 0.62, chain: 'tastevin', hat: 'beret', hatColour: '#1f1b1d', capColour: '#b9a36e', handY: -0.12,
       moustache: '#ffe9c0', eyeW: 26, eyeH: 26, eyeR: 13, gap: 50, eye: '#ffe9c0', ring: 0xfff1b8, glove: '#ece2c2', tools: [['wineglass'], ['iron', 'bottle']], tray: 'slate' },
     room: 'The Cave', roam: ['The Listening Room'], brings: true,
@@ -126,8 +126,8 @@ export const CAST = [
 
   // ---- PASHA, the banshchik. A birch log: white bark with its dark lenticels, the grey felt hat of the steam room,
   // a moustache, cheeks that are always a little red. Loud in the wash room, reverent in the steam.
-  { id: 'pasha', name: 'Pasha', role: 'the banya', rest: 'happy', speed: 2.3, chirp: [53, 57, 60],
-    look: { shape: 'barrel', scale: 1.03, hover: 4.45, colour: '#ebe6da', colour2: '#3a3430', pattern: 'bark', shirt: false, belt: '#a33b2e', hat: 'banya', hatColour: '#aaa294', hatTrim: '#a33b2e', capColour: '#8a6a44',
+  { id: 'pasha', name: 'Pasha', role: 'the banya', rest: 'happy', speed: 1.7, chirp: [53, 57, 60],
+    look: { shape: 'barrel', scale: 1.03, hover: 4.0, colour: '#ebe6da', colour2: '#3a3430', pattern: 'bark', shirt: false, belt: '#a33b2e', hat: 'banya', hatColour: '#aaa294', hatTrim: '#a33b2e', capColour: '#8a6a44',
       moustache: '#ffe2b0', blush: 'rgba(255,110,90,.6)', brows: 0.5, eyeW: 36, eyeH: 40, gap: 46, eye: '#ffe2b0', ring: 0xff8a4a, glove: '#d9cbb2', tools: [['ladle'], ['venik', 'glass']], tray: 'oak' },
     room: 'The Banya', roam: ['The Tea Room', 'The Parnaya', 'The Treatment Room'], brings: true,
     home: [95.5, 48.0], faces: [95.5, 42], homeActs: ['shakeVenik', 'straighten', 'tea', 'rest'],
@@ -141,8 +141,8 @@ export const CAST = [
 
   // ---- TERRY, of the water: the pool, the edge pool, towels, robes. A drop of sea-glass green
   // with a towel wound round its head and another round its neck. Cannot see a wet guest without producing a towel.
-  { id: 'terry', name: 'Terry', role: 'the pool', rest: 'happy', speed: 2.5, chirp: [74, 77, 81],
-    look: { shape: 'drop', hover: 4.5, colour: '#9cc5bd', belly: LINEN, scarf: LINEN, hat: 'turban', hatColour: LINEN, hatTrim: '#e2dccd', trim: '#d9cbb2',
+  { id: 'terry', name: 'Terry', role: 'the pool', rest: 'happy', speed: 1.9, chirp: [74, 77, 81],
+    look: { shape: 'drop', hover: 4.05, colour: '#9cc5bd', belly: LINEN, scarf: LINEN, hat: 'turban', hatColour: LINEN, hatTrim: '#e2dccd', trim: '#d9cbb2',
       lashes: true, blush: true, eyeW: 38, eyeH: 44, gap: 44, eye: '#e8fbff', ring: 0x8fe3ff, tools: [[], ['towels', 'net', 'carafe', 'towel']], tray: 'oak' },
     room: 'The Pool', roam: [], brings: true,
     home: [73.6, 69.2], faces: [76.7, 69.2], homeActs: ['fold', 'stack', 'roll', 'fold'],
@@ -158,8 +158,8 @@ export const CAST = [
 
   // ---- BIJOU, of the nail corner. Small, hot pink with glitter in the lacquer, a beehive with a nail file through
   // it, gold hoops, lashes. Calls every guest "honey", always. Knows everything about everyone and will tell you.
-  { id: 'bijou', name: 'Bijou', role: 'nails', rest: 'happy', speed: 2.4, chirp: [81, 84, 88],
-    look: { shape: 'pip', scale: 0.95, hover: 4.35, colour: '#d6457f', colour2: '#ffd1e6', pattern: 'glitter', belly: '#ffe9f1', apron: '#f4e0ea', apronTrim: '#e9a8c6', hat: 'beehive', hatColour: '#f0dcb4', hatTrim: '#e03a7c', ears: 'hoops',
+  { id: 'bijou', name: 'Bijou', role: 'nails', rest: 'happy', speed: 1.8, chirp: [81, 84, 88],
+    look: { shape: 'pip', scale: 0.95, hover: 3.9, colour: '#d6457f', colour2: '#ffd1e6', pattern: 'glitter', belly: '#ffe9f1', apron: '#f4e0ea', apronTrim: '#e9a8c6', hat: 'beehive', hatColour: '#f0dcb4', hatTrim: '#e03a7c', ears: 'hoops',
       lashes: true, blush: 'rgba(255,120,170,.6)', eyeW: 30, eyeH: 40, gap: 42, eye: '#ffd0e6', ring: 0xff9ad0, tools: [['polish'], ['file', 'brush']], tray: 'brass', trayScale: 0.8 },
     room: 'The Tea Room', roam: [],
     home: [97.95, 18.75], faces: [96.5, 22.65], homeActs: ['file', 'admire', 'paint', 'file'],
@@ -170,8 +170,8 @@ export const CAST = [
 
   // ---- HUSH, of the quiet rooms: the Quiet Room, the Suite, the candles. A small grey ball in a knitted tea cosy.
   // Says nothing. Brings tea before it is wanted, feeds the fire, turns the bed down, lights what should be lit.
-  { id: 'hush', name: 'Hush', role: 'the quiet rooms', rest: 'sleepy', speed: 1.7, quiet: true, chirp: [48],
-    look: { shape: 'round', scale: 0.86, hover: 4.1, colour: '#b9b2a4', colour2: '#a8a092', pattern: 'knit', belly: '#d9d2c2', hat: 'cosy', hatColour: '#8a9a8c', hatTrim: '#d9d2c2', trim: '#8a8478', capColour: '#8a8478',
+  { id: 'hush', name: 'Hush', role: 'the quiet rooms', rest: 'sleepy', speed: 1.3, quiet: true, chirp: [48],
+    look: { shape: 'round', scale: 0.86, hover: 3.65, colour: '#b9b2a4', colour2: '#a8a092', pattern: 'knit', belly: '#d9d2c2', hat: 'cosy', hatColour: '#8a9a8c', hatTrim: '#d9d2c2', trim: '#8a8478', capColour: '#8a8478',
       eyeW: 26, eyeH: 22, eyeR: 11, gap: 44, eye: '#f2e6cf', ring: 0xf2d9b0, glove: '#d9d2c2', tools: [['cup'], ['teapot', 'taper', 'duster']], tray: 'oak', trayScale: 0.9 },
     room: 'The Quiet Room', roam: ['The Gallery', 'The Suite'], brings: true, offers: 'pot of tea',
     home: [63.7, 69.6], faces: [63.7, 72.5], homeActs: ['pourTea', 'rest', 'straighten', 'breathe'],
@@ -189,8 +189,8 @@ export const CAST = [
   // A luna moth: pale green, feathery antennae, wings folded down its back with an eye-spot and a tail on each, a
   // bookbinder's apron, a lamplighter's pole. Small, quiet, a little dry. Keeps the candles and the bowl of still
   // water under the shaft, looks up at the light, and offers a question rather than an answer.
-  { id: 'luna', name: 'Luna', role: 'the chapel', rest: 'neutral', speed: 1.5, chirp: [64, 71],
-    look: { shape: 'pip', scale: 0.92, hover: 4.15, colour: '#b9cfa6', belly: '#e6ebd2', apron: '#5a4030', apronTrim: '#4b3427', top: 'antennae', frond: '#e9dfb0', wings: ['#c9dcae', '#7d5a6a', '#e9d68a'], capColour: '#b8954f',
+  { id: 'luna', name: 'Luna', role: 'the chapel', rest: 'neutral', speed: 1.1, chirp: [64, 71],
+    look: { shape: 'pip', scale: 0.92, hover: 3.7, colour: '#b9cfa6', belly: '#e6ebd2', apron: '#5a4030', apronTrim: '#4b3427', top: 'antennae', frond: '#e9dfb0', wings: ['#c9dcae', '#7d5a6a', '#e9d68a'], capColour: '#b8954f',
       eyeW: 28, eyeH: 30, gap: 38, eye: '#ffd28e', faceBg: '#120c08', ring: 0xd9f0a8, glove: '#ece0c8', tools: [[], ['pole']], tray: 'oak', trayScale: 0.8 },
     room: 'The Chapel', roam: [],
     home: [65.0, 91.0], faces: [60, 87.5], homeActs: ['gaze', 'breathe', 'gaze', 'rest'],
@@ -204,8 +204,8 @@ export const CAST = [
   // ---- DING, the bellhop. A brass bell with a turned wooden handle and a red collar, the glow under it where the
   // clapper would be. Ring any bell in the place and it is Ding who comes, at speed, delighted. Between calls:
   // dusting, plumping, squaring things that were already square.
-  { id: 'ding', name: 'Ding', role: 'the bell', rest: 'happy', speed: 3.3, chirp: [88, 93],
-    look: { lathe: [[0, -0.5], [0.6, -0.5], [0.66, -0.45], [0.63, -0.38], [0.52, -0.2], [0.44, 0.08], [0.38, 0.3], [0.28, 0.46], [0.14, 0.55], [0, 0.57]], scale: 0.82, hover: 4.4, colour: '#c9a45c', colour2: '#a8843f', pattern: 'band', bandAt: -0.78, shirt: false,
+  { id: 'ding', name: 'Ding', role: 'the bell', rest: 'happy', speed: 2.0, chirp: [88, 93],
+    look: { lathe: [[0, -0.5], [0.6, -0.5], [0.66, -0.45], [0.63, -0.38], [0.52, -0.2], [0.44, 0.08], [0.38, 0.3], [0.28, 0.46], [0.14, 0.55], [0, 0.57]], scale: 0.82, hover: 3.95, colour: '#c9a45c', colour2: '#a8843f', pattern: 'band', bandAt: -0.78, shirt: false,
       faceY: 0.03, faceH: 0.2, faceW: 0.86, collar: '#a3312b', top: 'knob', topColour: '#5a3a26', capColour: '#8a6a2e', handY: -0.2, trim: '#f1d98a',
       blush: 'rgba(255,150,120,.5)', eyeW: 34, eyeH: 34, eyeR: 17, gap: 46, eye: '#fff1c8', ring: 0xffe9a0, glove: LINEN, tools: [[], ['duster', 'cushion', 'silver']], tray: 'brass' },
     room: 'The Hall', roam: ['The Listening Room', 'The Pool', 'The Banya', 'The Tea Room', 'The Cave'], brings: true, runner: true,

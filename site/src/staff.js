@@ -25,6 +25,7 @@ import { makeTalk } from './faculty/talk.js';
 import { useThreeDrinks, buildDrink, setFill } from './faculty/drinks.js';
 import { makeWorld, Polite, VR, attendVisitor, engageVisitor } from './faculty/manners.js';
 import { makeFaceLife } from './robokit/face.js';
+import { turnTime } from './robokit/speech.js';
 import { useThree, buildStaff, buildCarried } from './staff/bodies.js';
 import { pose, HOLDS, SECS } from './staff/acts.js';
 import { COURT } from './campus.js';
@@ -62,13 +63,13 @@ class Staffer extends Polite {
       });
       m.onDoor = leaf => { for (const mate of H.W.doors) if (!mate.fixed && mate.stop === leaf.stop) mate.isOpen = true; };
     }
-    this.bubble = H.bubbles.make(spec.name);
+    this.bubble = H.bubbles.make(spec.name); this.bubble.far = 26;
     this.state = 'home'; this.queue = []; this.expr = 'neutral'; this.exprUntil = 0; this.act = null; this.actT = 0; this.attn = {}; this.eng = {};
     this.greeted = -1e9; this.wasIn = false; this.nextIdle = H.now + 15 + Math.random() * 25; this.nextDoing = 0; this.trips = 0; this.sitTo = 0; this.sitK = 0;
     this.carrying = null; this.cargo = null; this.offered = false; this.making = null; this.drink = null; this.chatting = null; this.offeredAt = -1e9; this.inSince = 0;
     this.life = makeFaceLife(spec.id, H.now);
     this.talkReach = 12; this.asideStarts = []; this.calmUntil = 0;
-    if (spec.seat && !this.fixed) { this.sitTo = 1; this.sitK = 1; }      // (found in its chair)
+    if (spec.seat && !spec.seat.when && !this.fixed) { this.sitTo = 1; this.sitK = 1; }      // (found in its chair)
     this.item = { x: m.x, y: m.y + b.hover, z: m.z, reach: 10, size: 1.7, label: () => this.label(), act: () => this.press() };
     H.ctx.interact.push(this.item);
   }
@@ -156,7 +157,7 @@ class Staffer extends Polite {
     const W = this.W, end = W.now + (secs ?? (SECS[act] ?? 8) * (0.8 + Math.random() * 0.4)), yaw0 = this.m.yaw; this.state = state;
     try {
       this.setAct(act);
-      if (this.inRoom && W.now > this.nextDoing && this.L.doing?.[act] && Math.random() < 0.5 && !this.bubble.talking(W.now) && this.H.talk.robot !== this) { this.say(pick(this.L.doing[act]), 'neutral'); this.nextDoing = W.now + 30 + Math.random() * 30; this.nextIdle = Math.max(this.nextIdle, W.now + 16); }
+      if (this.inRoom && this.near && W.now > this.nextDoing && this.L.doing?.[act] && Math.random() < 0.6 && !this.bubble.talking(W.now) && this.H.talk.robot !== this) { this.say(pick(this.L.doing[act]), 'neutral'); this.nextDoing = W.now + 30 + Math.random() * 30; this.nextIdle = Math.max(this.nextIdle, W.now + 16); }
       while (W.now < end) { this.m.v = Math.max(0, this.m.v - W.dt * 4); if (!this.attn.looking) this.m.face(yaw0, W.dt); yield; }
     } finally { this.setAct(null); }
   }
@@ -184,12 +185,12 @@ class Staffer extends Polite {
       // home, and its work there (sat down, if it has a chair of its own)
       if (!this.atHome()) { this.state = 'go'; if (!(yield* this.travel(s.home.x, s.home.z, { must: true, patience: 30 }))) { yield* this.stay(3, 'pause'); continue; } }
       yield* this.turn(this.homeYaw, 0.8);
-      if (sp.seat) this.sitTo = 1;
+      if (sp.seat && !sp.seat.when) this.sitTo = 1;
       try {
         const end = this.W.now + 14 + Math.random() * 22;
         while (this.W.now < end && !this.queue.length) { const a = pick(sp.homeActs ?? ['rest']); yield* this.doing(a, null, 'home'); if (Math.random() < 0.45) yield* this.stay(2 + Math.random() * 3, 'home'); }
-      } finally { if (sp.seat) { this.sitTo = 0; } }
-      if (sp.seat) { const t0 = this.W.now; while (this.W.now - t0 < 1.2 && this.sitK > 0.05) yield; }
+      } finally { if (sp.seat && !sp.seat.when) { this.sitTo = 0; } }
+      if (sp.seat && !sp.seat.when) { const t0 = this.W.now; while (this.W.now - t0 < 1.2 && this.sitK > 0.05) yield; }
     }
   }
   nearGuest(p, r) { const v = this.W.visitor; return this.about() && Math.hypot(p.x - v.x, p.z - v.z) < r; }
@@ -211,21 +212,21 @@ class Staffer extends Polite {
     const lines = pick(CHAT.filter(c => c[0] === this.id && c[1] === o.id))[2];
     const dx = this.x - o.x, dz = this.z - o.z, d = Math.hypot(dx, dz) || 1, gap = this.r + o.r + 1.4, p = this.plan;
     const c = p.nearest(o.x + dx / d * gap, o.z + dz / d * gap, this.m.need, 4, false, c => p.lane[c] !== 2 && p.lane[c] !== 3 && !p.inDoorway(p.cx(c), p.cz(c))); if (c < 0) return false;
-    o.chatting = this; this.chatting = o; o.run('chat', o.listen(this, 24 + lines.length * 3.4), true);
+    o.chatting = this; this.chatting = o; o.run('chat', o.listen(this, 24 + lines.reduce((t, l) => t + turnTime(l), 0)), true);
     try {
       this.state = 'go'; if (!(yield* this.travel(p.cx(c), p.cz(c), { patience: 14, until: () => o.chatting !== this }))) return false;
       if (o.chatting !== this || Math.hypot(o.x - this.x, o.z - this.z) > gap + 2.5) return false;
       for (let k = 0; k < lines.length; k++) {
         const who = k % 2 ? o : this;
-        if (this.inEarshot() || o.inEarshot()) who.say(lines[k], k === lines.length - 1 ? 'happy' : who.rest === 'sleepy' ? 'neutral' : who.rest, 3.4);
-        const t0 = W.now; while (W.now - t0 < 3.4) { this.m.faceTo(o.x, o.z, W.dt * 2); this.state = 'chat'; yield; }
+        if (this.inEarshot() || o.inEarshot()) who.say(lines[k], k === lines.length - 1 ? 'happy' : who.rest === 'sleepy' ? 'neutral' : who.rest, turnTime(lines[k]) - 0.8);
+        const t0 = W.now, turn = turnTime(lines[k]); while (W.now - t0 < turn) { /* (each line read through, and a breath before the reply: robokit/speech.js) */ this.m.faceTo(o.x, o.z, W.dt * 2); this.state = 'chat'; yield; }
         if (o.chatting !== this) break;
       }
       return true;
     } finally { if (o.chatting === this) o.chatting = null; this.chatting = null; }
   }
   *listen(o, secs) { const W = this.W, end = W.now + secs; this.state = 'chat'; try { while (W.now < end && this.chatting === o) { this.m.v = 0; if (Math.hypot(o.x - this.x, o.z - this.z) < 9) this.m.faceTo(o.x, o.z, W.dt * 1.5); yield; } } finally { if (this.chatting === o) this.chatting = null; } }
-  inEarshot() { return this.visitorDist() < 26; }
+  inEarshot() { return this.visitorDist() < 17; }
   busyWithOrder() { return !!(this.queue.length || this.making || this.carrying); }
 
   // ---- orders ---------------------------------------------------------------------------------------------------
@@ -337,7 +338,7 @@ class Staffer extends Polite {
     let arrived = 0, nextWait = 0, away = 0, replan = 0, goal = null, stuck = 0, fail = null; const t0 = W.now, at = c.order?.at;
     try {
       while (this.carrying) {
-        const here = v.present && this.about() && (this.fixed || this.plan.inBoxes(v.x, v.z));
+        const here = v.present && this.about() && (this.fixed || this.plan.inBoxes(v.x, v.z)), still = this.fixed || this.spec.stays;      // (still: it does not leave its place; it holds the thing out from there)
         if (!here) {      // she has gone where it cannot follow: it waits a while, then keeps it for her
           away += W.dt; this.offered = false; m.v = 0; this.state = 'wait';
           if (away > 60) { this.line('kept', c.name); this.unload(); return; }
@@ -347,10 +348,10 @@ class Staffer extends Polite {
         const d = Math.hypot(v.x - this.x, v.z - this.z), stop = Math.max(3.4, this.keep + 1.3);
         // near enough to hand it over: beside her, or as near as the room (or a colleague) lets it get, in plain sight
         const reach = d <= stop + 0.8 || (d < 8 && stuck > 1.5 && this.plan.openBetween(this.x, this.z, v.x, v.z)) || (d < 16 && stuck > 3) || (this.offered && d < Math.max(stop + 2.2, this.item.reach - 1.5));      // (she is in the water, or behind a table: held out from the nearest floor, and she comes for it)
-        if (!reach && !this.fixed) {
+        if (!reach && !still) {
           this.offered = false; this.state = 'carry';
           if (W.now > replan || !goal || Math.hypot(goal.x - v.x, goal.z - v.z) > stop + 2.5) { replan = W.now + 1.5; goal = this.standNear(stop); if (!goal || !m.goTo(goal.x, goal.z)) { m.goTo(v.x, v.z); goal = null; } }
-          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? 1.25 : 0.9);
+          const x0 = this.x, z0 = this.z, st = m.update(W.dt, d > 12 ? 1.1 : 0.85);
           if (st === 'failed' && fail && Math.hypot(fail.x - this.x, fail.z - this.z) < 1 && this.nudge()) { fail = null; replan = W.now + 1.6; }      // twice in one place: out to roomier floor first
           else if (st === 'failed') { fail = { x: this.x, z: this.z }; replan = 0; } else if (st === 'idle' || st === 'arrived') replan = 0;
           stuck = Math.hypot(this.x - x0, this.z - z0) < W.dt * 0.2 ? stuck + W.dt : 0;
@@ -383,11 +384,11 @@ class Staffer extends Polite {
         if (!v.present || !this.about() || !this.plan.inBoxes(v.x, v.z)) { m.v = 0; yield; continue; }
         const d = Math.hypot(v.x - this.x, v.z - this.z), stop = Math.max(3.6, this.keep + 1.4); if (d < stop + 0.8) break;
         if (W.now > replan) { replan = W.now + 1.5; const g = this.standNear(stop); if (!g || !m.goTo(g.x, g.z)) m.goTo(v.x, v.z); }
-        const st = m.update(W.dt, 1.3); this.state = 'go';
+        const st = m.update(W.dt, 1.1); this.state = 'go';
         if (st === 'failed' && fail && Math.hypot(fail.x - this.x, fail.z - this.z) < 1 && this.nudge()) { fail = null; replan = W.now + 1.6; } else if (st === 'failed') { fail = { x: this.x, z: this.z }; replan = 0; }
         yield;
       }
-      m.stop(); this.say(pick(RANG.here), 'happy'); this.replyUntil = W.now + 5;
+      m.stop(); this.say(this.quiet ? '*is simply there, at your elbow, waiting to be told*' : this.id === 'ding' ? pick(RANG.here) : 'You rang, darling?', 'happy'); this.replyUntil = W.now + 5; if (!this.H.talk.robot) this.H.talk.open(this, this.dialogue());      // (and its card of things to ask for, opened for her)
     } finally { this.making = null; }
   }
 
@@ -399,27 +400,43 @@ class Staffer extends Polite {
     const dv = Math.hypot(v.x - this.x, v.z - this.z), talking = H.talk.robot === this;
     // coming and going; what the concierge arranged; a thing brought unasked
     if (inRoom && !this.wasIn) { this.cameIn = now; this.inSince = now; }
+    // Nobody calls across a room: what it says unasked (a greeting, a mutter at its work, a word with a colleague) is
+    // said only when she is within speaking distance, on its floor
+    const near = this.near = v.present && dv < 17 && Math.abs(v.y - this.y) < 4;
     if (!this.fixed) {
       const bk = H.booking;
       if (bk && bk.with === this.id && H.room && H.room.name === bk.room && !this.busyWithOrder() && this.plan.inBoxes(v.x, v.z)) {      // (in the room it is for, which may not be its own: it comes to her there)
         H.booking = null; this.greeted = now; setTimeout(() => this.say(pick(this.L.booked?.[bk.key] ?? this.L.greet ?? []), 'happy', 7), 700);
         const post = this.spots.posts.find(p => p.room === bk.room); if (post && Math.hypot(post.x - this.x, post.z - this.z) > 3) this.queue.push({ kind: 'meet', post });
       }
-      else if (inRoom && !this.wasIn && now - this.greeted > 60) { this.greeted = now; setTimeout(() => this.line('greet'), 600); }
-      if (!inRoom && this.wasIn && now - this.greeted > 12 && Math.random() < 0.6 && dv < 30) this.line('bye');
-      if (inRoom && now > this.nextIdle && !talking && !this.bubble.talking(now) && !this.busyWithOrder()) { this.line('idle'); this.nextIdle = now + 30 + Math.random() * 40; }
+      else if (inRoom && near && now - this.greeted > 60 && (!this.metIn || this.cameIn !== this.metIn)) { this.greeted = now; this.metIn = this.cameIn; setTimeout(() => this.line('greet'), 600); }      // (when she comes within speaking distance, not from across the room)
+      if (!inRoom && this.wasIn && now - this.greeted > 12 && Math.random() < 0.6 && dv < 20) this.line('bye');
+      if (inRoom && near && now > this.nextIdle && !talking && !this.bubble.talking(now) && !this.busyWithOrder()) { this.line('idle'); this.nextIdle = now + 30 + Math.random() * 40; }
       if (sp.offers && inRoom && !this.busyWithOrder() && now - this.inSince > (v.seated ? 12 : 45) && now - this.offeredAt > 300 && !H.ctx.holding?.()) { this.offeredAt = now; this.queue.push({ kind: 'bring', name: sp.offers }); }
     }
     this.wasIn = inRoom;
+    // The analyst: she lies on the couch, and it takes its chair behind her head and talks to her, a line now and
+    // then; she gets up, and it rises.
+    if (sp.seat?.when && !this.fixed) {
+      const lying = v.present && H.ctx.walker?.seated?.label === sp.seat.when && inRoom;
+      const hm = this.spots.home, atChair = Math.hypot(hm.x - this.x, hm.z - this.z) < 2.2;
+      if (lying && !this.busyWithOrder() && !atChair && this.taskName !== 'toChair') { const me = this; this.run('toChair', (function* () { me.state = 'go'; yield* me.travel(hm.x, hm.z, { must: true, patience: 20 }); yield* me.turn(me.homeYaw, 0.6); })(), true); }      // (wherever it was: over to its chair)
+      if (lying && !this.busyWithOrder() && atChair) {
+        if (!this.session) { this.session = { i: 0, next: now + 5 }; }
+        this.sitTo = 1;
+        if (this.sitK > 0.8 && now > this.session.next && !talking && !this.bubble.talking(now)) { const l = this.L.session ?? []; if (l.length) this.say(l[this.session.i++ % l.length], 'neutral'); this.session.next = now + 15 + Math.random() * 9; this.nextIdle = now + 30; }
+      } else if (this.session && !lying) { this.session = null; this.sitTo = 0; if (inRoom) this.say(pick(this.L.sessionEnd ?? ['We will stop there.']), 'happy'); }
+      else if (!lying) this.sitTo = 0;
+    }
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
-    const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 6 });
+    const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7 });
     const errand = this.busyWithOrder() || this.withdrawing;
     const replying = now < (this.replyUntil ?? 0), hold = this.engaged = !this.fixed && ((eng.on && (talking || (!eng.give && !errand))) || (replying && !this.carrying));      // (still answering her: it does not walk off mid-sentence)
     if (this.fixed) { if (!talking && now >= (this.replyUntil ?? 0) && this.queue.length && !this.making && !this.carrying) { const o = this.queue.shift(); if (o.kind === 'answer' || !o.name) { this.say(pick(RANG.here), 'happy'); this.replyUntil = now + 4; } else if (o.kind === 'make') o.ready = true; else this.run('order', this.bring(o), false); } if (!this.task) this.think(); this.stepTask(); }
     else {
       // (a room too small to step aside in: after a few tries in a row it stays where it is for a while, turned to her)
       if (now < this.calmUntil && this.aside.phase) { this.aside.phase = 0; this.asideEnd = now; m.stop(); }
-      if (now >= this.nextManners && !seated && !this.offered && now > this.calmUntil) { this.nextManners = now + 0.2; this.manners({ still: hold || this.state === 'chat' || this.state === 'offer', back: ['home', 'make', 'chat'].includes(this.state) }); }
+      if (now >= this.nextManners && !seated && !this.offered && now > this.calmUntil && !sp.stays) { this.nextManners = now + 0.2; this.manners({ still: hold || this.state === 'chat' || this.state === 'offer', back: ['home', 'make', 'chat'].includes(this.state) }); }
       if (this.aside.phase) { this.setAct(null); this.stepAside(dt); }
       else if (hold) { m.v = 0; if (!seated) m.faceTo(v.x, v.z, dt * 1.6); }
       else {
@@ -427,7 +444,7 @@ class Staffer extends Polite {
         if (!this.task && now > (this.faultAt ?? -9) + 2) this.think();
         this.stepTask();
       }
-      if (!seated) this.glide(dt);
+      if (!seated && !sp.stays) this.glide(dt);
     }
     this.actT += dt;
     // turning to her as she comes up: the eyes, then the head, then the body
@@ -475,7 +492,7 @@ export function hireStaff(ctx, plans, ask = '1') {
   const place = c => {
     const r = P?.rooms?.[c.room]; if (!r) { console.warn(`staff: ${c.id}'s room, "${c.room}", is not in the building; left out`); return null; }
     const y = P.world(c.home[0], c.home[1], r.floor).y, sv = c.serve;
-    const seat = c.seat ? (() => { const [x, z] = xz(c.seat.at), [fx, fz] = xz(c.seat.faces); const yaw = Math.atan2(fx - x, fz - z); return { x: x + Math.sin(yaw) * 0.5, z: z + Math.cos(yaw) * 0.5, top: c.seat.top, yaw }; })() : null;      // (forward on the seat, clear of the chair's back)
+    const seat = c.seat ? (() => { const [x, z] = xz(c.seat.at), [fx, fz] = xz(c.seat.faces); const yaw = Math.atan2(fx - x, fz - z); return { x: x + Math.sin(yaw) * 0.5, z: z + Math.cos(yaw) * 0.5, top: c.seat.top, yaw, when: c.seat.when }; })() : null;      // (forward on the seat, clear of the chair's back)
     // The pool attendant works both sides of the pool doors. Cross-sections
     // cover the dry courtyard only, ending behind the raised infinity coping.
     const court = c.outdoor ? [] : null;
@@ -489,6 +506,10 @@ export function hireStaff(ctx, plans, ask = '1') {
       }
     }
     const counterW = c.counter ? (() => { const [x, z] = xz(c.counter.at); return { x, z, r: c.counter.r, top: c.counter.top }; })() : null;
+    // Whoever brings things can follow her into any room on its own floor (its rounds keep to its own rooms: `roam` in
+    // cast.js says where its posts may be; this only widens the floor it can walk)
+    const floorOf = q => q.floor ?? q.y0, sameFloor = c.serve && !c.stays ? [...new Set(ctx.house.rooms.filter(q => q.site === r.world.site && Math.abs(floorOf(q) - floorOf(r.world)) < 1.5 && !/Stair|Laundry|Linen|Old Cave/.test(q.name)).map(q => q.name))] : [];
+    c = { ...c, roam: [...new Set([...(c.roam ?? []), ...sameFloor])].filter(n => n !== c.room) };
     return { ...c, court, counterW, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
       posts: [...(c.posts ?? []), ...(c.outdoor ?? [])].filter(p => !p.room || P.rooms[p.room] || (console.warn(`staff: ${c.id} has a post in "${p.room}", which is not in the building`), false)).map(p => ({ ...p, at: xz(p.at), faces: p.faces ? xz(p.faces) : null })),
       serve: sv ? { ...sv, machine: sv.machine ? xz(sv.machine) : null, faces: sv.faces ? xz(sv.faces) : null, pickup: sv.pickup ? { xz: xz(sv.pickup), y: y + sv.pickup[2] } : null, menu: Object.fromEntries(Object.entries(sv.menu ?? {}).map(([k, it]) => [k, it.at ? { ...it, at: xz(it.at) } : it])) } : undefined };
@@ -530,6 +551,17 @@ export function hireStaff(ctx, plans, ask = '1') {
     return true;
   };
   ctx.staff = { ring: H.ring, book: H.book, who: H.staff, H };
+  // The bell in her pocket: G, from anywhere, calls the runner (Ding below; upstairs, where Ding cannot come, Hush).
+  // It comes to her and opens its card of things to bring.
+  let rangAt = -9;
+  addEventListener('keydown', e => {
+    if (e.code !== 'KeyG' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || ctx.mode !== 'walk' || /INPUT|TEXTAREA/.test(document.activeElement?.tagName ?? '') || W.now - rangAt < 4) return;
+    rangAt = W.now; ctx.sound?.chirp?.([88, 93, 100], 0.05);
+    const v = W.visitor, can = s => !s.broken && !s.fixed && Math.abs(v.y - s.y) < 3 && s.plan.inBoxes(v.x, v.z);
+    const who = [H.staff.ding, H.staff.hush, ...staff.filter(s => s.spec.brings)].find(s => s && can(s));
+    if (who && H.ring({ by: who.id, quiet: who.quiet })) ctx.flash?.(who.id === 'ding' ? 'You ring for Ding.' : `You ring. ${who.name} is coming.`);
+    else ctx.flash?.('You ring. Nobody can get to you here.');
+  });
   // the nail corner's bell-push (furnish/banya_nails_fx.js): Bijou calls it out, the runner brings it and sets it on the throne's table
   if (!lineup) import('./furnish/banya_nails_fx.js').then(({ NAILS }) => {
     NAILS.onBell = ({ i, drink }) => {

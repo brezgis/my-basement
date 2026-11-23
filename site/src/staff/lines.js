@@ -28,6 +28,11 @@ export const LINES = {
     ready: ['Your %s. On the little table. I shall not interpret it.'],
     served: ['Sometimes a glass of water is only a glass of water.'],
     doing: { ponder: ['I wonder what you would make of that.', 'Hm. Not nothing.'], note: ['*writes "resistant to bookmarks"*', '*writes, crosses out, writes the same thing again*'], readNotes: ['Last week you said the opposite. Both are true.'] },
+    // she lies on the couch: it takes its chair behind her head, and now and then says one of these, in order
+    session: ['Begin anywhere. People always do.', 'Mm.', 'And what comes to mind about that?', '*the pen moves; it does not say what it wrote*', 'Say more.', 'You went quiet just then. Where did you go?',
+      'I notice you are looking at the window. Most people do. It is why the couch points that way.', 'Mm-hm. And before that?', 'There is no hurry. The hour is long and mostly imaginary.',
+      'And how was it, being brought a drink by a bell?', 'You may say the thing you were not going to say.', '*a long, comfortable silence, professionally maintained*', 'Mm. That is not nothing.'],
+    sessionEnd: ['We will stop there. Rise slowly. You were somewhere.', 'That is our time. It usually is.', 'Up you get. Gently. Insight is hard on the knees.'],
     booked: { session: ['You are expected. The couch is yours. I will be just here, behind your head, being quiet at you.', 'Ah, the one Cosima wrote down in ink. Lie down, or sit. Begin anywhere. People always do.'] },
     topics: [
       { q: 'What do you do here?', a: 'I listen. Somebody in a spa ought to. Everyone else down here is trying to improve you. I am only trying to hear you.', expr: 'neutral',
@@ -301,6 +306,27 @@ LINES.luna = {
     { q: 'Why a moth?', a: 'We like a flame and we know better than to touch it. It is a useful temperament in a chapel.', expr: 'wink' },
   ],
 };
+
+// What a robot says it is doing, it is doing. Lines that describe an action (in asterisks, or about the thing in its
+// hands) are said only WHILE it does that (`doing[act]`), never as a passing remark from wherever it happens to be:
+// Saz does not hold a coupe to the light in the middle of the lounge. `idle` keeps only what can be said anywhere.
+// (The table moves each such line out of `idle`, by how it begins, to the gesture it belongs to: staff/acts.js.)
+const BELONGS = {
+  winnicbott: [['*writes one word', 'note'], ['*consults the clock', 'readNotes'], ['*a long, comfortable silence', 'rest']],
+  cosima: [['*runs a finger down the ledger', 'ledger'], ['*straightens a key', 'straighten'], ['*polishes the bell', 'polish']],
+  saz: [['*holds a coupe', 'polish'], ['*wipes the counter', 'wipe'], ['*adjusts the cherry', 'straighten']],
+  tomme: [['*turns a wheel', 'straighten'], ['*whispers something to the Comt', 'straighten'], ['*draws a plug', 'probe'], ['*swirls', 'taste']],
+  pasha: [['*shakes a venik', 'shakeVenik'], ['*checks the stones', 'steam']],
+  terry: [['*folds a towel', 'fold'], ['*draws the net', 'skim'], ['One leaf.', 'skim'], ['*squares the stack', 'stack']],
+  bijou: [['*files, blows', 'file'], ['*admires her own', 'admire']],
+  hush: [['*sets a cup down', 'pourTea'], ['*turns the teapot', 'pourTea'], ['*adds one log', 'tend'], ['*straightens a blanket', 'straighten']],
+  ding: [['*plumps a cushion', 'plump'], ['*dusts something', 'dust']],
+  luna: [['*lifts the pole', 'lightPole'], ['*looks up the shaft', 'gaze'], ['*holds both mittens', 'bowl'], ['*straightens one candle', 'straighten']],
+};
+for (const [id, moves] of Object.entries(BELONGS)) {
+  const L = LINES[id]; if (!L) continue; L.doing ??= {};
+  for (const [starts, act] of moves) { const i = (L.idle ?? []).findIndex(t => t.startsWith(starts)); if (i < 0) { console.warn('staff lines: no idle line of', id, 'begins', starts); continue; } (L.doing[act] ??= []).push(L.idle.splice(i, 1)[0]); }
+}
 
 // What the one who answers a bell says on the way, and on arriving with nothing ordered
 export const RANG = { coming: ['Ding! Coming!', 'DING! That was a bell! That was a REAL one!', 'Ding! Do not move!'], here: ['You rang! You actually rang! What can I bring?', 'Ding! Here! What do you need? Say anything!'],
