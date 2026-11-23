@@ -27,6 +27,7 @@ import { makeWorld, Polite, VR, attendVisitor, engageVisitor } from './faculty/m
 import { makeFaceLife } from './robokit/face.js';
 import { turnTime } from './robokit/speech.js';
 import { useThree, buildStaff, buildCarried } from './staff/bodies.js';
+import { THREE as T3 } from './robokit/parts.js';
 import { pose, HOLDS, SECS } from './staff/acts.js';
 import { COURT } from './campus.js';
 import { CAST, byId } from './staff/cast.js';
@@ -137,6 +138,7 @@ class Staffer extends Polite {
       if (t.bring) this.queue.push({ kind: 'bring', name: t.bring });
       if (t.book) this.H.book(t.book);
       if (t.call) this.H.ring({ by: t.call, quiet: true });
+      if (t.service) { if (this.treat?.at) this.treat.service = t.service; else this.H.treatWish = t.service; }      // (on the table: begun at once; standing: kept for when she lies down)
       t.then?.(this.H.ctx, this);
       this.asked = (this.asked ?? 0) + 1;
       return t.next ? this.topics(t.next) : null;
@@ -149,8 +151,47 @@ class Staffer extends Polite {
     const wrap = t => ({ ...t, then: (ctx, me) => { if (me.session) { me.session.said = (me.session.said ?? 0) + 3; me.session.next = me.H.now + 30; } t.then?.(ctx, me); }, next: t.next?.map(x => ({ ...x })) });
     return this.topics([...three.map(wrap), quiet]);
   }
+  // Reiki: a soft light between its hands and her, there while it works (the one thing in the place that glows for no reason)
+  aura(now, on) {
+    if (!this.auraS) { if (!on) return; const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+      gr.addColorStop(0, 'rgba(255,244,214,1)'); gr.addColorStop(0.3, 'rgba(214,196,255,.5)'); gr.addColorStop(1, 'rgba(190,170,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+      const tb = this.spec.tableW, m = new T3.SpriteMaterial({ map: new T3.CanvasTexture(c), transparent: true, depthWrite: false, blending: T3.AdditiveBlending, opacity: 0, fog: false, depthTest: false });
+      this.auraS = new T3.Sprite(m); this.auraS.scale.set(1.2, 1.2, 1); this.auraS.position.set(tb.fx + (tb.x - tb.fx) * 0.62, this.y + 4.3, tb.fz + (tb.z - tb.fz) * 0.62); this.auraS.name = 'reiki'; this.H.ctx.scene.add(this.auraS); this.auraK = 0; }
+    this.auraK += ((on ? 1 : 0) - this.auraK) * 0.02; this.auraS.visible = this.auraK > 0.01; this.auraS.material.opacity = this.auraK * (0.6 + 0.2 * Math.sin(now * 0.9)); const k = 1.0 + 0.18 * Math.sin(now * 0.6); this.auraS.scale.set(k, k, 1);
+  }
+  // (lying on the treatment table she is not in anybody's way: its keeper comes right up to her, as it never would to someone standing)
+  about() { return this.treat ? false : super.about(); }
+  // On the treatment table: what may be asked for (three, and the rest behind "something else"), or nothing at all
+  tableCard() {
+    const S = this.L.services ?? {}, opt = k => ({ q: S[k].q, a: S[k].a, service: k, expr: 'happy' }), keys = Object.keys(S);
+    const quiet = { q: '*just lie here*', a: this.L.tableQuiet ?? ['Mm.'], expr: 'sleepy', then: (ctx, me) => { if (me.treat) me.treat.quietUntil = me.H.now + 60; } };
+    return this.topics([...keys.slice(0, 2).map(opt), { q: 'Something else.', a: 'Of course. There is no wrong one.', expr: 'happy', next: [...keys.slice(2, 5).map(opt), quiet] }, quiet]);
+  }
+  // The table: it comes to the head of it, rises to lean over her, and does what she asks for, where she can watch its
+  // hands; a line now and then as it works; when she gets up, it is over.
+  *treatment() {
+    const W = this.W, H = this.H, T = this.treat, tb = this.spec.tableW, S = this.L.services ?? {};
+    try {
+      this.state = 'go'; if (H.talk.robot === this) H.talk.close();
+      yield* this.travel(tb.x, tb.z, { must: true, patience: 20, beside: true }); yield* this.turn(tb.yaw, 0.8);
+      if (!T.lying) return;
+      T.at = true; this.bubble.pinned = true; this.state = 'treat';
+      this.say(this.next('tableOpen', this.L.tableOpen ?? ['There.']), 'sleepy', 6); let wait = W.now + 6.5;
+      while (T.lying) {
+        this.m.v = 0; this.m.face(tb.yaw, W.dt); this.nextIdle = W.now + 30;
+        const sv = T.service && S[T.service];
+        if (!sv) { T.service = null; if (!H.talk.robot && W.now > wait && W.now > (T.quietUntil ?? 0) && !this.bubble.talking(W.now)) { H.talk.open(this, this.tableCard()); wait = W.now + 9; } }
+        else {
+          if (T.doing !== T.service) { T.doing = T.service; T.t0 = W.now; T.nextLine = W.now + 10; T.i = 0; this.setAct(sv.act); if (H.talk.robot === this) H.talk.close(); if (!this.bubble.talking(W.now)) this.say(one(sv.a), 'happy', 7); }
+          if (W.now > T.nextLine && !this.bubble.talking(W.now)) { this.say(sv.during[T.i++ % sv.during.length], 'sleepy', 7); T.nextLine = W.now + 15 + Math.random() * 7; }
+          if (W.now - T.t0 > (sv.secs ?? 70)) { this.say(one(sv.done), 'happy', 8); this.setAct(null); T.service = T.doing = null; wait = W.now + 9; }
+        }
+        yield;
+      }
+    } finally { const was = this.treat; this.treat = null; this.setAct(null); this.bubble.pinned = false; if (H.talk.robot === this) H.talk.close(); if (was?.at && this.inRoom) this.say(pick(this.L.tableEnd ?? ['Slowly.']), 'happy', 7); }
+  }
   // She closed the card herself (the way out that every card has): a session or a tasting does not put it straight back
-  cardClosed() { const now = this.H.now; if (this.session) { this.session.quietUntil = now + 70; this.session.next = now + 30; } if (this.tasting) this.tasting.cardAt = now + 150; this.replyUntil = Math.min(this.replyUntil ?? 0, now); }
+  cardClosed() { const now = this.H.now; if (this.session) { this.session.quietUntil = now + 70; this.session.next = now + 30; } if (this.tasting) this.tasting.cardAt = now + 150; if (this.treat) this.treat.quietUntil = now + 60; this.replyUntil = Math.min(this.replyUntil ?? 0, now); }
   dialogue() {
     const all = this.L.topics ?? [], n = all.length, k = (this.asked ?? 0) % Math.max(1, n);
     const list = n <= 4 ? all : [...all.slice(0, 2), ...[0, 1].map(i => all[2 + ((k + i) % (n - 2))])];
@@ -429,6 +470,13 @@ class Staffer extends Polite {
       if (sp.offers && inRoom && !this.busyWithOrder() && now - this.inSince > (v.seated ? 12 : 45) && now - this.offeredAt > 300 && !H.ctx.holding?.()) { this.offeredAt = now; this.queue.push({ kind: 'bring', name: sp.offers }); }
     }
     this.wasIn = inRoom;
+    // The treatment table: she lies down on it, and its keeper comes to her head (treatment(), above)
+    if (sp.tableW && !this.fixed) {
+      const lying = v.present && H.ctx.walker?.seated?.label === sp.tableW.when && inRoom;
+      if (lying && !this.treat && !this.busyWithOrder()) { this.treat = { service: H.treatWish ?? null, lying: true }; H.treatWish = null; this.run('treat', this.treatment(), false); }
+      if (this.treat) this.treat.lying = lying;
+      this.aura?.(now, this.treat?.at && this.treat.doing === 'reiki');
+    }
     // The analyst: she lies on the couch, and it takes its chair behind her head and talks to her, a line now and
     // then; she gets up, and it rises.
     if (sp.seat?.when && !this.fixed) {
@@ -497,7 +545,7 @@ class Staffer extends Polite {
     const seated = this.sitting, level0 = v.present && Math.abs(v.y - this.y) < 3 && (inRoom || dv < 7);
     const eng = engageVisitor(this.eng, this, v, dt, { talking: talking || now < (this.replyUntil ?? 0), level: level0, near: this.fixed ? 0 : 7, far: 9, atAWalk: true });
     const errand = this.busyWithOrder() || this.withdrawing || (this.taskName === 'toCounter' && this.state === 'go');
-    const replying = now < (this.replyUntil ?? 0), hold = this.engaged = !this.fixed && ((eng.on && (talking || (!eng.give && !errand))) || (replying && !this.carrying));      // (still answering her: it does not walk off mid-sentence)
+    const replying = now < (this.replyUntil ?? 0), hold = this.engaged = !this.fixed && !this.treat && ((eng.on && (talking || (!eng.give && !errand))) || (replying && !this.carrying));      // (still answering her: it does not walk off mid-sentence)
     if (this.fixed) { if (!talking && now >= (this.replyUntil ?? 0) && this.queue.length && !this.making && !this.carrying) { const o = this.queue.shift(); if (o.kind === 'answer' || !o.name) { this.say(pick(RANG.here), 'happy'); this.replyUntil = now + 4; } else if (o.kind === 'make') o.ready = true; else this.run('order', this.bring(o), false); } if (!this.task) this.think(); this.stepTask(); }
     else {
       // (a room too small to step aside in: after a few tries in a row it stays where it is for a while, turned to her)
@@ -522,14 +570,17 @@ class Staffer extends Polite {
     const q = sp.seat, k = q ? this.sitK : 0, sm = k * k * (3 - 2 * k);
     if (q && k > 0.3) { let dy = q.yaw - m.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); m.yaw += dy * Math.min(1, dt * 3); }
     // behind its counter it floats higher, so that it is seen over it (cast.js `counter`)
-    { const c = sp.counterW, inside = c && !seated && Math.hypot(m.x - c.x, m.z - c.z) < c.r; this.lift = (this.lift ?? 0) + ((inside ? Math.max(0, c.top - 0.2 - (b.hover + b.bottom)) : 0) - (this.lift ?? 0)) * Math.min(1, dt * 2.5); }
-    const t = now + this.phase, moving = m.v > 0.25, speak = this.bubble.talking(now), act = talking || this.aside.phase || (hold && !seated) ? null : this.act;
+    { const c = sp.counterW, inside = c && !seated && Math.hypot(m.x - c.x, m.z - c.z) < c.r; this.lift = (this.lift ?? 0) + ((inside ? Math.max(0, c.top - 0.2 - (b.hover + b.bottom)) : this.treat?.at ? sp.tableW.lift : 0) - (this.lift ?? 0)) * Math.min(1, dt * (this.treat?.at ? 0.9 : 2.5)); }      /* (and it rises, slowly, to lean over the table) */
+    const t = now + this.phase, moving = m.v > 0.25, speak = this.bubble.talking(now), act = (talking && !this.treat?.doing) || this.aside.phase || (hold && !seated && !this.treat) ? null : this.act;
     // (the body is drawn a breath behind where it is: pressed by her, or nudged aside in small steps, it gives way in one
     // smooth movement, not a shudder)
     { const D = this.drawn ??= { x: m.x, z: m.z, yaw: m.yaw }, far = Math.hypot(m.x - D.x, m.z - D.z) > 2.5, kS = far ? 1 : 1 - Math.exp(-dt * 11);
       D.x += (m.x - D.x) * kS; D.z += (m.z - D.z) * kS; let dy = m.yaw - D.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); D.yaw += dy * (far ? 1 : 1 - Math.exp(-dt * 14));
-      b.root.position.set(D.x + (q ? (q.x - D.x) * sm : 0), m.y, D.z + (q ? (q.z - D.z) * sm : 0)); b.root.rotation.y = D.yaw; }
-    const P = act && act !== 'idle' ? pose(act, this.actT, b.D) : null, w = 1 - at.w * (at.yaw !== null ? 0.7 : 0.25);
+      // (at the treatment table it is drawn forward of where it stands, leaning in over her head)
+      const tw = sp.tableW, ov = this.overK = (this.overK ?? 0) + ((this.treat?.at ? 1 : 0) - (this.overK ?? 0)) * Math.min(1, dt * 0.9), oe = ov * ov * (3 - 2 * ov), od = tw ? Math.hypot(tw.fx - tw.x, tw.fz - tw.z) : 1, reach = tw ? Math.max(0, od - (tw.back ?? 1.0)) * oe / od : 0;
+      b.root.position.set(D.x + (q ? (q.x - D.x) * sm : 0) + (tw ? (tw.fx - tw.x) * reach : 0), m.y, D.z + (q ? (q.z - D.z) * sm : 0) + (tw ? (tw.fz - tw.z) * reach : 0)); b.root.rotation.y = D.yaw; }
+    const P = act && act !== 'idle' ? pose(act, this.actT, b.D) : this.overK > 0.05 ? { ...pose('breathe', this.actT, b.D) } : null, w = this.treat?.at ? 1 : 1 - at.w * (at.yaw !== null ? 0.7 : 0.25);      /* (at the table its hands are wholly on the work, however near she is) */
+    if (P && this.overK > 0.05) { const k = this.overK; P.lean = (P.lean ?? 0) + 0.6 * k; for (const h of ['L', 'R']) if (P[h]) P[h] = [P[h][0] * (1 + 0.9 * k), P[h][1] + 0.62 * k, P[h][2] + 0.1 * k]; }      // (bent well over, to look down at her)
     const head = hold && seated ? Math.max(-0.6, Math.min(0.6, at.rel)) : hold ? 0 : at.head;
     const Lf = this.life.step(now, dt, { w: at.w, eye: at.eye, work: P ? (P.ly ?? 0) : null, moveLook: moving && at.w < 0.5 && m.path?.[m.i] ? Math.atan2(Math.sin(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw), Math.cos(Math.atan2(m.path[m.i].x - m.x, m.path[m.i].z - m.z) - m.yaw)) * 1.5 : null });
     const close = ['paint', 'file', 'note', 'probe', 'tamp', 'light', 'pourTea', 'pour', 'water'].includes(act), restful = ['rest', 'breathe', 'listen', 'tea', 'taste', 'ponder'].includes(act);
@@ -562,6 +613,7 @@ export function hireStaff(ctx, plans, ask = '1') {
   const place = c => {
     const r = P?.rooms?.[c.room]; if (!r) { console.warn(`staff: ${c.id}'s room, "${c.room}", is not in the building; left out`); return null; }
     const y = P.world(c.home[0], c.home[1], r.floor).y, sv = c.serve;
+    const tableW = c.table ? (() => { const [x, z] = xz(c.table.at), [fx, fz] = xz(c.table.faces); return { x, z, yaw: Math.atan2(fx - x, fz - z), fx, fz, when: c.table.when, lift: c.table.lift ?? 1, back: c.table.back ?? 1 }; })() : null;
     const seat = c.seat ? (() => { const [x, z] = xz(c.seat.at), [fx, fz] = xz(c.seat.faces); const yaw = Math.atan2(fx - x, fz - z); return { x: x + Math.sin(yaw) * 0.5, z: z + Math.cos(yaw) * 0.5, top: c.seat.top, yaw, when: c.seat.when }; })() : null;      // (forward on the seat, clear of the chair's back)
     // The pool attendant works both sides of the pool doors. Cross-sections
     // cover the dry courtyard only, ending behind the raised infinity coping.
@@ -580,7 +632,7 @@ export function hireStaff(ctx, plans, ask = '1') {
     // cast.js says where its posts may be; this only widens the floor it can walk)
     const floorOf = q => q.floor ?? q.y0, sameFloor = c.serve && !c.stays ? [...new Set(ctx.house.rooms.filter(q => q.site === r.world.site && Math.abs(floorOf(q) - floorOf(r.world)) < 1.5 && !/Stair|Laundry|Linen|Old Cave/.test(q.name)).map(q => q.name))] : [];
     c = { ...c, own: [c.room, ...(c.roam ?? [])], roam: [...new Set([...(c.roam ?? []), ...sameFloor])].filter(n => n !== c.room) };      // (own: where it goes on its own account: its rounds, a word with a colleague)
-    return { ...c, court, counterW, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
+    return { ...c, court, counterW, tableW, home: xz(c.home), y, roomBox: r.world, faces: c.faces ? xz(c.faces) : null, seat,
       posts: [...(c.posts ?? []), ...(c.outdoor ?? [])].filter(p => !p.room || P.rooms[p.room] || (console.warn(`staff: ${c.id} has a post in "${p.room}", which is not in the building`), false)).map(p => ({ ...p, at: xz(p.at), faces: p.faces ? xz(p.faces) : null })),
       serve: sv ? { ...sv, machine: sv.machine ? xz(sv.machine) : null, faces: sv.faces ? xz(sv.faces) : null, pickup: sv.pickup ? { xz: xz(sv.pickup), y: y + sv.pickup[2] } : null, menu: Object.fromEntries(Object.entries(sv.menu ?? {}).map(([k, it]) => [k, it.at ? { ...it, at: xz(it.at) } : it])) } : undefined };
   };

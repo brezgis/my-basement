@@ -81,6 +81,8 @@ export const PROPS = {
   pole: () => [paint(T(cyl(0.017, 0.017, 2.05, 6), { p: [0, 0.57, 0.04] }), '#a8844a'), paint(T(cyl(0.022, 0.022, 0.06, 6), { p: [0, -0.44, 0.04] }), '#7d6036'), paint(T(box(0.09, 0.015, 0.015), { p: [0.04, 1.53, 0.04] }), '#a8844a'),
     paint(T(new THREE.ConeGeometry(0.05, 0.09, 10, 1, true), { p: [0.075, 1.485, 0.04] }), '#b8954f'), paint(T(cyl(0.012, 0.016, 0.05, 6), { p: [0, 1.595, 0.04] }), '#3a2c22'), paint(T(sph(0.026, 8, 6), { p: [0, 1.66, 0.04], s: [1, 2, 1] }), '#ffcf70')],      // a lamplighter's pole: wick-holder, snuffer bell, a small flame
   // Ding
+  stone: () => [paint(T(sph(0.13, 12, 8), { p: [0, -0.04, 0.12], s: [1.15, 0.38, 0.9] }), '#3a3836')],      // a basalt stone, warm
+  thread: () => [paint(T(cyl(0.006, 0.006, 0.5, 4), { p: [-0.2, 0.04, 0.12], r: [0, 0, Math.PI / 2] }), '#f2ead8')],      // a length of cotton thread, held taut across to the other hand
   cushion: () => [paint(T(slab(0.6, 0.24, 0.6), { p: [0.3, 0.02, 0.24], r: [0.3, 0, 0] }), '#d9cbb2')],
   silver: () => [paint(T(lathe([[0, 0], [0.3, 0], [0.31, 0.02], [0.27, 0.16], [0.16, 0.26], [0.04, 0.29], [0.04, 0.32], [0, 0.34]], 20), { p: [0, 0.0, 0.3] }), '#cfd2d4'), paint(T(sph(0.035, 8, 6), { p: [0, 0.34, 0.3] }), BRASS)],      // a cloche
 };

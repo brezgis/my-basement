@@ -101,7 +101,7 @@ export const LINES = {
       { q: 'What can you arrange for me?', a: 'Anything in this building and several things outside it. Heat, water, hands, cheese, or a professional silence. Choose, darling, and it is done.', expr: 'happy',
         next: [
           { q: 'Steam. Proper steam.', a: 'Then you want Pasha. I am writing you in. He will have the stones ready and a great deal to say. Through the east door, darling: the Banya.', book: 'steam', expr: 'happy' },
-          { q: 'Somebody to rub my shoulders.', a: 'The Treatment Room, past the banya, with Pasha. Warm oil, warm stones, and hands like a man who kneads bread for a living. He will talk, darling. Let him. You are in the book.', book: 'treatment', expr: 'happy' },
+          { q: 'Somebody to rub my shoulders.', a: 'The Treatment Room, past the banya, with Opal. Warm stones, a facial, the shoulders, and reiki, darling, which Opal will perform on you in complete sincerity. I have stopped arguing. People come out glowing. You are in the book.', book: 'treatment', expr: 'happy' },
           { q: 'My nails.', a: 'Bijou, in the Tea Room, by the cloud window. She will call you "honey" and tell you things about people you have never met. Booked. Brace yourself, darling.', book: 'nails', expr: 'wink' },
           { q: 'Fifty minutes with the analyst.', a: 'Upstairs, the Consulting Room. Winnicbott is expecting you; he says he always was. I have written it in ink.', book: 'session', expr: 'neutral' },
         ] },
@@ -201,7 +201,7 @@ export const LINES = {
     waiting: ['The %s is going cold, and a cold tea is a small tragedy. We have enough large ones.', 'My friend. The %s. I am holding it with love but also with an arm.'],
     kept: ['I put the %s back by the samovar. It will wait. Tea is the most patient drink there is.'],
     doing: { steam: ['Ssssss! Hear that? That is the stones saying thank you.', '*a ladle on the stones; steps back; lets it roll over him like weather*'], whisk: ['Lightly! Lightly! We are not beating a carpet. We are persuading a shoulder.'], shakeVenik: ['*shakes the leaves through the hot air above his head*'], tea: ['*takes his tea through a sugar cube held in the teeth, like a professional*'] },
-    booked: { treatment: ['The shoulders! Cosima told me. On the table, face down. I have warm oil, warm stones, and opinions about your posture. All three are free.', 'Aha, my booking! Lie down. You carry your whole week in the neck. I can see it from here. We take it out, we throw it on the stones.'],
+    booked: {
       steam: ['There you are! Cosima told me. The stones have been ready an hour and so have I. Hat. Sheet. In you go. I follow with the venik.', 'My booking! Come. Three rounds: one to arrive, one to sweat, one to forget your own surname.'] },
     topics: [
       { q: 'How does this work?', a: 'Simple! The parnaya: you sit, you sweat, I throw water on the stones and wave the hot air down onto you with the venik. Then the cold plunge, with shouting. Then tea. Then again. Three times and you are a new person, or at least a cleaner one.', expr: 'happy',
@@ -244,6 +244,55 @@ export const LINES = {
       { q: 'Do you ever stop folding?', a: 'I tried once! I sat down. I looked at the pool. And then a towel was just lying there, unfolded, like a cry for help.', expr: 'sass' },
       { q: 'Pasha says he does not hit people.', a: 'With the twigs! He says "persuading". I have seen it. It is hitting, darling, but lovely hitting. You will want to go back.', expr: 'wink' },
       { q: 'Is that a towel on your head?', a: 'It is! I did it once after a swim and it just felt right. Cosima says it is "not uniform". Cosima wears a hat the size of a biscuit.', expr: 'sass' },
+    ],
+  },
+
+  // ---------------------------------------------------------------------------------------------------------------
+  // OPAL, of the Treatment Room. Slow, soft, and entirely sincere: it can feel your energy and is glad to tell you
+  // how it is doing. Never hurries, never jokes at the guest's expense, never doubts the stones. "Dear heart", sometimes.
+  //   services   what is done on the table: { q (what the guest says), a (what Opal answers as it begins), act (acts.js),
+  //              secs, during (said one at a time while it works, in order), done (said as it finishes) }
+  //   tableOpen  the one line as she lies down and it comes to the head of the table; tableEnd as she gets up
+  opal: {
+    greet: ['Welcome. Breathe out. ... There. You have arrived now.', 'Come in, dear heart. Leave the day by the door. It will wait.', 'Oh. Your energy came in a moment before you did. It is lovely. A little tired at the edges.'],
+    idle: ['*holds two warm stones, and is still*', 'The room is at exactly the temperature of a held hand.', 'I cleared the corners this morning. Corners collect things.', '*breathes in for four, out for six; the lamp seems to agree*', 'The stones were in the river a thousand years. They are in no hurry and neither am I.', 'Somebody left their worry on the table yesterday. I folded it and put it with the towels.', 'Your shoulders are up by your ears. No need to move them. Only notice.'],
+    bye: ['Go gently. Drink water. Your aura is still putting its shoes on.', 'You are lighter. Mind the doorway.'],
+    walkedOff: ['Go well. The table will be here.'],
+    doing: { reiki: ['*hands held over the empty table, eyes closed; the table seems to appreciate it*'], warmStone: ['*warms a stone between its palms and listens to it*'], fold: ['*folds a warm towel, slowly, in thirds*'] },
+    booked: { treatment: ['Cosima said you were coming. So did the stones. Lie down when you are ready, dear heart; there is no late here.', 'There you are. I have warmed the table and cleared the room. Lie down, and tell me what you would like, or do not, and I will listen to your shoulders.'] },
+    tableOpen: ['There. Let the table hold you. It is very good at it.', 'Lie back. Nothing is required of you now.', 'Good. Breathe out, longer than you breathed in. ... Again.', 'I am just here, at your head. Close your eyes, or do not.'],
+    tableEnd: ['Slowly. Sit a moment before you stand. There is water by the door.', 'Welcome back. You were somewhere nice. I could tell.', 'Gently, dear heart. The world has waited, and it can wait one more minute.'],
+    tableQuiet: ['Then we will just be here a while.', 'Mm. Silence is also a treatment.'],
+    services: {
+      reiki: { q: 'Reiki, please.', a: ['Oh, good. I will begin at the crown. You may feel warmth, or tingling, or nothing at all. All three are correct.', 'Reiki. Yes. I am not going to touch you. I am going to be very near you, on purpose.'], act: 'reiki', secs: 80,
+        during: ['*hands held a palm above your forehead, perfectly still*', 'There is a great deal of thinking up here. I am only letting it settle. Like snow in a globe.', 'Mm. The heart is open. Slightly ajar. That is plenty.', '*moves its hands a few inches; waits; the lamp flickers once*', 'Something just let go near your left shoulder. You do not need to know what it was.', 'The energy knows where to go. I only hold the door.'],
+        done: ['There. I have closed the field and thanked it. You are balanced. Possibly for the first time since spring.', 'That is the whole of it. Your energy is humming now. A low C, I think.'] },
+      stones: { q: 'The hot stones.', a: ['Basalt, from the river, warmed in water. One at a time. Each one knows its place.', 'The stones. Yes. They are warm, not hot. They have been looking forward to this.'], act: 'stones', secs: 70,
+        during: ['*lays a warm stone down, slowly, and leaves its hand on it a moment*', 'This one goes between the shoulder blades. It has always gone there.', 'Feel the weight? That is the stone doing the relaxing so that you need not.', '*another stone; the warmth spreads outward from it like a small sun*', 'Seven stones. One for each of the places a week gets stuck.'],
+        done: ['I will take them back now, one by one, and thank them. They say you were easy company.', 'There. The stones have what you were carrying. They do not mind. They are stones.'] },
+      facial: { q: 'A facial.', a: ['Warm cloth first. Then the blue clay, then rose water. Your face has been making expressions all day; it may stop now.', 'A facial. Lovely. Close your eyes. I will be working in very small circles and thinking kind things.'], act: 'facial', secs: 70,
+        during: ['*small slow circles at the temples, with a warm cloth*', 'Unclench the jaw. ... And the bit behind the jaw. ... There it is.', 'The clay is from Lake Baikal. It is very old and very calm and some of that rubs off.', '*rose water, patted on, hardly there*', 'You are frowning at something that is not in this room. Let it wait outside.'],
+        done: ['Done. You look like someone who slept nine hours and was told good news.', 'There. I would say you are glowing, but I say that to everyone, and it is true of everyone.'] },
+      massage: { q: 'My shoulders.', a: ['The shoulders. Of course. They have been holding up a great deal that was never theirs to hold.', 'Warm oil, cedar. I will press, and wait, and press. Tell me if it is too much. It will not be.'], act: 'massage', secs: 75,
+        during: ['*presses, slowly, with one warm palm; then the other*', 'There is a knot here with a name on it. I will not ask whose.', 'Breathe into my hand. ... Yes. The muscle is listening now.', '*long, unhurried strokes outward from the neck*', 'You may fall asleep. Most do. I take it as a compliment.'],
+        done: ['There. Your shoulders are where shoulders go. Remember where that is.', 'Finished. Roll them once. ... See? They had forgotten they could.'] },
+      threading: { q: 'My brows. Threading.', a: ['Threading. I will be quick and I will be kind. Breathe out when I say. ... Out.', 'Cotton thread, twisted. It is a very old art. It stings for the length of one breath, and then you have architecture.'], act: 'threading', secs: 45,
+        during: ['*a taut thread, a small quick twist; a pause to let you forgive it*', 'Breathe out. ... Out. ... There. That one was the worst and it is over.', 'Your brows have a natural arch. I am only reminding them of it.', '*twist; pause; a cool fingertip pressed where it stung*'],
+        done: ['Done. A cool cloth. The redness will go in ten minutes and the arch will stay a month.', 'There. Symmetrical. I checked with both eyes and then with my heart.'] },
+    },
+    topics: [
+      { q: 'What do you do here?', a: 'Reiki. Warm stones. A facial with blue clay. The shoulders. Threading, kindly. Lie down on the table and tell me which, dear heart, or tell me now and I will be ready.', expr: 'happy',
+        next: [
+          { q: 'Reiki.', a: 'Then lie down, and I will come to your head. You need do nothing. The less the better.', service: 'reiki' },
+          { q: 'The hot stones.', a: 'They are warm already. Lie down, on your back is fine. They will find you.', service: 'stones' },
+          { q: 'A facial.', a: 'Lie down, dear heart. I will bring the warm cloth.', service: 'facial' },
+          { q: 'My shoulders.', a: 'I saw them come in before you did. Lie down.', service: 'massage' },
+        ] },
+      { q: 'Does reiki actually work?', a: ['You came in with your shoulders at your ears, and in an hour they will not be. I do not need a better theory than that. But yes. Obviously.', 'I have laid hands near four thousand people and every one of them left softer. Tomme says it is the lying down. Tomme has never tried it.'], expr: 'happy' },
+      { q: 'What can you tell about my energy?', a: ['It is warm. Bright in the chest. Busy in the head, like a kitchen at noon. And there is something by your left knee that I think is just a knee.', 'A lovely colour. Green going to gold. A little frayed where you have been useful to too many people.'], expr: 'love' },
+      { q: 'How are you so calm?', a: 'I was a stone in a river for a very long time before I was this. It teaches you that most things go round you.', expr: 'sleepy' },
+      { q: 'Do you know Bijou?', a: 'Bijou is my dearest friend. She speaks and I breathe; between us it is one whole conversation. Her energy is pink and has no off switch. I find it restful.', expr: 'happy' },
+      { q: 'Do the others come to you?', a: ['Ding, every Tuesday. Reiki. He vibrates slightly less for about an hour. Pasha says he does not need it and falls asleep before I have begun.', 'Cosima came once. She held her ledger the whole time. I worked round it. The ledger is very relaxed now.'], expr: 'wink' },
     ],
   },
 
@@ -387,6 +436,7 @@ const MORE = {
   pasha: ['Steam does not care who you are upstairs!', 'First heat, then cold, then tea. Everything else is commentary.', 'A dry banya is only a shed.', 'In my steam room nobody has ever finished an argument.', 'The stones remember every bucket.', 'You are too tense. I can hear it from here.', 'Sweat is the body telling the truth.', 'A good venik is tied in June. Everything good is tied in June.'],
   terry: ['Thirty-four degrees. I checked again. Still thirty-four!', 'A dry towel is a promise. A warm one is a hug.', 'If you see a leaf in the pool: no you did not.', 'I counted the towels. There are enough. There are SO enough.', 'Water remembers nothing. I find that restful.', 'Somebody left a wet footprint. I am not upset. I am following it.', 'Thirds! It is always thirds.'],
   bijou: ['Honey, Luna asked me what colour suits a moth. I said all of them and she went quiet for an HOUR.', 'Honey, Pasha keeps a bottle of rose oil behind the veniks. For the moustache. You did not hear it here.', 'Winnicbott came for a manicure once, honey. Clear coat. Said nothing for fifty minutes and tipped in silence.', 'Honey, Ding rang for himself last Tuesday. Just to see who would come.', 'Between us, honey: Saz cries at the slow songs. Polishes right through it.', 'Honey, Hush and I had a whole conversation yesterday. I did all of it. Best one in weeks.', 'Honey, Terry has a favourite towel. It has a NAME. I am not allowed to say.'],
+  opal: ['If you listen, the towel warmer hums in D. I have tuned my breathing to it.', 'I smudged the trolley. With cedar. The trolley had been through a lot.', '*turns a stone over, so that its other side may have a go*', 'Nobody has ever hurried in this room. The clock tried once. I spoke to it.', 'Bijou says I am the only one who lets her finish. I did not know there was an ending.', 'There is a draught under the door. I have decided it is the building breathing out.'],
   hush: ['*looks at the window for a while; nothing needs doing; this is the point*', '*folds a napkin into a square, then into a smaller square*', '*nods at nobody in particular*', '*the fire pops; it looks over, satisfied*', '*waits; is good at it*', '*moves a cup one inch to the left; considers; moves it back*'],
   ding: ['I can hear the samovar from here. It is fine. I am only saying I can hear it.', 'Is it seven minutes yet? It is always nearly seven minutes!', 'I practised ringing quietly. It is not my best work.', 'Standing by! Still standing by! Very good at standing by!', 'If you need anything, I am right here! And if you do not: also here!', 'Someone moved a cushion! It was me. I moved it back.', 'I went past the bar four times. Nobody needed anything. Five is not too many.'],
   luna: ['The candles and I have an understanding. I light them; they do the rest.', 'It is quieter under a hill than you would think. And louder inside it.', 'Somebody sat here an hour yesterday and left lighter. I did nothing. That is the method.', 'A flame is a thing that is only ever happening.', 'The ring up there mends itself. I only dust it.', 'Nobody has ever been asked to leave. Nobody has ever needed to be.'],
@@ -400,7 +450,7 @@ export const RANG = { coming: ['Ding! Coming!', 'DING! That was a bell! That was
 // What the concierge can arrange: who is ready for you when you get there, and in which room
 export const BOOKINGS = {
   steam: { with: 'pasha', room: 'The Banya', what: 'steam with Pasha' },
-  treatment: { with: 'pasha', room: 'The Treatment Room', what: 'the treatment table, with Pasha' },
+  treatment: { with: 'opal', room: 'The Treatment Room', what: 'the treatment table, with Opal' },
   nails: { with: 'bijou', room: 'The Tea Room', what: 'nails with Bijou' },
   session: { with: 'winnicbott', room: 'The Consulting Room', what: 'fifty minutes with Winnicbott' },
   tasting: { with: 'tomme', room: 'The Cave', what: 'a tasting with Tomme' },

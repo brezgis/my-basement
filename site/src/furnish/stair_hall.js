@@ -314,7 +314,7 @@ void main() {
       K.put(cf, MAT.OAKD, bev(-0.51, 0.51, -0.047, 0.01, -0.64, 0.64, 0.012, { grain: 'z' }), { rx: 0.1, at: [0, 0.012, 0.66] });
       cf.bev(MAT.OAK, -0.54, 0.54, -0.23, 0.16, 0, 0.06, 0.012, { grain: 'x' });
       f.label(cf, 0, 0.1, 0.6, { label: 'read the treatments', reach: 6, title: 'Treatments', kicker: 'Ask at the desk',
-        text: 'Parenie in the Parnaya: steam, and birch veniks soaked in hot water, laid on and swept. 40 minutes, with rests.\nThe cold plunge in the Banya: three rounds, a blanket between. 20 minutes.\nSalt and honey scrub, in the Treatment Room. 45 minutes.\nMassage. 60 or 90 minutes.\nPedicure in the Tea Room\'s corner, facing the clouds. 60 minutes.\nTea at the samovar in the Tea Room, for as long as you like.\nThe Quiet Room. One hour; nobody talks.\nCoffee in seven minutes.',
+        text: 'Parenie in the Parnaya: steam, and birch veniks soaked in hot water, laid on and swept. 40 minutes, with rests.\nThe cold plunge in the Banya: three rounds, a blanket between. 20 minutes.\nSalt and honey scrub, in the Treatment Room. 45 minutes.\nMassage, hot stones, a facial, or reiki with Opal, in the Treatment Room. As long as it takes.\nPedicure in the Tea Room\'s corner, facing the clouds. 60 minutes.\nTea at the samovar in the Tea Room, for as long as you like.\nThe Quiet Room. One hour; nobody talks.\nCoffee in seven minutes.',
         foot: 'Anna’s Basement' });
       // a hand lantern at the east end of the counter
       handLantern(K, c, -2.46, 0.56, 0, fl.hall, 1.12); K.lampAt(c, -2.46, 0.56, 0.53, 0.5); { const l = K.lamps[K.lamps.length - 1]; l.kind = 'glow'; l.halo = 0.7; }

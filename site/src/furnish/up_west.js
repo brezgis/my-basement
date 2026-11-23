@@ -237,6 +237,21 @@ export default function (f) {
     // ---- Monet's wheatstacks over the bench on the landing
     f.framed(f.fr(16.85, 40.75, F, 0), 0, 5.3, 3.2, 1.89, 'monet_wheatstacks', { frame: 'oak_light#8f6c4c', border: 0.1, mat: 0, title: 'Stacks of Wheat (End of Summer)', kicker: 'Claude Monet, 1890–91',
       text: 'Two stacks in a field at Giverny in the late light, one of the series he painted over and over as the hours and the seasons changed.', foot: 'The Art Institute of Chicago. Public domain.' });
+    // ---- Hilma af Klint's Ten Largest, Nos. 1 to 9, small, on the stone wall across the south void from the bridge (the
+    // consulting room's north wall, its face at Y 53.55, X 25..42.75): opposite the globes that hang in the north void.
+    // In order from the left as you face them from the bridge (looking south, so No. 1 is at the east end), stepping up
+    // and down about eye height. (No. 10 is not hung. Read from the bridge, so the captions reach further than usual.)
+    { const KW = f.fr(34.0, 53.55, F, 0), TEN = [                       // x = X - 34.0; [number, age, ratio of the image (w : h), a line about it]
+        [1, 'Childhood', 0.753, 'The first of ten paintings on the ages of life, made in Stockholm in the last months of 1907: childhood, in deep blue, under wreaths of white and rose.'],
+        [2, 'Childhood', 0.743, 'Childhood again: two great discs of orange and dark blue under a crowd of flowers, in tempera on paper pasted to canvas, more than ten feet tall.'],
+        [3, 'Youth', 0.750, 'Youth, and the ground turns to orange: spirals and shells unwinding in every direction.'],
+        [4, 'Youth', 0.746, 'Youth still: petals of blue, rose and yellow thrown out across the orange.'],
+        [5, 'Adulthood', 0.748, 'Adulthood begins, in lilac: a great pink flower over letters in a looping script of her own.'],
+        [6, 'Adulthood', 0.743, 'The second of the four lilac canvases of adulthood, written over with words and loops in her own hand.'],
+        [7, 'Adulthood', 0.754, 'One of ten great paintings on paper about the ages of life, painted in Stockholm in 1907 and kept unseen for decades by her own wish.'],
+        [8, 'Adulthood', 0.753, 'The last of adulthood: the forms grow paler and rounder, and the line begins to curl in on itself.'],
+        [9, 'Old Age', 0.751, 'Old age: the colour thins to rose and white, and the forms settle into pairs. No. 10, which ends the series, is not hung here.']];
+      for (const [n, age, k, text] of TEN) f.framed(KW, (5 - n) * 1.8, 5.5 + (n % 2 ? 0.28 : -0.28), 1.6 * k, 1.6, 'afklint_ten_largest_' + n, { frame: 'oak_light#8f6c4c', border: 0.07, mat: 0, reach: 12, title: 'The Ten Largest, No. ' + n + ', ' + age, kicker: 'Hilma af Klint, 1907', text, foot: 'Public domain. Image via Wikimedia Commons.' }); }
   }
   // a cloth hung from an oak pole on a wall frame: centred at x 0, its top at z top, w wide, h long, a few soft folds;
   // painted by draw(g, W, H) on its own canvas (f.later)

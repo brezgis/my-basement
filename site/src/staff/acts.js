@@ -27,10 +27,11 @@ export const HOLDS = {
   pourTea: ['cup', 'teapot'], light: [null, 'taper'], dust: [null, 'duster'], plump: [null, null], turnDown: [null, null],
   cloche: [null, 'silver'],
   lightPole: [null, 'pole'], gaze: [null, 'pole'], bowl: [null, null],
+  reiki: [null, null], warmStone: ['stone', 'stone'], stones: [null, 'stone'], facial: [null, 'cloth'], threading: [null, 'thread'], massage: [null, null],
 };
 export const SECS = { wipe: 10, polish: 11, tamp: 5, pull: 8, restock: 12, straighten: 11, read: 30, listen: 22, stir: 12, shake: 6, pour: 7, taste: 12, probe: 10, note: 14, ponder: 12, readNotes: 16,
   ledger: 12, ring: 3, toast: 8, robe: 9, bow: 3, present: 5, whisk: 9, shakeVenik: 6, steam: 7, tea: 9, fold: 13, stack: 8, skim: 16, water: 8, roll: 8, file: 10, paint: 12, admire: 6, gossip: 8,
-  pourTea: 8, light: 8, dust: 11, plump: 8, turnDown: 10, cloche: 6, rest: 22, breathe: 12, idle: 5, salute: 2.5, tend: 10, lightPole: 9, gaze: 14, bowl: 9 };
+  pourTea: 8, light: 8, dust: 11, plump: 8, turnDown: 10, cloche: 6, rest: 22, breathe: 12, idle: 5, salute: 2.5, tend: 10, lightPole: 9, gaze: 14, bowl: 9, reiki: 16, warmStone: 9, stones: 14, facial: 12, threading: 10, massage: 12 };
 
 export function pose(name, t, D) {
   const { x, y, f, lo, mid, hi } = D, o = { L: [-x, y, 0.1], R: [x, y, 0.1], lean: 0, rise: 0, ly: 0, pour: 0 };
@@ -110,6 +111,15 @@ export function pose(name, t, D) {
     case 'turnDown': { const k = ease(wave(t, 5)); at('R', 0.3 - 0.5 * k, lo + 0.05 + 0.1 * Math.sin(k * Math.PI), f + 0.25 + 0.2 * k); at('L', -0.3 - 0.1 * k, lo + 0.05, f + 0.25); o.lean = 0.26; o.twist = -0.15 * k; o.ly = 0.9; break; }      // the corner of the duvet folded back, smoothed
     // ---- the chapel ------------------------------------------------------------------------------------------------
     case 'lightPole': { const k = ease(wave(t, 4.5)); at('R', x * 0.5, y + 0.1 + 0.25 * k, f + 0.1 + 0.2 * k); at('L', -x, y, 0.1); o.tipR = 0.25 + 0.55 * k; o.ly = -0.5 * k; o.calm = true; break; }      // the pole reached out to a wick, held, drawn back
+    // ---- the treatment table: all of it done out in front and low, over whoever lies there -----------------------
+    case 'reiki': { const k = ease(Math.min(1, t / 3)), d = 0.05 * Math.sin(t * 0.5), u = 0.035 * Math.sin(t * 0.37 + 1);      // the hands held still over her, palms down, hardly moving
+      at('R', x * 0.5 + d, lo - 0.02 + u, f + 0.5 * k); at('L', -x * 0.5 - d, lo - 0.02 - u, f + 0.5 * k); o.lean = 0.42 * k; o.ly = 1; o.tipR = o.tipL = 0.9 * k; o.calm = true; break; }
+    case 'warmStone': { const k = wave(t, 5); at('R', x * 0.35, mid - 0.1 + 0.03 * k, f + 0.05); at('L', -x * 0.35, mid - 0.1 + 0.03 * (1 - k), f + 0.05); o.lean = 0.08; o.ly = 0.6; o.calm = true; break; }      // a stone warmed between the palms
+    case 'stones': { const n = Math.floor(t / 3.2), k = (t % 3.2) / 3.2, go = ease(Math.min(1, k / 0.55)), s = n % 2 ? -1 : 1, back = k > 0.7 ? ease((k - 0.7) / 0.3) : 0, put = go * (1 - back);      // one stone at a time, taken from the side and laid down slowly
+      at('R', x * (1.1 - put * (1.1 - 0.45 * s)), mid - 0.05 - put * (mid - lo + 0.1), f * 0.4 + put * (f * 0.6 + 0.45)); at('L', -x * 0.6, lo + 0.05, f + 0.3); o.lean = 0.2 + 0.2 * put; o.ly = 0.9; o.tipR = 0.5 * put; break; }
+    case 'facial': { const a = t * 1.1; at('R', x * 0.42 + 0.07 * Math.cos(a), lo + 0.02 + 0.03 * Math.sin(a * 0.5), f + 0.45 + 0.07 * Math.sin(a)); at('L', -x * 0.42 - 0.07 * Math.cos(a), lo + 0.02 + 0.03 * Math.sin(a * 0.5), f + 0.45 + 0.07 * Math.sin(a)); o.lean = 0.4; o.ly = 1; o.tipR = o.tipL = 0.7; break; }      // small slow circles, both hands, mirrored
+    case 'threading': { const q = pulse(t, 1.3, 0.35); at('R', x * 0.22 + 0.05 * q, lo + 0.08 + 0.04 * q, f + 0.5); at('L', -x * 0.22 - 0.05 * q, lo + 0.08 - 0.02 * q, f + 0.5); o.lean = 0.46; o.ly = 1; o.rollR = 0.5 * q; break; }      // the thread held taut between the hands, and a quick twist
+    case 'massage': { const a = t * 1.5, p = Math.max(0, Math.sin(a)), r = Math.max(0, -Math.sin(a)); at('R', x * 0.75, lo - 0.02 - 0.1 * p, f + 0.42 + 0.05 * p); at('L', -x * 0.75, lo - 0.02 - 0.1 * r, f + 0.42 + 0.05 * r); o.lean = 0.36 + 0.05 * Math.sin(a * 0.5); o.ly = 1; o.tipR = 0.6; o.tipL = 0.6; break; }      // the shoulders: one hand, then the other, pressed and let go
     case 'gaze': { const k = ease(Math.min(1, t / 2)); at('R', x, y + 0.04, 0.12); at('L', -x * 0.5, mid - 0.1, f + 0.05); o.lean = -0.14 * k; o.ly = -1 * k; o.calm = true; break; }      // looking up the shaft at the light, the pole grounded
     case 'bowl': { const k = ease(wave(t, 6)); at('R', 0.16, lo + 0.1 - 0.06 * k, f + 0.24); at('L', -0.16, lo + 0.1 - 0.06 * k, f + 0.24); o.lean = 0.18 + 0.06 * k; o.ly = 0.9; o.calm = true; break; }      // both hands over the still water, not touching it
     default: break;

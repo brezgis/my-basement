@@ -349,7 +349,7 @@ export class Polite extends Agent {
     for (;;) {
       if (o.until?.()) { m.stop(); return true; }
       if (Math.hypot(x - this.x, z - this.z) < 0.25) { m.stop(); return true; }
-      const at = this.about() && Math.hypot(v.x - x, v.z - z) < this.keep + 0.5 && this.plan.openBetween(x, z, v.x, v.z);      // she is standing where I am going
+      const at = !o.beside && this.about() && Math.hypot(v.x - x, v.z - z) < this.keep + 0.5 && this.plan.openBetween(x, z, v.x, v.z);      // she is standing where I am going (o.beside: she is lying on something there, and I am to come right up to it)
       if (at || W.taken(this, x, z, this.r + 0.9)) {
         if (!o.must || W.now > end) return false;
         yield* this.standBy(x, z, 2.5);
@@ -358,7 +358,8 @@ export class Polite extends Agent {
       const vx = v.x, vz = v.z, round = this.about() && Math.hypot(vx - this.x, vz - this.z) < 30;
       // round her at a good berth; if the room does not allow that, round her closely; else straight, to wait where she blocks the way
       this.soft = 0.9;
-      if (round && this.goAvoiding(x, z, vx, vz, berth)) { /* the wide way */ }
+      if (o.beside) { if (!m.goTo(x, z)) { if (W.now > end) return false; yield* this.wait(1.2); continue; } }
+      else if (round && this.goAvoiding(x, z, vx, vz, berth)) { /* the wide way */ }
       else if (round && this.goAvoiding(x, z, vx, vz, this.keep + 0.5)) this.soft = 0.15;
       else if (!m.goTo(x, z)) { if (W.now > end) return false; yield* this.wait(1.2); continue; }
       let st = 'moving', t0 = W.now;

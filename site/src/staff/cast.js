@@ -136,11 +136,10 @@ export const CAST = [
   { id: 'pasha', name: 'Pasha', role: 'the banya', rest: 'happy', speed: 1.7, chirp: [53, 57, 60],
     look: { shape: 'barrel', scale: 1.03, hover: 3.4, colour: '#ebe6da', colour2: '#3a3430', pattern: 'bark', shirt: false, belt: '#a33b2e', hat: 'banya', hatColour: '#aaa294', hatTrim: '#a33b2e', capColour: '#8a6a44',
       moustache: '#ffe2b0', blush: 'rgba(255,110,90,.6)', brows: 0.5, eyeW: 36, eyeH: 40, gap: 46, eye: '#ffe2b0', ring: 0xff8a4a, glove: '#d9cbb2', tools: [['ladle'], ['venik', 'glass']], tray: 'oak' },
-    room: 'The Banya', roam: ['The Tea Room', 'The Parnaya', 'The Treatment Room'], brings: true,
+    room: 'The Banya', roam: ['The Tea Room', 'The Parnaya'], brings: true,
     home: [95.5, 48.0], faces: [95.5, 42], homeActs: ['shakeVenik', 'straighten', 'tea', 'rest'],
     posts: [
       { at: [90.0, 62.0], faces: [90, 70], acts: ['steam', 'whisk', 'shakeVenik'], w: 1.2, room: 'The Parnaya' },      // the stones
-      { at: [99, 61.75], faces: [101, 66], acts: ['whisk', 'fold'], w: 0.7, room: 'The Treatment Room' },         // the table
       { at: [94.5, 31.75], faces: [96.3, 32], acts: ['pourTea', 'tea'], w: 1, room: 'The Tea Room' },            // the samovar
       { at: [94.5, 35.75], faces: [98, 40], acts: ['plump', 'straighten'], w: 0.6, room: 'The Tea Room' },           // the north daybed
     ],
@@ -173,6 +172,25 @@ export const CAST = [
     posts: [
       { at: [99.7, 21.2], faces: [99.7, 22.6], acts: ['paint', 'straighten', 'admire'], w: 1 },     // the manicure table
       { at: [103.0, 19.9], faces: [103.0, 17.5], acts: ['restock', 'admire'], w: 0.8 },              // the polish shelf
+    ] },
+
+  // ---- OPAL, of the Treatment Room: reiki, hot stones, the facial, threading, the shoulders. A smooth pale pebble
+  // (a moonstone, it would say) with half-closed eyes and a leaf on top. Bijou's opposite number: where Bijou talks,
+  // Opal breathes. Entirely sincere about energy. Lie down on the table and it comes to the head of it, rises over
+  // you and does the thing, slowly, where you can watch its hands.
+  //   table   { at: [X, Y] where it stands (the head of the table), faces: [X, Y] (the guest's head), when: the label
+  //           of the lying-down spot, lift: feet it rises to lean over her }
+  { id: 'opal', name: 'Opal', role: 'treatments', rest: 'sleepy', speed: 1.0, chirp: [60, 67], stays: true,
+    look: { lathe: [[0, -0.5], [0.3, -0.48], [0.52, -0.36], [0.62, -0.15], [0.63, 0.05], [0.56, 0.28], [0.42, 0.45], [0.22, 0.55], [0, 0.58]], scale: 0.9, hover: 3.3, colour: '#d6d0e2', colour2: '#bfb6d2', belly: '#efeaf4', shirt: false,
+      apron: '#e9e4da', apronTrim: '#a9b79c', top: 'sprout', capColour: '#a9b79c', blush: 'rgba(200,160,230,.45)', eyeW: 30, eyeH: 22, eyeR: 11, gap: 44, eye: '#efe2ff', faceBg: '#1a1622', ring: 0xc9b8ff, glove: '#efeaf4',
+      tools: [['stone'], ['stone', 'thread', 'cloth']], tray: 'oak', trayScale: 0.8 },
+    room: 'The Treatment Room', roam: [],
+    home: [99.3, 64.0], faces: [101, 64.0], homeActs: ['reiki', 'breathe', 'warmStone', 'rest', 'fold'],
+    table: { at: [101.0, 68.75], faces: [101.0, 66.3], when: 'lie down on the table', lift: 1.0, back: 1.25 },
+    posts: [
+      { at: [99.0, 58.9], faces: [97.4, 58.2], acts: ['warmStone', 'restock'], w: 1 },        // the trolley of oils and stones
+      { at: [104.2, 70.3], faces: [104.9, 72.4], acts: ['fold', 'straighten'], w: 0.8 },      // the towel warmer
+      { at: [102.7, 64.0], faces: [101, 64.0], acts: ['reiki', 'straighten'], w: 0.8 },       // the other side of the table
     ] },
 
   // ---- HUSH, of the quiet rooms: the Quiet Room, the Suite, the candles. A small grey ball in a knitted tea cosy.

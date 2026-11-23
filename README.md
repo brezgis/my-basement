@@ -3,7 +3,7 @@
 A place to walk around in the browser: a bath-house cut into the rock under a house on a floating island. You go
 down a stair under a pair of cellar doors and come out into rooms round a circular courtyard that is open on one side
 to the clouds. There is a warm pool, a chapel with stained glass, a banya, a bar with a wall of records, a cave of
-cheese, a bedroom, an analyst's consulting room, and ten robots who run it and know that they do.
+cheese, a bedroom, an analyst's consulting room, a treatment table, and eleven robots who run it and know that they do.
 
 **Visit it: <https://basement.brezgis.com>**
 
@@ -20,7 +20,7 @@ tunnel of stairs, and one round cut in a hillside that every room looks into.
 | | |
 |---|---|
 | **W A S D**, mouse | walk and look |
-| **E** | use what you are looking at: open a door, sit, lie down, talk to a robot, take what it hands you |
+| **E** | use what you are looking at: open a door, sit, lie down (on the analyst's couch, on the treatment table), talk to a robot, take what it hands you |
 | **1 to 4**, **0** | choose a line on a robot's card of things to say; 0 (or X, or Esc) closes any card |
 | **Q**, **R** | sip or bite what you are holding; put it down |
 | **G** | ring for Ding, the bellhop, from anywhere |
@@ -38,7 +38,7 @@ tunnel of stairs, and one round cut in a hillside that every room looks into.
 | The Hall | The concierge's desk, a fire, robes. |
 | The Listening Room | The bar, a record player and a wall of record sleeves, a banquette. Its north end is double height, with the stair to the upper floor. |
 | The Cave | Cheese and wine under a stone vault. Sit down and a tasting is offered. |
-| The Pool | The warm pool. You float. |
+| The Pool | The warm pool, the house's A in tesserae on its bed. You float. |
 | The Chapel | Stained glass in lit niches, each window after one scientific paper, and an oculus to the sky. |
 | The Banya, the Parnaya, the Treatment Room | The wash room, the steam room, one table. |
 | The Tea Room | A samovar, daybeds, and a nail corner by the cloud window. |
@@ -47,7 +47,7 @@ tunnel of stairs, and one round cut in a hillside that every room looks into.
 
 ## The staff
 
-Ten robots, of the same make as the house's butlers. Each keeps its own rooms, turns to you as you come up, and has
+Eleven robots, of the same make as the house's butlers. Each keeps its own rooms, turns to you as you come up, and has
 a card of things you can say to it. What you ask for is brought to you on a tray.
 
 - **Cosima**, the concierge. Coffee, champagne, a warm robe; she arranges steam, shoulders, nails, a tasting, or fifty minutes upstairs.
@@ -55,6 +55,7 @@ a card of things you can say to it. What you ask for is brought to you on a tray
 - **Tomme**, in the Cave. A wheel of cheese in a beret. Whispers, because the cheese is asleep.
 - **Pasha**, the banshchik. A birch log in the felt hat of the steam room.
 - **Terry**, at the pool. Folds towels, skims the water, cannot see a wet guest without producing a towel.
+- **Opal**, in the Treatment Room. A pale pebble with a leaf on top. Reiki, hot stones, a facial, the shoulders, threading: lie down on the table and it comes to your head and does it, in complete sincerity.
 - **Bijou**, at the nail corner. Calls everyone "honey" and knows everything about everyone.
 - **Hush**, in the quiet rooms. Says nothing. Brings tea before it is wanted.
 - **Luna**, who keeps the Chapel. A luna moth with a lamplighter's pole; offers a question, not an answer.

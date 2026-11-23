@@ -1,8 +1,8 @@
 # The staff of Anna's Basement
 
-Ten robots work the house by default. Press E near one to speak or take a delivery. For an empty house, add `?staff=0`.
+Eleven robots work the house by default. Press E near one to speak or take a delivery. For an empty house, add `?staff=0`.
 
-    ?at=court&staff=lineup            all ten in a row in the courtyard, going through their gestures (E talks to them)
+    ?at=court&staff=lineup            all eleven in a row in the courtyard, going through their gestures (E talks to them)
     ?staff=lineup:ding,saz&staffr=6   only those, six feet off
     ?room=The%20Hall&staff=1          everyone at their posts, living their day (any ?room= will do)
     ?staff=cosima,ding,saz            only those, at their posts
@@ -16,7 +16,8 @@ of light, two mitten hands), not the lab's FORM kit. Six draw calls each.
 | **Cosima**, the concierge | The Hall | Dark green lacquer, brass buttons, a pillbox cap, the key to everything. Brings coffee, champagne or a warm robe to you; arranges steam, shoulders, nails, a tasting, fifty minutes upstairs. |
 | **Saz**, the bar | The Listening Room | A black waistcoat, a waxed moustache, copper headphones, a cocktail cherry for an antenna. Makes everything; sets it on the bar. |
 | **Tomme**, the cave | The Cave | A wheel of cheese in a beret with a tastevin on a chain. Whispers. Brings the tasting and the wine to you. |
-| **Pasha**, the banya | The Banya, the Parnaya, the Treatment Room, the Tea Room | A birch log in the felt hat of the steam room. Venik, ladle, samovar, and the treatment table. Brings tea. |
+| **Pasha**, the banya | The Banya, the Parnaya, the Tea Room | A birch log in the felt hat of the steam room. Venik, ladle, samovar. Brings tea. |
+| **Opal**, treatments | The Treatment Room | A pale pebble with half-closed eyes and a leaf on top. Reiki, hot stones, a facial, the shoulders, threading. Lie down on the table and it comes to the head of it, leans in over you and does what you choose from its card (`table` in cast.js, `services` in lines.js, `treatment()` in staff.js). |
 | **Terry**, the pool | The Pool | Sea-glass green, a towel round the head. Folds, skims the pool with a net, brings towels (to the edge, if you are in the water). |
 | **Bijou**, nails | The Tea Room's nail corner | Hot pink with glitter, a beehive with a file through it. "Honey", always, and gossip. |
 | **Hush**, the quiet rooms | The Quiet Room, the Gallery, the Suite | A grey ball in a tea cosy. Says nothing (asterisks only). Brings tea unasked, tends the fire, turns the bed down. |

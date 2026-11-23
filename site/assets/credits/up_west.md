@@ -22,3 +22,12 @@ The two squiggles in the Consulting Room are drawn in code (up_west_parts.js), n
 - `van_gogh_bedroom`: Vincent van Gogh, *The Bedroom*, 1889. From ~/projects/my_house/site/assets/art; The Art Institute of Chicago, https://www.artic.edu/artworks/28560. Public domain.
 - `the_kiss`: Gustav Klimt, *The Kiss*, 1907–08. From ~/projects/my_house/site/assets/art; https://commons.wikimedia.org/wiki/File:The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg. Public domain.
 - `monet_wheatstacks`: Claude Monet, *Stacks of Wheat (End of Summer)*. Already in this project's art folder (see its manifest entry). Public domain.
+- `afklint_ten_largest_1`: Hilma af Klint, *The Ten Largest, No. 1, Childhood*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._1_-_Childhood_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_2`: Hilma af Klint, *The Ten Largest, No. 2, Childhood*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._2_-_Childhood_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_3`: Hilma af Klint, *The Ten Largest, No. 3, Youth*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._3_-_Youth_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_4`: Hilma af Klint, *The Ten Largest, No. 4, Youth*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._4_-_Youth_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_5`: Hilma af Klint, *The Ten Largest, No. 5, Adulthood*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._5_-_Adulthood_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_6`: Hilma af Klint, *The Ten Largest, No. 6, Adulthood*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._6_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_8`: Hilma af Klint, *The Ten Largest, No. 8, Adulthood*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._8_-_Adulthood_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_9`: Hilma af Klint, *The Ten Largest, No. 9, Old Age*, 1907. Image: https://commons.wikimedia.org/wiki/File:Hilma_af_Klint_-_The_Ten_Largest_No._9_-_1907.jpg (resized to 900 px). Public domain.
+- `afklint_ten_largest_7`: already in this project's art folder (credited in larder.md); hung again here in the row of nine in The Gallery.
